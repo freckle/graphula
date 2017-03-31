@@ -1,0 +1,24 @@
+name: graphula
+version: "0.1.0"
+maintainer: Front Row Education
+
+extra-source-files:
+  - stack.yaml
+
+dependencies:
+  - base
+  - free
+  - QuickCheck
+
+library:
+  source-dirs:
+    - src
+  ghc-options: -Wall
+
+executables:
+  fansible:
+    main: Example.hs
+    ghc-options: -Wall
+    dependencies:
+      - base
+      - graph-ula
