@@ -38,7 +38,10 @@ validate n = liftF (Validate n id)
 
 class HasDependencies a where
   type Dependencies a
+  -- defaults to having no dependencies
+  type instance Dependencies a = ()
   dependsOn :: a -> Dependencies a -> a
+  dependsOn = const
 
 
 data GenerationFailure =

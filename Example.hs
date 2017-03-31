@@ -37,10 +37,7 @@ data A = A { aa :: String, ab :: Int }
 instance Arbitrary A where
   arbitrary = A <$> arbitrary <*> arbitrary
 
-instance HasDependencies A where
-  type Dependencies A = ()
-  dependsOn = const
-
+instance HasDependencies A
 
 data B = B { ba :: A, bb :: String }
   deriving (Show)
