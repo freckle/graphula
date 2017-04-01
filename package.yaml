@@ -9,6 +9,8 @@ dependencies:
   - base
   - free
   - QuickCheck
+  - persistent
+  - transformers
 
 library:
   source-dirs:
