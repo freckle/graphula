@@ -4,8 +4,8 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Lib
-  ( module Lib
+module Graphula
+  ( module Graphula
   , Arbitrary(..)
   ) where
 

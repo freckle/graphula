@@ -21,4 +21,4 @@ executables:
     ghc-options: -Wall
     dependencies:
       - base
-      - graph-ula
+      - graphula

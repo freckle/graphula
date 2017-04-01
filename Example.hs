@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeFamilies #-}
 module Main where
 
-import Lib
+import Graphula
 import Data.Functor.Identity (Identity(..))
 import Control.Monad.Free (iterM)
 
