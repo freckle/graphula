@@ -23,7 +23,6 @@ type Graph constraint entity = Free (Actions constraint entity)
 
 data Actions (constraint :: * -> Constraint) entity next where
   Insert :: constraint a => a -> (Maybe (entity a) -> next) -> Actions constraint entity next
-  Validate :: constraint a => a -> (Bool -> next) -> Actions constraint entity next
   LiftIO :: IO a -> (a -> next) -> Actions constraint entity next
 
 deriving instance Functor (Actions constraint entity)
@@ -33,9 +32,6 @@ liftIO io = liftF (LiftIO io id)
 
 insert :: constraint a => a -> Graph constraint entity (Maybe (entity a))
 insert n = liftF (Insert n id)
-
-validate :: constraint a => a -> Graph constraint entity Bool
-validate n = liftF (Validate n id)
 
 
 class NoConstraint a where
@@ -78,10 +74,6 @@ tryInsert maxAttempts currentAttempts source
       liftIO . throwIO $ GenerationFailureMaxAttempts (typeRep (Proxy :: Proxy a))
   | otherwise = do
     value <- source
-    isValid <- validate value
-    if isValid then
-      insert value >>= \case
-        Just a -> pure a
-        Nothing -> tryInsert maxAttempts (succ currentAttempts) source
-    else
-      tryInsert maxAttempts (succ currentAttempts) source
+    insert value >>= \case
+      Just a -> pure a
+      Nothing -> tryInsert maxAttempts (succ currentAttempts) source

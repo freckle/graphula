@@ -25,8 +25,6 @@ withGraphIO :: Graph NoConstraint Identity r -> IO r
 withGraphIO f = flip iterM f $ \case
   Insert n next ->
     next $ Just $ Identity n
-  Validate _ next ->
-    next True
   LiftIO io next ->
     next =<< io
 

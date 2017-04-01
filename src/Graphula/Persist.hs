@@ -20,8 +20,6 @@ withPersistGraph f = flip iterM f $ \case
     case mKey of
       Nothing -> next Nothing
       Just key -> next =<< getEntity key
-  Validate _ next ->
-    next True
   LiftIO io next ->
     next =<< liftIO io
 
