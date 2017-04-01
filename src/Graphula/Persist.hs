@@ -13,7 +13,7 @@ import Control.Monad.Trans.Reader
 import Database.Persist
 import Database.Persist.Sql
 
-withPersistGraph :: (SqlBackendCanRead backend, PersistQueryWrite backend, PersistStoreWrite backend, PersistUniqueWrite backend, MonadIO m) => Graph (PersistRecord backend) Entity r -> ReaderT backend m r
+withPersistGraph :: (SqlBackendCanWrite backend, MonadIO m) => Graph (PersistRecord backend) Entity r -> ReaderT backend m r
 withPersistGraph f = flip iterM f $ \case
   Insert n next -> do
     mKey <- insertUnique n

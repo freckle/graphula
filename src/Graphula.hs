@@ -53,22 +53,32 @@ data GenerationFailure =
 
 instance Exception GenerationFailure
 
-nodeEditWith :: forall a entity constraint. (constraint a, Typeable a, Arbitrary a, HasDependencies a) => (Dependencies a) -> (a -> a) -> Graph constraint entity (entity a)
+nodeEditWith
+  :: forall a entity constraint. (constraint a, Typeable a, Arbitrary a, HasDependencies a)
+  => (Dependencies a) -> (a -> a) -> Graph constraint entity (entity a)
 nodeEditWith dependencies edits =
   tryInsert 10 0 $ do
     x <- liftIO $ generate arbitrary
     pure (edits x `dependsOn` dependencies)
 
-nodeWith :: forall a entity constraint. (constraint a, Typeable a, Arbitrary a, HasDependencies a) => (Dependencies a) -> Graph constraint entity (entity a)
+nodeWith
+  :: forall a entity constraint. (constraint a, Typeable a, Arbitrary a, HasDependencies a)
+  => (Dependencies a) -> Graph constraint entity (entity a)
 nodeWith = flip nodeEditWith id
 
-nodeEdit :: forall a entity constraint. (constraint a, Typeable a, Arbitrary a, HasDependencies a, Dependencies a ~ ()) => (a -> a) -> Graph constraint entity (entity a)
+nodeEdit
+  :: forall a entity constraint. (constraint a, Typeable a, Arbitrary a, HasDependencies a, Dependencies a ~ ())
+  => (a -> a) -> Graph constraint entity (entity a)
 nodeEdit edits = nodeEditWith () edits
 
-node :: forall a entity constraint. (constraint a, Typeable a, Arbitrary a, HasDependencies a, Dependencies a ~ ()) => Graph constraint entity (entity a)
+node
+  :: forall a entity constraint. (constraint a, Typeable a, Arbitrary a, HasDependencies a, Dependencies a ~ ())
+  => Graph constraint entity (entity a)
 node = nodeWith ()
 
-tryInsert :: forall a entity constraint. (constraint a, Typeable a) => Int -> Int -> (Graph constraint entity a) -> Graph constraint entity (entity a)
+tryInsert
+  :: forall a entity constraint. (constraint a, Typeable a)
+  => Int -> Int -> (Graph constraint entity a) -> Graph constraint entity (entity a)
 tryInsert maxAttempts currentAttempts source
   | currentAttempts >= maxAttempts =
       liftIO . throwIO $ GenerationFailureMaxAttempts (typeRep (Proxy :: Proxy a))
