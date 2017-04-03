@@ -7,30 +7,33 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
 module Graphula
-  ( module Graphula
-  , Arbitrary(..)
+  ( Graph
+  , Actions(..)
+  , HasDependencies(..)
+  , nodeEditWith
+  , nodeWith
+  , nodeEdit
+  , node
+  , NoConstraint
   ) where
 
 import Test.QuickCheck
-import Control.Monad.Free
+import Control.Monad.Trans.Free
+import Control.Monad.IO.Class
 import Control.Exception
 import Data.Proxy
 import Data.Typeable
 import GHC.Exts (Constraint)
 
 
-type Graph constraint entity = Free (Actions constraint entity)
+type Graph constraint entity = FreeT (Actions constraint entity)
 
 data Actions (constraint :: * -> Constraint) entity next where
   Insert :: constraint a => a -> (Maybe (entity a) -> next) -> Actions constraint entity next
-  LiftIO :: IO a -> (a -> next) -> Actions constraint entity next
 
 deriving instance Functor (Actions constraint entity)
 
-liftIO :: IO a -> Graph constraint entity a
-liftIO io = liftF (LiftIO io id)
-
-insert :: constraint a => a -> Graph constraint entity (Maybe (entity a))
+insert :: (Monad m, constraint a) => a -> Graph constraint entity m (Maybe (entity a))
 insert n = liftF (Insert n id)
 
 
@@ -54,31 +57,31 @@ data GenerationFailure =
 instance Exception GenerationFailure
 
 nodeEditWith
-  :: forall a entity constraint. (constraint a, Typeable a, Arbitrary a, HasDependencies a)
-  => (Dependencies a) -> (a -> a) -> Graph constraint entity (entity a)
+  :: forall a entity constraint m. (MonadIO m, constraint a, Typeable a, Arbitrary a, HasDependencies a)
+  => (Dependencies a) -> (a -> a) -> Graph constraint entity m (entity a)
 nodeEditWith dependencies edits =
   tryInsert 10 0 $ do
     x <- liftIO $ generate arbitrary
     pure (edits x `dependsOn` dependencies)
 
 nodeWith
-  :: forall a entity constraint. (constraint a, Typeable a, Arbitrary a, HasDependencies a)
-  => (Dependencies a) -> Graph constraint entity (entity a)
+  :: forall a entity constraint m. (MonadIO m, constraint a, Typeable a, Arbitrary a, HasDependencies a)
+  => (Dependencies a) -> Graph constraint entity m (entity a)
 nodeWith = flip nodeEditWith id
 
 nodeEdit
-  :: forall a entity constraint. (constraint a, Typeable a, Arbitrary a, HasDependencies a, Dependencies a ~ ())
-  => (a -> a) -> Graph constraint entity (entity a)
+  :: forall a entity constraint m. (MonadIO m, constraint a, Typeable a, Arbitrary a, HasDependencies a, Dependencies a ~ ())
+  => (a -> a) -> Graph constraint entity m (entity a)
 nodeEdit edits = nodeEditWith () edits
 
 node
-  :: forall a entity constraint. (constraint a, Typeable a, Arbitrary a, HasDependencies a, Dependencies a ~ ())
-  => Graph constraint entity (entity a)
+  :: forall a entity constraint m. (MonadIO m, constraint a, Typeable a, Arbitrary a, HasDependencies a, Dependencies a ~ ())
+  => Graph constraint entity m (entity a)
 node = nodeWith ()
 
 tryInsert
-  :: forall a entity constraint. (constraint a, Typeable a)
-  => Int -> Int -> (Graph constraint entity a) -> Graph constraint entity (entity a)
+  :: forall a entity constraint m. (MonadIO m, constraint a, Typeable a)
+  => Int -> Int -> (Graph constraint entity m a) -> Graph constraint entity m (entity a)
 tryInsert maxAttempts currentAttempts source
   | currentAttempts >= maxAttempts =
       liftIO . throwIO $ GenerationFailureMaxAttempts (typeRep (Proxy :: Proxy a))

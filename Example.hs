@@ -3,9 +3,11 @@
 {-# LANGUAGE TypeFamilies #-}
 module Main where
 
-import Graphula
+import Control.Monad.Trans.Free (iterT)
 import Data.Functor.Identity (Identity(..))
-import Control.Monad.Free (iterM)
+import Control.Monad.IO.Class
+import Graphula
+import Test.QuickCheck
 
 main :: IO ()
 main =
@@ -21,12 +23,10 @@ main =
     liftIO $ print (a, b, c)
 
 
-withGraphIO :: Graph NoConstraint Identity r -> IO r
-withGraphIO f = flip iterM f $ \case
+withGraphIO :: Graph NoConstraint Identity IO r -> IO r
+withGraphIO f = flip iterT f $ \case
   Insert n next ->
     next $ Just $ Identity n
-  LiftIO io next ->
-    next =<< io
 
 data A = A { aa :: String, ab :: Int }
   deriving (Show)
