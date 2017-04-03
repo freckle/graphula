@@ -21,15 +21,12 @@ main =
     liftIO $ print (a, b, c)
 
 
-withGraphIO :: Graph Identity r -> IO r
+withGraphIO :: Graph NoConstraint Identity r -> IO r
 withGraphIO f = flip iterM f $ \case
   Insert n next ->
     next $ Just $ Identity n
-  Validate _ next ->
-    next True
   LiftIO io next ->
     next =<< io
-
 
 data A = A { aa :: String, ab :: Int }
   deriving (Show)
