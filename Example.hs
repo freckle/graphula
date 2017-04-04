@@ -3,7 +3,6 @@
 {-# LANGUAGE TypeFamilies #-}
 module Main where
 
-import Control.Monad.Trans.Free (iterT)
 import Data.Functor.Identity (Identity(..))
 import Control.Monad.IO.Class
 import Graphula
@@ -12,7 +11,7 @@ import Test.QuickCheck
 main :: IO ()
 main =
   -- wrap computation to allow shrinking, saving failed states, replay, etc with a free monad
-  withGraphIO $ do
+  runGraphula graphIO $ do
     -- Declare the graph at the term level
     a <- node @A
     b <- nodeWith @B a -- This can actually be inferred
@@ -23,8 +22,8 @@ main =
     liftIO $ print (a, b, c)
 
 
-withGraphIO :: Graph NoConstraint Identity IO r -> IO r
-withGraphIO f = flip iterT f $ \case
+graphIO :: Frontend NoConstraint Identity (IO r) -> IO r
+graphIO = \case
   Insert n next ->
     next $ Just $ Identity n
 

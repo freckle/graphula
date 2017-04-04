@@ -8,33 +8,68 @@
 {-# LANGUAGE FlexibleInstances #-}
 module Graphula
   ( Graph
-  , Actions(..)
+  , Frontend(..)
   , HasDependencies(..)
   , nodeEditWith
   , nodeWith
   , nodeEdit
   , node
+  , runGraphula
   , NoConstraint
   ) where
 
 import Test.QuickCheck
 import Control.Monad.Trans.Free
 import Control.Monad.IO.Class
-import Control.Exception
+import Control.Exception (Exception, throwIO)
+import Data.Functor.Sum
 import Data.Proxy
 import Data.Typeable
 import GHC.Exts (Constraint)
 
 
-type Graph constraint entity = FreeT (Actions constraint entity)
+type Graph constraint entity = FreeT (Sum Backend (Frontend constraint entity))
 
-data Actions (constraint :: * -> Constraint) entity next where
-  Insert :: constraint a => a -> (Maybe (entity a) -> next) -> Actions constraint entity next
+runGraphula
+  :: (MonadIO m)
+  => (Frontend constraint entity (m a) -> m a) -> Graph constraint entity m a -> m a
+runGraphula frontend f = flip iterT f $ \case
+  InR r -> frontend r
+  InL l -> backendArbitrary l
+    where
+      backendArbitrary = \case
+        GenerateNode next ->
+          next =<< (liftIO . generate $ arbitrary)
+        Throw e next ->
+          next =<< (liftIO $ throwIO e)
 
-deriving instance Functor (Actions constraint entity)
+liftLeft :: (Monad m, Functor f, Functor g) => FreeT f m a -> FreeT (Sum f g) m a
+liftLeft = transFreeT InL
+
+liftRight :: (Monad m, Functor f, Functor g) => FreeT g m a -> FreeT (Sum f g) m a
+liftRight = transFreeT InR
+
+
+data Frontend (constraint :: * -> Constraint) entity next where
+  Insert :: constraint a => a -> (Maybe (entity a) -> next) -> Frontend constraint entity next
+
+deriving instance Functor (Frontend constraint entity)
 
 insert :: (Monad m, constraint a) => a -> Graph constraint entity m (Maybe (entity a))
-insert n = liftF (Insert n id)
+insert n = liftRight $ liftF (Insert n id)
+
+
+data Backend next where
+  GenerateNode :: Arbitrary a => (a -> next) -> Backend next
+  Throw :: Exception e => e -> (a -> next) -> Backend next
+
+deriving instance Functor Backend
+
+generateNode :: (Monad m, Arbitrary a) => Graph constraint entity m a
+generateNode = liftLeft . liftF $ GenerateNode id
+
+throw :: (Monad m, Exception e) => e -> Graph constraint entity m a
+throw e = liftLeft . liftF $ Throw e id
 
 
 class NoConstraint a where
@@ -57,34 +92,34 @@ data GenerationFailure =
 instance Exception GenerationFailure
 
 nodeEditWith
-  :: forall a entity constraint m. (MonadIO m, constraint a, Typeable a, Arbitrary a, HasDependencies a)
+  :: forall a entity constraint m. (Monad m, constraint a, Typeable a, Arbitrary a, HasDependencies a)
   => (Dependencies a) -> (a -> a) -> Graph constraint entity m (entity a)
 nodeEditWith dependencies edits =
   tryInsert 10 0 $ do
-    x <- liftIO $ generate arbitrary
+    x <- generateNode
     pure (edits x `dependsOn` dependencies)
 
 nodeWith
-  :: forall a entity constraint m. (MonadIO m, constraint a, Typeable a, Arbitrary a, HasDependencies a)
+  :: forall a entity constraint m. (Monad m, constraint a, Typeable a, Arbitrary a, HasDependencies a)
   => (Dependencies a) -> Graph constraint entity m (entity a)
 nodeWith = flip nodeEditWith id
 
 nodeEdit
-  :: forall a entity constraint m. (MonadIO m, constraint a, Typeable a, Arbitrary a, HasDependencies a, Dependencies a ~ ())
+  :: forall a entity constraint m. (Monad m, constraint a, Typeable a, Arbitrary a, HasDependencies a, Dependencies a ~ ())
   => (a -> a) -> Graph constraint entity m (entity a)
 nodeEdit edits = nodeEditWith () edits
 
 node
-  :: forall a entity constraint m. (MonadIO m, constraint a, Typeable a, Arbitrary a, HasDependencies a, Dependencies a ~ ())
+  :: forall a entity constraint m. (Monad m, constraint a, Typeable a, Arbitrary a, HasDependencies a, Dependencies a ~ ())
   => Graph constraint entity m (entity a)
 node = nodeWith ()
 
 tryInsert
-  :: forall a entity constraint m. (MonadIO m, constraint a, Typeable a)
+  :: forall a entity constraint m. (Monad m, constraint a, Typeable a)
   => Int -> Int -> (Graph constraint entity m a) -> Graph constraint entity m (entity a)
 tryInsert maxAttempts currentAttempts source
   | currentAttempts >= maxAttempts =
-      liftIO . throwIO $ GenerationFailureMaxAttempts (typeRep (Proxy :: Proxy a))
+      throw $ GenerationFailureMaxAttempts (typeRep (Proxy :: Proxy a))
   | otherwise = do
     value <- source
     insert value >>= \case

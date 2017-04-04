@@ -4,19 +4,18 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-module Graphula.Persist (withPersistGraph) where
+module Graphula.Persist (persistGraph) where
 
-import Graphula (Graph, Actions(..))
-import Control.Monad.Trans.Free (iterTM)
+import Graphula
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
 import Database.Persist
 import Database.Persist.Sql
 
-withPersistGraph
+persistGraph
   :: (SqlBackendCanWrite backend, MonadIO m)
-  => Graph (PersistRecord backend) Entity m r -> ReaderT backend m r
-withPersistGraph f = flip iterTM f $ \case
+  => Frontend (PersistRecord backend) Entity (ReaderT backend m r) -> ReaderT backend m r
+persistGraph = \case
   Insert n next -> do
     mKey <- insertUnique n
     case mKey of
