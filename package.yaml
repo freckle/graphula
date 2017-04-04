@@ -11,6 +11,7 @@ dependencies:
   - QuickCheck
   - persistent
   - transformers
+  - mtl
 
 library:
   source-dirs:
@@ -24,3 +25,16 @@ executables:
     dependencies:
       - base
       - graphula
+
+tests:
+  test:
+    source-dirs:
+      - test
+    main: Spec.hs
+    dependencies:
+      - base
+      - graphula
+      - persistent
+      - persistent-template
+      - persistent-sqlite
+      - hspec
