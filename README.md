@@ -7,17 +7,18 @@ Graphula is a library for declaratively generating deeply nested relational data
 * This library should be maintainable by intermediate haskellers.
 
 ## Specific
-* Graphs should be described on the term level. Dense type level programming is mysterious to anyone but advanced Haskellers and therefore is innapropriate for a commonly used interfaces.
-* Data should utilize random generation via `Arbitrary`. We should leverage the Quick Check eccosystem as much as possible.
-* You should be able to declare the value of properties you care about. Practically, randomly generated data should be editable.
+* Describe graphs on the term level. Type level programming is mysterious to anyone but advanced Haskellers. This makes it inappropriate for common interfaces.
+* Data should use random generation via Arbitrary. We should leverage the Quick Check ecosystem as much as possible.
+* You should be able to declare the value of properties you care about. Practically, generated data should be editable.
 * Dependencies should be declarative and canonical. The type checker should reject poorly-formed graphs.
-* Term level usage should be idomatic. Everyday Haskell combinators should work as expected.
+* Term level usage should be idiomatic. Everyday Haskell combinators should work as expected.
 * Graphula should dump failed graphs for inspection. Random data highlights edge cases, but is useless when you can't inspect it.
 * Graphula should be able to replay failed data dumps to allow refining a test case and a red/green workflow.
-* Graphula should generate depdenencies you don't declare. Example: You should be able to ask for a `Town` and graphulate will generate a `County`, `State`, `Country`, `Planet`, etc. for you.
+* Graphula should generate dependencies for you if you ask. Example: You should be able to ask for a Town and Graphula will generate a County, State, Country, Planet, etc. for you.
+
 
 ## Pie in the Sky
-* Graphula should be able to rewind the graph. Practically this allows deletion of entities after run time. This can allow idempotent groups of tests to be run in parralel without having to truncate/reset the database inbetween.
+* Graphula should be able to rewind the graph. This allows deletion of entities after run time. This can allow idempotent groups of tests to run in parallel without having to truncate/reset the database inbetween.
 * Idempotent tests should be able to leverage quick check shrinking and replay to produce the smallest test failure possible.
 
 # Lessons Learned
