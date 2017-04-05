@@ -10,7 +10,7 @@ Graphula is a library for declaratively generating deeply nested relational data
 * Graphs should be described on the term level. Dense type level programming is mysterious to anyone but advanced Haskellers and therefore is innapropriate for a commonly used interfaces.
 * Data should utilize random generation via `Arbitrary`. We should leverage the Quick Check eccosystem as much as possible.
 * You should be able to declare the value of properties you care about. Practically, randomly generated data should be editable.
-* Dependencies should be declarative and canonical. If you don't align the nodes in your dependency graph then your graph should not type check.
+* Dependencies should be declarative and canonical. The type checker should reject poorly-formed graphs.
 * Term level usage should be idomatic. Everyday Haskell combinators should work as expected.
 * Graphula should dump failed graphs for inspection. Random data highlights edge cases, but is useless when you can't inspect it.
 * Graphula should be able to replay failed data dumps to allow refining a test case and a red/green workflow.
