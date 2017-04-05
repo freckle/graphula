@@ -14,7 +14,7 @@ Graphula is a library for declaratively generating deeply nested relational data
 * Term level usage should be idomatic. Everyday Haskell combinators should work as expected.
 * Graphula should dump failed graphs for inspection. Random data highlights edge cases, but is useless when you can't inspect it.
 * Graphula should be able to replay failed data dumps to allow refining a test case and a red/green workflow.
-* Graphula should generate depdenencies you don't declare. Example: You should be able to ask for a `Town` and graphulate will generate a `Country`, `State`, `Country`, `Planet`, etc. for you.
+* Graphula should generate depdenencies you don't declare. Example: You should be able to ask for a `Town` and graphulate will generate a `County`, `State`, `Country`, `Planet`, etc. for you.
 
 ## Pie in the Sky
 * Graphula should be able to rewind the graph. Practically this allows deletion of entities after run time. This can allow idempotent groups of tests to be run in parralel without having to truncate/reset the database inbetween.
