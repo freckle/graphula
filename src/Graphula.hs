@@ -57,13 +57,17 @@ runGraphula frontend f = do
 
 handleFail :: (MonadIO m, MonadThrow m) => IORef String -> HUnitFailure -> m a
 handleFail graphLog (HUnitFailure l r) = do
-  path <- liftIO $ bracket
-    (flip openTempFile "fail-.graphula" =<< getTemporaryDirectory)
-    (hClose . snd)
-    (\(path, handle) -> readIORef graphLog >>= hPutStr handle >> pure path )
+  path <- graphToTempFile graphLog
   throwM $ HUnitFailure l $ Reason
      $ "Graph dumped in temp file: " ++ path  ++ "\n\n"
     ++ formatFailureReason r
+
+graphToTempFile :: (MonadIO m) => IORef String -> m FilePath
+graphToTempFile graphLog =
+  liftIO $ bracket
+    (flip openTempFile "fail-.graphula" =<< getTemporaryDirectory)
+    (hClose . snd)
+    (\(path, handle) -> readIORef graphLog >>= hPutStr handle >> pure path )
 
 liftLeft :: (Monad m, Functor f, Functor g) => FreeT f m a -> FreeT (Sum f g) m a
 liftLeft = transFreeT InL
