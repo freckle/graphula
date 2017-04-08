@@ -7,11 +7,15 @@ extra-source-files:
 
 dependencies:
   - base
+  - directory
+  - exceptions
   - free
-  - QuickCheck
-  - persistent
-  - transformers
+  - HUnit
   - mtl
+  - persistent
+  - QuickCheck
+  - temporary
+  - transformers
 
 library:
   source-dirs:
