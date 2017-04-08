@@ -23,7 +23,7 @@ import Test.HUnit.Lang (HUnitFailure(..), FailureReason(..), formatFailureReason
 import Control.Monad.Catch (MonadCatch(..), MonadThrow(..))
 import Control.Monad.Trans.Free
 import Control.Monad.IO.Class
-import Control.Exception (Exception)
+import Control.Exception (Exception, bracket)
 import Data.Functor.Sum
 import Data.IORef
 import Data.Proxy
@@ -57,11 +57,10 @@ runGraphula frontend f = do
 
 handleFail :: (MonadIO m, MonadThrow m) => IORef String -> HUnitFailure -> m a
 handleFail graphLog (HUnitFailure l r) = do
-  path <- liftIO $ do
-    (path, handle) <- flip openTempFile "fail-.graphula" =<< getTemporaryDirectory
-    hPutStr handle =<< readIORef graphLog
-    hClose handle
-    pure path
+  path <- liftIO $ bracket
+    (flip openTempFile "fail-.graphula" =<< getTemporaryDirectory)
+    (hClose . snd)
+    (\(path, handle) -> readIORef graphLog >>= hPutStr handle >> pure path )
   throwM $ HUnitFailure l $ Reason
      $ "Graph dumped in temp file: " ++ path  ++ "\n\n"
     ++ formatFailureReason r
