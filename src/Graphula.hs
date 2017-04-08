@@ -47,13 +47,15 @@ runGraphula frontend f = do
       flip iterT f $ \case
         InR r -> frontend r
         InL l -> backendArbitrary graphLog l
-    backendArbitrary graphLog = \case
-      GenerateNode next -> do
-        a <- liftIO . generate $ arbitrary
-        liftIO $ modifyIORef' graphLog (++ ("\n" ++ show a))
-        next a
-      Throw e next ->
-        next =<< throwM e
+
+backendArbitrary :: (MonadThrow m, MonadIO m) => IORef String -> Backend (m b) -> m b
+backendArbitrary graphLog = \case
+  GenerateNode next -> do
+    a <- liftIO . generate $ arbitrary
+    liftIO $ modifyIORef' graphLog (++ ("\n" ++ show a))
+    next a
+  Throw e next ->
+    next =<< throwM e
 
 handleFail :: (MonadIO m, MonadThrow m) => IORef String -> HUnitFailure -> m a
 handleFail graphLog (HUnitFailure l r) = do
