@@ -1,11 +1,14 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 module Main where
 
+import Data.Aeson
 import Data.Functor.Identity (Identity(..))
 import Control.Monad.IO.Class
 import Graphula
+import GHC.Generics (Generic)
 import Test.QuickCheck
 
 main :: IO ()
@@ -28,15 +31,18 @@ graphIO = \case
     next $ Just $ Identity n
 
 data A = A { aa :: String, ab :: Int }
-  deriving (Show)
+  deriving (Show, Generic)
 
 instance Arbitrary A where
   arbitrary = A <$> arbitrary <*> arbitrary
 
 instance HasDependencies A
 
+instance ToJSON A
+instance FromJSON A
+
 data B = B { ba :: A, bb :: String }
-  deriving (Show)
+  deriving (Show, Generic)
 
 instance Arbitrary B where
   arbitrary = B <$> arbitrary <*> arbitrary
@@ -45,9 +51,12 @@ instance HasDependencies B where
   type Dependencies B = Identity A
   dependsOn b a = b {ba = runIdentity a}
 
+instance ToJSON B
+instance FromJSON B
+
 
 data C = C { ca :: A, cb :: B , cc :: String}
-  deriving (Show)
+  deriving (Show, Generic)
 
 instance Arbitrary C where
   arbitrary = C <$> arbitrary <*> arbitrary <*> arbitrary
@@ -55,3 +64,6 @@ instance Arbitrary C where
 instance HasDependencies C where
   type Dependencies C = (Identity A, Identity B)
   dependsOn c (a, b) = C (runIdentity a) (runIdentity b) (cc c)
+
+instance ToJSON C
+instance FromJSON C

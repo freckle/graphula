@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE GADTs #-}
@@ -15,21 +16,28 @@ module Graphula
   , nodeEdit
   , node
   , runGraphula
+  , runGraphulaReplay
   , NoConstraint
   ) where
 
+import Prelude hiding (readFile, lines)
 import Test.QuickCheck
 import Test.HUnit.Lang (HUnitFailure(..), FailureReason(..), formatFailureReason)
 import Control.Monad.Catch (MonadCatch(..), MonadThrow(..))
 import Control.Monad.Trans.Free
 import Control.Monad.IO.Class
 import Control.Exception (Exception, bracket)
+import Data.Semigroup ((<>))
+import Data.Aeson
+import Data.ByteString (ByteString, hPutStr, readFile)
+import Data.ByteString.Char8 (lines)
+import Data.ByteString.Lazy (toStrict, fromStrict)
 import Data.Functor.Sum
 import Data.IORef
 import Data.Proxy
 import Data.Typeable
 import GHC.Exts (Constraint)
-import System.IO (hPutStr, hClose)
+import System.IO (hClose)
 import System.IO.Temp (openTempFile)
 import System.Directory (getTemporaryDirectory)
 
@@ -48,23 +56,50 @@ runGraphula frontend f = do
         InR r -> frontend r
         InL l -> backendArbitrary graphLog l
 
-backendArbitrary :: (MonadThrow m, MonadIO m) => IORef String -> Backend (m b) -> m b
+runGraphulaReplay 
+  :: (MonadIO m, MonadCatch m)
+  => (Frontend constraint entity (m a) -> m a) -> FilePath -> Graph constraint entity m a -> m a
+runGraphulaReplay frontend replayFile f = do
+  graphLog <- liftIO $ newIORef ""
+  replayLog <- liftIO $ newIORef =<< (lines <$> readFile replayFile)
+  catch (go replayLog) (handleFail graphLog)
+  where
+    go replayLog =
+      flip iterT f $ \case
+        InR r -> frontend r
+        InL l -> backendReplay replayLog l
+
+
+backendArbitrary :: (MonadThrow m, MonadIO m) => IORef ByteString -> Backend (m b) -> m b
 backendArbitrary graphLog = \case
   GenerateNode next -> do
     a <- liftIO . generate $ arbitrary
-    liftIO $ modifyIORef' graphLog (++ ("\n" ++ show a))
+    liftIO $ modifyIORef' graphLog (<> (toStrict (encode a) <> "\n"))
     next a
   Throw e next ->
     next =<< throwM e
 
-handleFail :: (MonadIO m, MonadThrow m) => IORef String -> HUnitFailure -> m a
+backendReplay :: (MonadThrow m, MonadIO m) => IORef [ByteString] -> Backend (m b) -> m b
+backendReplay replayRef = \case
+  GenerateNode next -> do
+    jsonNode <- liftIO $ do
+      (jsonNode:rest) <- readIORef replayRef
+      writeIORef replayRef rest
+      pure jsonNode
+    case eitherDecode $ fromStrict jsonNode of
+      Left err -> throwM $ userError err
+      Right a -> next a
+  Throw e next ->
+    next =<< throwM e
+
+handleFail :: (MonadIO m, MonadThrow m) => IORef ByteString -> HUnitFailure -> m a
 handleFail graphLog (HUnitFailure l r) = do
   path <- graphToTempFile graphLog
   throwM $ HUnitFailure l $ Reason
      $ "Graph dumped in temp file: " ++ path  ++ "\n\n"
     ++ formatFailureReason r
 
-graphToTempFile :: (MonadIO m) => IORef String -> m FilePath
+graphToTempFile :: (MonadIO m) => IORef ByteString -> m FilePath
 graphToTempFile graphLog =
   liftIO $ bracket
     (flip openTempFile "fail-.graphula" =<< getTemporaryDirectory)
@@ -88,12 +123,12 @@ insert n = liftRight $ liftF (Insert n id)
 
 
 data Backend next where
-  GenerateNode :: (Show a, Arbitrary a) => (a -> next) -> Backend next
+  GenerateNode :: (ToJSON a, FromJSON a, Arbitrary a) => (a -> next) -> Backend next
   Throw :: Exception e => e -> (a -> next) -> Backend next
 
 deriving instance Functor Backend
 
-generateNode :: (Monad m, Show a, Arbitrary a) => Graph constraint entity m a
+generateNode :: (Monad m, ToJSON a, FromJSON a, Arbitrary a) => Graph constraint entity m a
 generateNode = liftLeft . liftF $ GenerateNode id
 
 throw :: (Monad m, Exception e) => e -> Graph constraint entity m a
@@ -120,7 +155,7 @@ data GenerationFailure =
 instance Exception GenerationFailure
 
 nodeEditWith
-  :: forall a entity constraint m. (Monad m, constraint a, Typeable a, Show a, Arbitrary a, HasDependencies a)
+  :: forall a entity constraint m. (Monad m, constraint a, Typeable a, ToJSON a, FromJSON a, Arbitrary a, HasDependencies a)
   => (Dependencies a) -> (a -> a) -> Graph constraint entity m (entity a)
 nodeEditWith dependencies edits =
   tryInsert 10 0 $ do
@@ -128,17 +163,17 @@ nodeEditWith dependencies edits =
     pure (edits x `dependsOn` dependencies)
 
 nodeWith
-  :: forall a entity constraint m. (Monad m, constraint a, Typeable a, Show a, Arbitrary a, HasDependencies a)
+  :: forall a entity constraint m. (Monad m, constraint a, Typeable a, ToJSON a, FromJSON a, Arbitrary a, HasDependencies a)
   => (Dependencies a) -> Graph constraint entity m (entity a)
 nodeWith = flip nodeEditWith id
 
 nodeEdit
-  :: forall a entity constraint m. (Monad m, constraint a, Typeable a, Show a, Arbitrary a, HasDependencies a, Dependencies a ~ ())
+  :: forall a entity constraint m. (Monad m, constraint a, Typeable a, ToJSON a, FromJSON a, Arbitrary a, HasDependencies a, Dependencies a ~ ())
   => (a -> a) -> Graph constraint entity m (entity a)
 nodeEdit edits = nodeEditWith () edits
 
 node
-  :: forall a entity constraint m. (Monad m, constraint a, Typeable a, Show a, Arbitrary a, HasDependencies a, Dependencies a ~ ())
+  :: forall a entity constraint m. (Monad m, constraint a, Typeable a, ToJSON a, FromJSON a, Arbitrary a, HasDependencies a, Dependencies a ~ ())
   => Graph constraint entity m (entity a)
 node = nodeWith ()
 
