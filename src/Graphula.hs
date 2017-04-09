@@ -21,21 +21,21 @@ module Graphula
   ) where
 
 import Prelude hiding (readFile, lines)
-import Test.QuickCheck
+import Test.QuickCheck (Arbitrary(..), generate)
 import Test.HUnit.Lang (HUnitFailure(..), FailureReason(..), formatFailureReason)
 import Control.Monad.Catch (MonadCatch(..), MonadThrow(..))
-import Control.Monad.Trans.Free
-import Control.Monad.IO.Class
+import Control.Monad.Trans.Free (FreeT, iterT, liftF, transFreeT)
+import Control.Monad.IO.Class (MonadIO(..))
 import Control.Exception (Exception, bracket)
 import Data.Semigroup ((<>))
-import Data.Aeson
+import Data.Aeson (ToJSON, FromJSON, encode, eitherDecode)
 import Data.ByteString (ByteString, hPutStr, readFile)
 import Data.ByteString.Char8 (lines)
 import Data.ByteString.Lazy (toStrict, fromStrict)
-import Data.Functor.Sum
-import Data.IORef
-import Data.Proxy
-import Data.Typeable
+import Data.Functor.Sum (Sum(..))
+import Data.IORef (IORef, newIORef, readIORef, writeIORef, modifyIORef')
+import Data.Proxy (Proxy(..))
+import Data.Typeable (Typeable, TypeRep, typeRep)
 import GHC.Exts (Constraint)
 import System.IO (hClose)
 import System.IO.Temp (openTempFile)
@@ -182,7 +182,7 @@ tryInsert
   => Int -> Int -> (Graph constraint entity m a) -> Graph constraint entity m (entity a)
 tryInsert maxAttempts currentAttempts source
   | currentAttempts >= maxAttempts =
-      throw $ GenerationFailureMaxAttempts (typeRep (Proxy :: Proxy a))
+      throw . GenerationFailureMaxAttempts $ typeRep (Proxy :: Proxy a)
   | otherwise = do
     value <- source
     insert value >>= \case
