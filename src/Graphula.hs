@@ -8,15 +8,15 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
 module Graphula
-  ( Graph
-  , Frontend(..)
-  , HasDependencies(..)
-  , nodeEditWith
-  , nodeWith
+  ( node
   , nodeEdit
-  , node
+  , nodeWith
+  , nodeEditWith
+  , HasDependencies(..)
+  , Graph
   , runGraphula
   , runGraphulaReplay
+  , Frontend(..)
   , NoConstraint
   ) where
 
