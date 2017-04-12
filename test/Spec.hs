@@ -91,7 +91,7 @@ main =
       c <- nodeEditWith (keys (a, b)) $ \n ->
         n { cTC = "spanish" }
       Just persistedC <- liftIO . runTestDB . getEntity $ entityKey c
-      liftIO $ persistedC `shouldNotBe` c
+      liftIO $ persistedC `shouldBe` c
 
 runTestDB :: ReaderT SqlBackend (NoLoggingT (ResourceT IO)) a -> IO a
 runTestDB = runSqlite ":test:"
