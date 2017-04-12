@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -12,9 +13,10 @@
 {-# LANGUAGE TypeFamilies               #-}
 module Main where
 
-import Control.Monad (void)
 import Control.Monad.Trans
-import Control.Monad.IO.Class
+import Control.Monad.Reader
+import Control.Monad.Logger
+import Control.Monad.Trans.Resource
 import Data.Aeson
 import Database.Persist
 import Database.Persist.Sqlite
@@ -78,21 +80,21 @@ instance ToJSON CT
 instance FromJSON CT
 
 
-withGraph test = do
-  liftIO . runSqlite ":test:" $ do
-    runMigration migrateAll
-    runGraphula persistGraph test
-  1 `shouldBe` 1
-
 main :: IO ()
-main = hspec $ do
+main =
+  hspec $
+  beforeAll (runTestDB $ runMigration migrateAll) $
   describe "trivial test" $ do
-    it "should persist things correctly" $ do
-      withGraph $ do
-        a <- node @AT
-        b <- nodeWith @BT (entityKey a)
-        c <- nodeEditWith @CT (entityKey a, entityKey b) $ \n ->
-          n { cTC = "spanish" }
+    it "should persist things correctly" $ withGraph $ do
+      a <- node
+      b <- nodeWith $ keys a
+      c <- nodeEditWith (keys (a, b)) $ \n ->
+        n { cTC = "spanish" }
+      Just persistedC <- liftIO . runTestDB . getEntity $ entityKey c
+      liftIO $ persistedC `shouldNotBe` c
 
-        Just persistedC <- lift . getEntity $ entityKey c
-        liftIO $ persistedC `shouldBe` c
+runTestDB :: ReaderT SqlBackend (NoLoggingT (ResourceT IO)) a -> IO a
+runTestDB = runSqlite ":test:"
+
+withGraph :: Graph (PersistRecord SqlBackend) Entity IO b -> IO b
+withGraph = runGraphula (persistGraph runTestDB)

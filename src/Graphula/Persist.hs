@@ -4,7 +4,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-module Graphula.Persist (persistGraph) where
+module Graphula.Persist (persistGraph, keys, PersistRecord) where
 
 import Graphula
 import Control.Monad.IO.Class
@@ -13,15 +13,39 @@ import Database.Persist
 import Database.Persist.Sql
 
 persistGraph
-  :: (SqlBackendCanWrite backend, MonadIO m)
-  => Frontend (PersistRecord backend) Entity (ReaderT backend m r) -> ReaderT backend m r
-persistGraph = \case
+  :: (SqlBackendCanWrite backend, MonadIO m, MonadIO n)
+  => (forall b. ReaderT backend n b -> m b)
+  -> Frontend (PersistRecord backend) Entity (m a) -> m a
+persistGraph runDB = \case
   Insert n next -> do
-    mKey <- insertUnique n
-    case mKey of
-      Nothing -> next Nothing
-      Just key -> next =<< getEntity key
+    x <- runDB $ do
+      mKey <- insertUnique n
+      case mKey of
+        Nothing -> pure Nothing
+        Just key -> getEntity key
+    next x
 
 class (PersistEntity a, PersistEntityBackend a ~ SqlBackend, PersistStoreWrite backend, PersistUniqueWrite backend) => PersistRecord backend a where
 
 instance (PersistEntity a, PersistEntityBackend a ~ SqlBackend, PersistStoreWrite backend, PersistUniqueWrite backend) => PersistRecord backend a where
+
+
+class EntityKeys a where
+  type Keys a
+  keys :: a -> Keys a
+
+instance EntityKeys (Entity a) where
+  type Keys (Entity a) = Key a
+  keys = entityKey
+
+instance EntityKeys (Entity a, Entity b) where
+  type Keys (Entity a, Entity b) = (Key a, Key b)
+  keys (a, b) = (entityKey a, entityKey b)
+
+instance EntityKeys (Entity a, Entity b, Entity c) where
+  type Keys (Entity a, Entity b, Entity c) = (Key a, Key b, Key c)
+  keys (a, b, c) = (entityKey a, entityKey b, entityKey c)
+
+instance EntityKeys (Entity a, Entity b, Entity c, Entity d) where
+  type Keys (Entity a, Entity b, Entity c, Entity d) = (Key a, Key b, Key c, Key d)
+  keys (a, b, c, d) = (entityKey a, entityKey b, entityKey c, entityKey d)

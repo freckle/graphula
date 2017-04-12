@@ -44,3 +44,5 @@ tests:
       - persistent-template
       - persistent-sqlite
       - hspec
+      - monad-logger
+      - resourcet
