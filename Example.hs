@@ -16,9 +16,9 @@ main =
   -- wrap computation to allow shrinking, saving failed states, replay, etc with a free monad
   runGraphula graphIO $ do
     -- Declare the graph at the term level
-    a <- node @A
-    b <- nodeWith @B a -- This can actually be inferred
-    c <- nodeEditWith @C (a, b) $ \n ->
+    Identity a <- node @A
+    Identity b <- nodeWith @B (only a) -- This can actually be inferred
+    Identity c <- nodeEditWith @C (a, b) $ \n ->
       n { cc = "spanish" }
 
     -- do shit with it
@@ -48,8 +48,7 @@ instance Arbitrary B where
   arbitrary = B <$> arbitrary <*> arbitrary
 
 instance HasDependencies B where
-  type Dependencies B = Identity A
-  dependsOn b a = b {ba = runIdentity a}
+  type Dependencies B = Only A
 
 instance ToJSON B
 instance FromJSON B
@@ -62,8 +61,7 @@ instance Arbitrary C where
   arbitrary = C <$> arbitrary <*> arbitrary <*> arbitrary
 
 instance HasDependencies C where
-  type Dependencies C = (Identity A, Identity B)
-  dependsOn c (a, b) = C (runIdentity a) (runIdentity b) (cc c)
+  type Dependencies C = (A, B)
 
 instance ToJSON C
 instance FromJSON C

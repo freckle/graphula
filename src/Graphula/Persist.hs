@@ -38,6 +38,10 @@ instance EntityKeys (Entity a) where
   type Keys (Entity a) = Key a
   keys = entityKey
 
+instance EntityKeys (Only (Entity a)) where
+  type Keys (Only (Entity a)) = Only (Key a)
+  keys (Only a) = Only (entityKey a)
+
 instance EntityKeys (Entity a, Entity b) where
   type Keys (Entity a, Entity b) = (Key a, Key b)
   keys (a, b) = (entityKey a, entityKey b)

@@ -1,12 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveFoldable #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module Graphula
   ( node
   , nodeEdit
@@ -18,6 +28,8 @@ module Graphula
   , runGraphulaReplay
   , Frontend(..)
   , NoConstraint
+  , Only(..)
+  , only
   ) where
 
 import Prelude hiding (readFile, lines)
@@ -36,7 +48,10 @@ import Data.Functor.Sum (Sum(..))
 import Data.IORef (IORef, newIORef, readIORef, writeIORef, modifyIORef')
 import Data.Proxy (Proxy(..))
 import Data.Typeable (Typeable, TypeRep, typeRep)
+import Generics.Eot (Void, fromEot, toEot, Eot, HasEot)
 import GHC.Exts (Constraint)
+import GHC.Generics (Generic)
+import GHC.TypeLits (TypeError, ErrorMessage(..))
 import System.IO (hClose)
 import System.IO.Temp (openTempFile)
 import System.Directory (getTemporaryDirectory)
@@ -134,19 +149,102 @@ generateNode = liftLeft . liftF $ GenerateNode id
 throw :: (Monad m, Exception e) => e -> Graph constraint entity m a
 throw e = liftLeft . liftF $ Throw e id
 
-
 class NoConstraint a where
 
 instance NoConstraint a where
 
-
 class HasDependencies a where
   type Dependencies a
-  -- defaults to having no dependencies
   type instance Dependencies a = ()
-  dependsOn :: a -> Dependencies a -> a
-  dependsOn = const
 
+  dependsOn :: a -> Dependencies a -> a
+  default dependsOn
+    ::
+      ( HasEot a
+      , HasEot (Dependencies a)
+      , GHasDependencies (Proxy a) (Proxy (Dependencies a)) (Eot a) (Eot (Dependencies a))
+      )
+    => a -> Dependencies a -> a
+  dependsOn a dependencies =
+    fromEot $
+      genericDependsOn
+        (Proxy :: Proxy a)
+        (Proxy :: Proxy (Dependencies a))
+        (toEot a)
+        (toEot dependencies)
+
+-- This looks over-specified, but we can have overlap in a type-family
+-- and then we avoid overlap in the type-classes below
+data Match t = NoMatch t | Match t
+data List a = None | Last a | Cons a (List a)
+
+type family FindMatches asTy dsTy as ds where
+  -- Excess dependencies
+  FindMatches asTy dsTy () (d, ds) = TypeError (Text "Excess dependencies " :<>: ShowType dsTy :<>: Text " for type " :<>: ShowType asTy)
+
+  -- No dependencies
+  FindMatches asTy dsTy () () = 'None
+
+  -- Last non-match
+  FindMatches asTy dsTy (a, ()) () = 'Last ('NoMatch a)
+
+  -- Only non-matches left
+  FindMatches asTy dsTy (a, as) () = 'Cons ('NoMatch a) (FindMatches asTy dsTy as ())
+
+  -- Last match
+  FindMatches asTy dsTy (a, ()) (a, ()) = 'Last ('Match a)
+
+  -- Match in the middle
+  -- If we wanted, we could require the match to be on `Key a` instead of `a`
+  FindMatches asTy dsTy (a, as) (a, ds) = 'Cons ('Match a) (FindMatches asTy asTy as ds)
+
+  -- Non-match in the middle
+  FindMatches asTy dsTy (a, as) (d, ds) = 'Cons ('NoMatch a) (FindMatches asTy dsTy as (d, ds))
+
+class GHasDependencies p q a d where
+  genericDependsOn :: p -> q -> a -> d -> a
+
+class GHasDependenciesRecursive fields a d where
+  genericDependsOnRecursive :: fields -> a -> d -> a
+
+instance
+  ( FindMatches asTy dsTy as ds ~ fs
+  , GHasDependenciesRecursive (Proxy fs) as ds
+  ) => GHasDependencies (Proxy asTy) (Proxy dsTy) (Either as Void) (Either ds Void) where
+  genericDependsOn _ _ (Left as) (Left ds) = Left (genericDependsOnRecursive (Proxy :: Proxy fs) as ds)
+  genericDependsOn _ _ _ _ = error "Impossible"
+
+instance
+  ( a ~ d
+  , GHasDependenciesRecursive (Proxy fs) as ds
+  ) => GHasDependenciesRecursive (Proxy ('Cons ('Match a) fs)) (a, as) (d, ds) where
+  genericDependsOnRecursive _ (_, as) (d, ds) = (d, genericDependsOnRecursive (Proxy :: Proxy fs) as ds)
+
+instance
+  ( GHasDependenciesRecursive (Proxy fs) as (d, ds)
+  ) => GHasDependenciesRecursive (Proxy ('Cons ('NoMatch a) fs)) (a, as) (d, ds) where
+  genericDependsOnRecursive _ (a, as) (d, ds) = (a, genericDependsOnRecursive (Proxy :: Proxy fs) as (d, ds))
+
+instance
+  ( GHasDependenciesRecursive (Proxy fs) as ()
+  ) => GHasDependenciesRecursive (Proxy ('Cons ('NoMatch a) fs)) (a, as) () where
+  genericDependsOnRecursive _ (a, as) () = (a, genericDependsOnRecursive (Proxy :: Proxy fs) as ())
+
+instance GHasDependenciesRecursive (Proxy ('Last ('NoMatch a))) (a, ()) () where
+  genericDependsOnRecursive _ (a, ()) () = (a, ())
+
+instance (a ~ d) => GHasDependenciesRecursive (Proxy ('Last ('Match a))) (a, ()) (d, ()) where
+  genericDependsOnRecursive _ (_, ()) (d, ()) = (d, ())
+
+instance GHasDependenciesRecursive (Proxy 'None) () () where
+  genericDependsOnRecursive _ () () = ()
+
+-- For entities that only one dependency
+newtype Only a = Only { unOnly :: a }
+  deriving (Eq, Show, Ord, Generic, Functor, Foldable, Traversable)
+
+only :: a -> Only a
+only = Only
 
 data GenerationFailure =
   GenerationFailureMaxAttempts TypeRep

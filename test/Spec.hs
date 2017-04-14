@@ -62,8 +62,7 @@ instance Arbitrary BT where
   arbitrary = BT <$> arbitrary <*> arbitrary
 
 instance HasDependencies BT where
-  type Dependencies BT = Key AT
-  dependsOn b a = b {bTA = a}
+  type Dependencies BT = Only (Key AT)
 
 instance ToJSON BT
 instance FromJSON BT
@@ -74,7 +73,6 @@ instance Arbitrary CT where
 
 instance HasDependencies CT where
   type Dependencies CT = (Key AT, Key BT)
-  dependsOn c (a, b) = c { cTA = a, cTB = b }
 
 instance ToJSON CT
 instance FromJSON CT
@@ -87,7 +85,7 @@ main =
   describe "trivial test" $ do
     it "should persist things correctly" $ withGraph $ do
       a <- node
-      b <- nodeWith $ keys a
+      b <- nodeWith $ keys $ only a
       c <- nodeEditWith (keys (a, b)) $ \n ->
         n { cTC = "spanish" }
       Just persistedC <- liftIO . runTestDB . getEntity $ entityKey c
