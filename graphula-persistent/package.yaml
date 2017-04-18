@@ -19,15 +19,15 @@ library:
   ghc-options: -Wall
 
 tests:
-  test:
-    source-dirs:
-      - test
-    main: Spec.hs
+  readme:
+    main: README.lhs
+    ghc-options: -Wall -pgmL markdown-unlit
     dependencies:
       - aeson
       - base
       - graphula-persistent
       - hspec
+      - markdown-unlit
       - monad-logger
       - persistent
       - persistent-template

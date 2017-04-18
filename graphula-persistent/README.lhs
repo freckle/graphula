@@ -1,3 +1,4 @@
+```haskell
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeApplications #-}
@@ -127,3 +128,4 @@ runTestDB = runSqlite ":test:"
 
 withGraph :: Graph (PersistRecord SqlBackend) Entity IO b -> IO b
 withGraph = runGraphula (persistGraph runTestDB)
+```
