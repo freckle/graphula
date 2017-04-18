@@ -184,7 +184,9 @@ type family FindMatches nodeTy depsTy as ds where
     TypeError
       ( 'Text "Excess dependency `" ':<>: 'ShowType d ':<>:
         'Text "` in `type Dependencies " ':<>: 'ShowType nodeTy ':<>:
-        'Text " = " ':<>: 'ShowType depsTy ':<>: 'Text "`"
+        'Text " = " ':<>: 'ShowType depsTy ':<>: 'Text "`" ':$$:
+        'Text "Ordering of dependencies must match their occurrence in the target type `" ':<>:
+        'ShowType nodeTy ':<>: 'Text "`"
       )
 
   -- No dependencies
@@ -227,16 +229,10 @@ instance
     (dep, genericDependsOnRecursive (Proxy :: Proxy fields) as deps)
 
 instance
-  ( GHasDependenciesRecursive (Proxy fields) as (dep, deps)
-  ) => GHasDependenciesRecursive (Proxy ('Cons ('NoMatch a) fields)) (a, as) (dep, deps) where
-  genericDependsOnRecursive _ (a, as) (dep, deps) =
-    (a, genericDependsOnRecursive (Proxy :: Proxy fields) as (dep, deps))
-
-instance
-  ( GHasDependenciesRecursive (Proxy fields) as ()
-  ) => GHasDependenciesRecursive (Proxy ('Cons ('NoMatch a) fields)) (a, as) () where
-  genericDependsOnRecursive _ (a, as) () =
-    (a, genericDependsOnRecursive (Proxy :: Proxy fields) as ())
+  ( GHasDependenciesRecursive (Proxy fields) as deps
+  ) => GHasDependenciesRecursive (Proxy ('Cons ('NoMatch a) fields)) (a, as) deps where
+  genericDependsOnRecursive _ (a, as) deps =
+    (a, genericDependsOnRecursive (Proxy :: Proxy fields) as deps)
 
 instance GHasDependenciesRecursive (Proxy ('Last ('NoMatch a))) (a, ()) () where
   genericDependsOnRecursive _ (a, ()) () = (a, ())
