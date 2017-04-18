@@ -26,8 +26,9 @@ library:
 
 executables:
   fansible:
-    main: Example.hs
-    ghc-options: -Wall
+    main: README.lhs
+    ghc-options: -Wall -pgmL markdown-unlit
     dependencies:
       - base
       - graphula
+      - markdown-unlit
