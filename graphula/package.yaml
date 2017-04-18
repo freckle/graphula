@@ -3,7 +3,7 @@ version: "0.1.0"
 maintainer: Front Row Education
 
 extra-source-files:
-  - stack.yaml
+  - ../stack.yaml
 
 dependencies:
   - aeson
@@ -12,13 +12,12 @@ dependencies:
   - directory
   - exceptions
   - free
+  - generics-eot
   - HUnit
   - mtl
-  - persistent
   - QuickCheck
   - temporary
   - transformers
-  - generics-eot
 
 library:
   source-dirs:
@@ -32,18 +31,3 @@ executables:
     dependencies:
       - base
       - graphula
-
-tests:
-  test:
-    source-dirs:
-      - test
-    main: Spec.hs
-    dependencies:
-      - base
-      - graphula
-      - persistent
-      - persistent-template
-      - persistent-sqlite
-      - hspec
-      - monad-logger
-      - resourcet

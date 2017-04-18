@@ -1,0 +1,35 @@
+name: graphula-persistent
+version: "0.1.0"
+maintainer: Front Row Education
+
+extra-source-files:
+  - ../stack.yaml
+
+dependencies:
+  - base
+  - graphula
+  - mtl
+  - persistent
+  - QuickCheck
+  - transformers
+
+library:
+  source-dirs:
+    - src
+  ghc-options: -Wall
+
+tests:
+  test:
+    source-dirs:
+      - test
+    main: Spec.hs
+    dependencies:
+      - aeson
+      - base
+      - graphula-persistent
+      - hspec
+      - monad-logger
+      - persistent
+      - persistent-template
+      - persistent-sqlite
+      - resourcet
