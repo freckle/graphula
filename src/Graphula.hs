@@ -1,12 +1,19 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveFoldable #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeFamilies #-}
+
 module Graphula
   ( node
   , nodeEdit
@@ -18,6 +25,8 @@ module Graphula
   , runGraphulaReplay
   , Frontend(..)
   , NoConstraint
+  , Only(..)
+  , only
   ) where
 
 import Prelude hiding (readFile, lines)
@@ -36,11 +45,14 @@ import Data.Functor.Sum (Sum(..))
 import Data.IORef (IORef, newIORef, readIORef, writeIORef, modifyIORef')
 import Data.Proxy (Proxy(..))
 import Data.Typeable (Typeable, TypeRep, typeRep)
+import Generics.Eot (fromEot, toEot, Eot, HasEot)
 import GHC.Exts (Constraint)
+import GHC.Generics (Generic)
 import System.IO (hClose)
 import System.IO.Temp (openTempFile)
 import System.Directory (getTemporaryDirectory)
 
+import Graphula.Internal
 
 type Graph constraint entity = FreeT (Sum Backend (Frontend constraint entity))
 
@@ -56,7 +68,7 @@ runGraphula frontend f = do
         InR r -> frontend r
         InL l -> backendArbitrary graphLog l
 
-runGraphulaReplay 
+runGraphulaReplay
   :: (MonadIO m, MonadCatch m)
   => (Frontend constraint entity (m a) -> m a) -> FilePath -> Graph constraint entity m a -> m a
 runGraphulaReplay frontend replayFile f = do
@@ -134,19 +146,29 @@ generateNode = liftLeft . liftF $ GenerateNode id
 throw :: (Monad m, Exception e) => e -> Graph constraint entity m a
 throw e = liftLeft . liftF $ Throw e id
 
-
 class NoConstraint a where
 
 instance NoConstraint a where
 
-
 class HasDependencies a where
   type Dependencies a
-  -- defaults to having no dependencies
   type instance Dependencies a = ()
-  dependsOn :: a -> Dependencies a -> a
-  dependsOn = const
 
+  dependsOn :: a -> Dependencies a -> a
+  default dependsOn
+    ::
+      ( HasEot a
+      , HasEot (Dependencies a)
+      , GHasDependencies (Proxy a) (Proxy (Dependencies a)) (Eot a) (Eot (Dependencies a))
+      )
+    => a -> Dependencies a -> a
+  dependsOn a dependencies =
+    fromEot $
+      genericDependsOn
+        (Proxy :: Proxy a)
+        (Proxy :: Proxy (Dependencies a))
+        (toEot a)
+        (toEot dependencies)
 
 data GenerationFailure =
   GenerationFailureMaxAttempts TypeRep
@@ -188,3 +210,10 @@ tryInsert maxAttempts currentAttempts source
     insert value >>= \case
       Just a -> pure a
       Nothing -> tryInsert maxAttempts (succ currentAttempts) source
+
+-- For entities that only have one dependency
+newtype Only a = Only { fromOnly :: a }
+  deriving (Eq, Show, Ord, Generic, Functor, Foldable, Traversable)
+
+only :: a -> Only a
+only = Only
