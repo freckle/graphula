@@ -7,7 +7,7 @@ extra-source-files:
 
 dependencies:
   - base
-  - graphula
+  - graphula-core
   - mtl
   - persistent
   - QuickCheck

@@ -1,4 +1,4 @@
-name: graphula
+name: graphula-core
 version: "0.1.0"
 maintainer: Front Row Education
 
@@ -30,5 +30,5 @@ executables:
     ghc-options: -Wall -pgmL markdown-unlit
     dependencies:
       - base
-      - graphula
+      - graphula-core
       - markdown-unlit
