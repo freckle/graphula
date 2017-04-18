@@ -183,7 +183,7 @@ type family FindMatches nodeTy depsTy as ds where
   FindMatches nodeTy depsTy () (d, ds) =
     TypeError
       ( 'Text "Excess dependency `" ':<>: 'ShowType d ':<>:
-        'Text "` in `type Dependencies " ':<>: 'ShowType nodeTy ':<>:
+        'Text "` in " ':$$: 'Text "`type Dependencies " ':<>: 'ShowType nodeTy ':<>:
         'Text " = " ':<>: 'ShowType depsTy ':<>: 'Text "`" ':$$:
         'Text "Ordering of dependencies must match their occurrence in the target type `" ':<>:
         'ShowType nodeTy ':<>: 'Text "`"
@@ -220,6 +220,34 @@ instance
   ) => GHasDependencies (Proxy nodeTy) (Proxy depsTy) (Either node Void) (Either deps Void) where
   genericDependsOn _ _ (Left node) (Left deps) = Left (genericDependsOnRecursive (Proxy :: Proxy fields) node deps)
   genericDependsOn _ _ _ _ = error "Impossible"
+
+instance
+  ( TypeError
+    ( 'Text "Cannot automatically find dependencies for sum type in" ':$$:
+      'Text "`type Dependencies " ':<>: 'ShowType nodeTy ':<>:
+      'Text " = " ':<>: 'ShowType depsTy ':<>: 'Text "`"
+    )
+  ) => GHasDependencies (Proxy nodeTy) (Proxy depsTy) (Either left (Either right rest)) (Either deps Void) where
+    genericDependsOn _ _ _ _ = error "Impossible"
+
+instance
+  ( TypeError
+    ( 'Text "Cannot automatically use a sum type as dependencies in" ':$$:
+      'Text "`type Dependencies " ':<>: 'ShowType nodeTy ':<>:
+      'Text " = " ':<>: 'ShowType depsTy ':<>: 'Text "`"
+    )
+  ) => GHasDependencies (Proxy nodeTy) (Proxy depsTy) (Either node Void) (Either left (Either right rest)) where
+    genericDependsOn _ _ _ _ = error "Impossible"
+
+instance
+  ( TypeError
+    ( 'Text "Cannot automatically find dependencies for sum type or use a sum type as a dependency in" ':$$:
+      'Text "`type Dependencies " ':<>: 'ShowType nodeTy ':<>:
+      'Text " = " ':<>: 'ShowType depsTy ':<>: 'Text "`"
+    )
+  ) => GHasDependencies (Proxy nodeTy) (Proxy depsTy) (Either left1 (Either right1 rest1)) (Either left2 (Either right2 rest2)) where
+    genericDependsOn _ _ _ _ = error "Impossible"
+
 
 instance
   ( a ~ dep
