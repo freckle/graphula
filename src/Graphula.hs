@@ -173,68 +173,76 @@ class HasDependencies a where
         (toEot a)
         (toEot dependencies)
 
--- This looks over-specified, but we can have overlap in a type-family
--- and then we avoid overlap in the type-classes below
+-- This looks over-specified, but if we can tolerate some overlap in a type-family,
+-- then we can avoid overlap in the type-classes below
 data Match t = NoMatch t | Match t
 data List a = None | Last a | Cons a (List a)
 
-type family FindMatches asTy dsTy as ds where
+type family FindMatches nodeTy depsTy as ds where
   -- Excess dependencies
-  FindMatches asTy dsTy () (d, ds) = TypeError (Text "Excess dependencies " :<>: ShowType dsTy :<>: Text " for type " :<>: ShowType asTy)
+  FindMatches nodeTy depsTy () (d, ds) =
+    TypeError
+      ( 'Text "Excess dependency `" ':<>: 'ShowType d ':<>:
+        'Text "` in `type Dependencies " ':<>: 'ShowType nodeTy ':<>:
+        'Text " = " ':<>: 'ShowType depsTy ':<>: 'Text "`"
+      )
 
   -- No dependencies
-  FindMatches asTy dsTy () () = 'None
+  FindMatches nodeTy depsTy () () = 'None
 
   -- Last non-match
-  FindMatches asTy dsTy (a, ()) () = 'Last ('NoMatch a)
+  FindMatches nodeTy depsTy (a, ()) () = 'Last ('NoMatch a)
 
   -- Only non-matches left
-  FindMatches asTy dsTy (a, as) () = 'Cons ('NoMatch a) (FindMatches asTy dsTy as ())
+  FindMatches nodeTy depsTy (a, as) () = 'Cons ('NoMatch a) (FindMatches nodeTy depsTy as ())
 
   -- Last match
-  FindMatches asTy dsTy (a, ()) (a, ()) = 'Last ('Match a)
+  FindMatches nodeTy depsTy (a, ()) (a, ()) = 'Last ('Match a)
 
   -- Match in the middle
   -- If we wanted, we could require the match to be on `Key a` instead of `a`
-  FindMatches asTy dsTy (a, as) (a, ds) = 'Cons ('Match a) (FindMatches asTy asTy as ds)
+  FindMatches nodeTy depsTy (a, as) (a, ds) = 'Cons ('Match a) (FindMatches nodeTy depsTy as ds)
 
   -- Non-match in the middle
-  FindMatches asTy dsTy (a, as) (d, ds) = 'Cons ('NoMatch a) (FindMatches asTy dsTy as (d, ds))
+  FindMatches nodeTy depsTy (a, as) (d, ds) = 'Cons ('NoMatch a) (FindMatches nodeTy depsTy as (d, ds))
 
-class GHasDependencies p q a d where
-  genericDependsOn :: p -> q -> a -> d -> a
+class GHasDependencies nodeTyProxy depsTyProxy node deps where
+  genericDependsOn :: nodeTyProxy -> depsTyProxy -> node -> deps -> node
 
-class GHasDependenciesRecursive fields a d where
-  genericDependsOnRecursive :: fields -> a -> d -> a
+class GHasDependenciesRecursive fieldsProxy node deps where
+  genericDependsOnRecursive :: fieldsProxy -> node -> deps -> node
 
 instance
-  ( FindMatches asTy dsTy as ds ~ fs
-  , GHasDependenciesRecursive (Proxy fs) as ds
-  ) => GHasDependencies (Proxy asTy) (Proxy dsTy) (Either as Void) (Either ds Void) where
-  genericDependsOn _ _ (Left as) (Left ds) = Left (genericDependsOnRecursive (Proxy :: Proxy fs) as ds)
+  ( FindMatches nodeTy depsTy node deps ~ fields
+  , GHasDependenciesRecursive (Proxy fields) node deps
+  ) => GHasDependencies (Proxy nodeTy) (Proxy depsTy) (Either node Void) (Either deps Void) where
+  genericDependsOn _ _ (Left node) (Left deps) = Left (genericDependsOnRecursive (Proxy :: Proxy fields) node deps)
   genericDependsOn _ _ _ _ = error "Impossible"
 
 instance
-  ( a ~ d
-  , GHasDependenciesRecursive (Proxy fs) as ds
-  ) => GHasDependenciesRecursive (Proxy ('Cons ('Match a) fs)) (a, as) (d, ds) where
-  genericDependsOnRecursive _ (_, as) (d, ds) = (d, genericDependsOnRecursive (Proxy :: Proxy fs) as ds)
+  ( a ~ dep
+  , GHasDependenciesRecursive (Proxy fields) as deps
+  ) => GHasDependenciesRecursive (Proxy ('Cons ('Match a) fields)) (a, as) (dep, deps) where
+  genericDependsOnRecursive _ (_, as) (dep, deps) =
+    (dep, genericDependsOnRecursive (Proxy :: Proxy fields) as deps)
 
 instance
-  ( GHasDependenciesRecursive (Proxy fs) as (d, ds)
-  ) => GHasDependenciesRecursive (Proxy ('Cons ('NoMatch a) fs)) (a, as) (d, ds) where
-  genericDependsOnRecursive _ (a, as) (d, ds) = (a, genericDependsOnRecursive (Proxy :: Proxy fs) as (d, ds))
+  ( GHasDependenciesRecursive (Proxy fields) as (dep, deps)
+  ) => GHasDependenciesRecursive (Proxy ('Cons ('NoMatch a) fields)) (a, as) (dep, deps) where
+  genericDependsOnRecursive _ (a, as) (dep, deps) =
+    (a, genericDependsOnRecursive (Proxy :: Proxy fields) as (dep, deps))
 
 instance
-  ( GHasDependenciesRecursive (Proxy fs) as ()
-  ) => GHasDependenciesRecursive (Proxy ('Cons ('NoMatch a) fs)) (a, as) () where
-  genericDependsOnRecursive _ (a, as) () = (a, genericDependsOnRecursive (Proxy :: Proxy fs) as ())
+  ( GHasDependenciesRecursive (Proxy fields) as ()
+  ) => GHasDependenciesRecursive (Proxy ('Cons ('NoMatch a) fields)) (a, as) () where
+  genericDependsOnRecursive _ (a, as) () =
+    (a, genericDependsOnRecursive (Proxy :: Proxy fields) as ())
 
 instance GHasDependenciesRecursive (Proxy ('Last ('NoMatch a))) (a, ()) () where
   genericDependsOnRecursive _ (a, ()) () = (a, ())
 
-instance (a ~ d) => GHasDependenciesRecursive (Proxy ('Last ('Match a))) (a, ()) (d, ()) where
-  genericDependsOnRecursive _ (_, ()) (d, ()) = (d, ())
+instance (a ~ dep) => GHasDependenciesRecursive (Proxy ('Last ('Match a))) (a, ()) (dep, ()) where
+  genericDependsOnRecursive _ (_, ()) (dep, ()) = (dep, ())
 
 instance GHasDependenciesRecursive (Proxy 'None) () () where
   genericDependsOnRecursive _ () () = ()
