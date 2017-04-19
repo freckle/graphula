@@ -44,8 +44,7 @@ data A
   = A
   { aa :: String
   , ab :: Int
-  }
-  deriving (Show, Eq, Generic)
+  } deriving (Show, Eq, Generic)
 
 instance Arbitrary A where
   arbitrary = A <$> arbitrary <*> arbitrary
@@ -55,8 +54,7 @@ data B
   = B
   { ba :: A
   , bb :: String
-  }
-  deriving (Show, Eq, Generic)
+  } deriving (Show, Eq, Generic)
 
 instance Arbitrary B where
   arbitrary = B <$> arbitrary <*> arbitrary
@@ -67,8 +65,7 @@ data C
   { ca :: A
   , cb :: B
   , cc :: String
-  }
-  deriving (Show, Eq, Generic)
+  } deriving (Show, Eq, Generic)
 
 instance Arbitrary C where
   arbitrary = C <$> arbitrary <*> arbitrary <*> arbitrary
