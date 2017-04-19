@@ -1,6 +1,6 @@
 # Graphula Core
 
-The core of graphula is a simple interface for declaring data and linking its dependencies.
+Graphula is a simple interface for generating data and linking its dependencies. We use this interface to generate fixtures for automated testing. The interface is extensible and supports pluggable front-ends.
 
 
 ```haskell
@@ -45,7 +45,7 @@ data C = C { ca :: A, cb :: B , cc :: String}
 
 ## Arbitrary
 
-Graphula utilizes `QuickCheck` to randomly generate data. So we need to declare `Arbitrary` instances.
+Graphula utilizes `QuickCheck` to generate random data. We need to declare `Arbitrary` instances for our types.
 
 ```haskell
 instance Arbitrary C where
@@ -60,22 +60,22 @@ instance Arbitrary A where
 
 ## Dependencies
 
-Dependencies are declared via the `HasDependencies` typeclass.
+We declare dependencies via the `HasDependencies` typeclass and its associated type `Dependencies`.
 
-By default a type does not have any dependencies, so we only need to decalre a blank instance
+By default a type does not have any dependencies. We only need to decalare an empty instance
 
 ```haskell
 instance HasDependencies A
 ```
 
-To declare a single dependency we use an associated type with `Only`.
+For single dependencies we use the `Only` type.
 
 ```haskell
 instance HasDependencies B where
   type Dependencies B = Only A
 ```
 
-Groups of dependencies can be declared with tuples. These dependencies should be declared in the order they appear in the type. This allows us to leverage generic programming to write the rest of the instance for you.
+Groups of dependencies use tuples. Declare these dependencies in the order they appear in the type. `HasDependencies` leverages generic programming to inject dependencies for you.
 
 ```haskell
 instance HasDependencies C where
@@ -84,7 +84,7 @@ instance HasDependencies C where
 
 ## Serialization
 
-Graphula uses JSON as a human readable serialization format. When a test fails the graph will be dumped to a test file so you can inspect it or replay it for red/green refact with `runGraphulaReplay`.
+We use `JSON` as a human readable serialization format. Graphula dumps graphs to a temp file on test failure. You can inspect or `runGraphulaReplay` a failed graph for red/green refactor.
 
 ```haskell
 instance ToJSON A
@@ -99,7 +99,7 @@ instance FromJSON C
 
 ## Running It
 
-`runGraphula` requires you to pass it a frontend. This provides the instructions for evaluating a graph. This simple `Frontend` is not constraining our types an is wrapping them in an `Identity` type. `Graphula.Persist` is an example of a more complex frontend utilizing `Database.Persist`.
+`runGraphula` requires you to provide a front-end. This carries the instructions for evaluating a graph. Our simple `Frontend` is not constraining types and it is wrapping insert results in `Identity`. `Graphula.Persist` is an example of a more complex frontend utilizing `Database.Persist`.
 
 ```haskell
 graphIO :: Frontend NoConstraint Identity (IO r) -> IO r
