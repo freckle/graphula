@@ -35,32 +35,43 @@ main = hspec $
           ca c `shouldBe` ba b
 ```
 
-## The Data
-
-```haskell
-data A = A { aa :: String, ab :: Int }
-  deriving (Show, Eq, Generic)
-
-data B = B { ba :: A, bb :: String }
-  deriving (Show, Eq, Generic)
-
-data C = C { ca :: A, cb :: B , cc :: String}
-  deriving (Show, Eq, Generic)
-```
-
-## Arbitrary
+## Arbitrary Data
 
 Graphula utilizes `QuickCheck` to generate random data. We need to declare `Arbitrary` instances for our types.
 
 ```haskell
+data A
+  = A
+  { aa :: String
+  , ab :: Int
+  }
+  deriving (Show, Eq, Generic)
+
 instance Arbitrary A where
   arbitrary = A <$> arbitrary <*> arbitrary
 
-instance Arbitrary C where
-  arbitrary = C <$> arbitrary <*> arbitrary <*> arbitrary
+
+data B
+  = B
+  { ba :: A
+  , bb :: String
+  }
+  deriving (Show, Eq, Generic)
 
 instance Arbitrary B where
   arbitrary = B <$> arbitrary <*> arbitrary
+
+
+data C
+  = C
+  { ca :: A
+  , cb :: B
+  , cc :: String
+  }
+  deriving (Show, Eq, Generic)
+
+instance Arbitrary C where
+  arbitrary = C <$> arbitrary <*> arbitrary <*> arbitrary
 ```
 
 ## Dependencies
