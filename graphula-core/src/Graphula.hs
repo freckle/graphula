@@ -94,15 +94,24 @@ backendArbitrary graphLog = \case
 backendReplay :: (MonadThrow m, MonadIO m) => IORef [ByteString] -> Backend (m b) -> m b
 backendReplay replayRef = \case
   GenerateNode next -> do
-    jsonNode <- liftIO $ do
-      (jsonNode:rest) <- readIORef replayRef
-      writeIORef replayRef rest
-      pure jsonNode
-    case eitherDecode $ fromStrict jsonNode of
-      Left err -> throwM $ userError err
-      Right a -> next a
+    mJsonNode <- popReplay replayRef
+    case mJsonNode of
+      Nothing -> throwM $ userError "Not enough replay data to fullfill graph."
+      Just jsonNode ->
+        case eitherDecode $ fromStrict jsonNode of
+          Left err -> throwM $ userError err
+          Right a -> next a
   Throw e next ->
     next =<< throwM e
+
+popReplay :: MonadIO m => IORef [ByteString] -> m (Maybe ByteString)
+popReplay ref = liftIO $ do
+  nodes <- readIORef ref
+  case nodes of
+    [] -> pure Nothing
+    head:rest -> do
+      writeIORef ref rest
+      pure $ Just head
 
 handleFail :: (MonadIO m, MonadThrow m) => IORef ByteString -> HUnitFailure -> m a
 handleFail graphLog (HUnitFailure l r) = do
