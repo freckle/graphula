@@ -104,7 +104,7 @@ instance FromJSON C
 
 ## Running It
 
-`runGraphula` requires you to provide a front-end. This carries the instructions for evaluating a graph. Our simple `Frontend` is not constraining types and it is wrapping insert results in `Identity`. `Graphula.Persist` is an example of a more complex frontend utilizing `Database.Persist`.
+`runGraphula` requires you to provide a front-end. This carries the instructions for evaluating a graph. Our simple `Frontend` is not constraining types and it is wrapping insert results in `Identity`. [`Graphula.Persist`](https://github.com/frontrowed/graphula/tree/master/graphula-persistent) is an example of a more complex frontend utilizing `Database.Persist`.
 
 ```haskell
 graphIdentity :: Frontend NoConstraint Identity (IO r) -> IO r
