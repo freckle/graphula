@@ -18,15 +18,15 @@ import Test.QuickCheck
 
 main :: IO ()
 main =
-  -- wrap computation to allow shrinking, saving failed states, replay, etc with a free monad
   runGraphula graphIO $ do
     -- Declare the graph at the term level
     Identity a <- node @A
-    Identity b <- nodeWith @B (only a) -- This can actually be inferred
+    Identity b <- nodeWith @B (only a)
+    -- Type application is not necessary, but recommended for clarity.
     Identity c <- nodeEditWith @C (a, b) $ \n ->
       n { cc = "spanish" }
 
-    -- do shit with it
+    -- Do something with your data
     liftIO $ print (a, b, c)
 ```
 
