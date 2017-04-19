@@ -67,7 +67,7 @@ instance Arbitrary B where
 
 We declare dependencies via the `HasDependencies` typeclass and its associated type `Dependencies`.
 
-By default a type does not have any dependencies. We only need to decalare an empty instance
+By default a type does not have any dependencies. We only need to declare an empty instance
 
 ```haskell
 instance HasDependencies A
