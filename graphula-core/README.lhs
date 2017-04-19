@@ -95,9 +95,9 @@ instance HasDependencies C where
   type Dependencies C = (A, B)
 ```
 
-## Serialization
+## Replay And Serialization
 
-We use `JSON` as a human readable serialization format. Graphula dumps graphs to a temp file on test failure. You can inspect or `runGraphulaReplay` a failed graph for red/green refactor.
+Graphula allows logging of graphs via `runGraphulaLogged`. We use `JSON` as a human readable serialization format. Graphula dumps graphs to a temp file on test failure. You can inspect or `runGraphulaReplay` a failed graph for red/green refactor.
 
 ```haskell
 instance ToJSON A
