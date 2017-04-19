@@ -18,7 +18,7 @@ import Test.QuickCheck
 
 main :: IO ()
 main =
-  runGraphula graphIO $ do
+  runGraphula graphIdentity $ do
     -- Declare the graph at the term level
     Identity a <- node @A
     Identity b <- nodeWith @B (only a)
@@ -102,8 +102,8 @@ instance FromJSON C
 `runGraphula` requires you to provide a front-end. This carries the instructions for evaluating a graph. Our simple `Frontend` is not constraining types and it is wrapping insert results in `Identity`. `Graphula.Persist` is an example of a more complex frontend utilizing `Database.Persist`.
 
 ```haskell
-graphIO :: Frontend NoConstraint Identity (IO r) -> IO r
-graphIO f = case f of
+graphIdentity :: Frontend NoConstraint Identity (IO r) -> IO r
+graphIdentity f = case f of
   Insert n next ->
     next $ Just $ Identity n
 ```
