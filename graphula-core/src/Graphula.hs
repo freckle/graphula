@@ -98,7 +98,7 @@ backendArbitrary = \case
   GenerateNode next -> do
     a <- liftIO . generate $ arbitrary
     next a
-  LogNode a next -> next ()
+  LogNode _ next -> next ()
   Throw e next ->
     next =<< throwM e
 
@@ -132,9 +132,9 @@ popReplay ref = liftIO $ do
   nodes <- readIORef ref
   case nodes of
     [] -> pure Nothing
-    head:rest -> do
-      writeIORef ref rest
-      pure $ Just head
+    n:ns -> do
+      writeIORef ref ns
+      pure $ Just n
 
 logFail :: (MonadIO m, MonadThrow m) => IORef ByteString -> HUnitFailure -> m a
 logFail graphLog (HUnitFailure l r) = do
