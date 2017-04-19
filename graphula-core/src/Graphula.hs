@@ -25,6 +25,7 @@ module Graphula
   , runGraphulaLogged
   , runGraphulaReplay
   , Frontend(..)
+  , Backend(..)
   , NoConstraint
   , Only(..)
   , only
