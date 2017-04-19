@@ -15,32 +15,37 @@ import Control.Monad.IO.Class
 import Graphula
 import GHC.Generics (Generic)
 import Test.QuickCheck
+import Test.Hspec
 
 main :: IO ()
-main =
-  runGraphula graphIdentity $ do
-    -- Declare the graph at the term level
-    Identity a <- node @A
-    Identity b <- nodeWith @B (only a)
-    -- Type application is not necessary, but recommended for clarity.
-    Identity c <- nodeEditWith @C (a, b) $ \n ->
-      n { cc = "spanish" }
+main = hspec $
+  describe "Simple graphula" $
+    it "builds arbitrary graphs of data" $
+      runGraphula graphIdentity $ do
+        -- Declare the graph at the term level
+        Identity a <- node @A
+        Identity b <- nodeWith @B (only a)
+        -- Type application is not necessary, but recommended for clarity.
+        Identity c <- nodeEditWith @C (a, b) $ \n ->
+          n { cc = "spanish" }
 
-    -- Do something with your data
-    liftIO $ print (a, b, c)
+        -- Do something with your data
+        liftIO $ do
+          cc c `shouldBe` "spanish"
+          ca c `shouldBe` ba b
 ```
 
 ## The Data
 
 ```haskell
 data A = A { aa :: String, ab :: Int }
-  deriving (Show, Generic)
+  deriving (Show, Eq, Generic)
 
 data B = B { ba :: A, bb :: String }
-  deriving (Show, Generic)
+  deriving (Show, Eq, Generic)
 
 data C = C { ca :: A, cb :: B , cc :: String}
-  deriving (Show, Generic)
+  deriving (Show, Eq, Generic)
 ```
 
 ## Arbitrary

@@ -24,11 +24,12 @@ library:
     - src
   ghc-options: -Wall
 
-executables:
+tests:
   readme:
     main: README.lhs
     ghc-options: -Wall -pgmL markdown-unlit
     dependencies:
       - base
       - graphula-core
+      - hspec
       - markdown-unlit
