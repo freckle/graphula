@@ -26,18 +26,18 @@ data List a
 
 type family DependenciesTypeInstance nodeTy depsTy where
   DependenciesTypeInstance nodeTy depsTy =
-    'Text "`type Dependencies " ':<>: 'ShowType nodeTy ':<>:
-    'Text " = " ':<>: 'ShowType depsTy ':<>: 'Text "`"
+    'Text "‘type Dependencies " ':<>: 'ShowType nodeTy ':<>:
+    'Text " = " ':<>: 'ShowType depsTy ':<>: 'Text "’"
 
 -- Walk through the fields of our node and match them up with fields from the dependencies.
 type family FindMatches nodeTy depsTy as ds where
   -- Excess dependencies
   FindMatches nodeTy depsTy () (d, ds) =
     TypeError
-      ( 'Text "Excess dependency `" ':<>: 'ShowType d ':<>:
-        'Text "` in " ':$$: DependenciesTypeInstance nodeTy depsTy ':$$:
-        'Text "Ordering of dependencies must match their occurrence in the target type `" ':<>:
-        'ShowType nodeTy ':<>: 'Text "`"
+      ( 'Text "Excess dependency ‘" ':<>: 'ShowType d ':<>:
+        'Text "’ in " ':$$: DependenciesTypeInstance nodeTy depsTy ':$$:
+        'Text "Ordering of dependencies must match their occurrence in the target type ‘" ':<>:
+        'ShowType nodeTy ':<>: 'Text "’"
       )
 
   -- No dependencies

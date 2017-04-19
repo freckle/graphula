@@ -4,6 +4,9 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Graphula.Persist (persistGraph, keys, PersistRecord) where
 
 import Graphula
@@ -11,6 +14,7 @@ import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
 import Database.Persist
 import Database.Persist.Sql
+import GHC.TypeLits (TypeError, ErrorMessage(..))
 
 persistGraph
   :: (SqlBackendCanWrite backend, MonadIO m, MonadIO n)
@@ -34,7 +38,14 @@ class EntityKeys a where
   type Keys a
   keys :: a -> Keys a
 
-instance EntityKeys (Entity a) where
+instance
+  ( TypeError
+    ( 'Text "Cannot use naked ‘" ':<>: 'ShowType (Entity a) ':<>:
+      'Text "’ as argument to ‘keys’." ':$$:
+      'Text "Did you mean ‘Only (" ':<>:
+      'ShowType (Entity a) ':<>: 'Text ")’?"
+    )
+  ) => EntityKeys (Entity a) where
   type Keys (Entity a) = Key a
   keys = entityKey
 
