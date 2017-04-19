@@ -19,8 +19,8 @@ import Test.Hspec
 
 main :: IO ()
 main = hspec $
-  describe "Simple graphula" $
-    it "builds arbitrary graphs of data" $
+  describe "graphula-core" $
+    it "generates and links arbitrary graphs of data" $
       runGraphula graphIdentity $ do
         -- Declare the graph at the term level
         Identity a <- node @A
