@@ -53,14 +53,14 @@ data C = C { ca :: A, cb :: B , cc :: String}
 Graphula utilizes `QuickCheck` to generate random data. We need to declare `Arbitrary` instances for our types.
 
 ```haskell
+instance Arbitrary A where
+  arbitrary = A <$> arbitrary <*> arbitrary
+
 instance Arbitrary C where
   arbitrary = C <$> arbitrary <*> arbitrary <*> arbitrary
 
 instance Arbitrary B where
   arbitrary = B <$> arbitrary <*> arbitrary
-
-instance Arbitrary A where
-  arbitrary = A <$> arbitrary <*> arbitrary
 ```
 
 ## Dependencies
