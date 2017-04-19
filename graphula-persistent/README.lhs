@@ -126,6 +126,6 @@ main =
 runTestDB :: ReaderT SqlBackend (NoLoggingT (ResourceT IO)) a -> IO a
 runTestDB = runSqlite ":test:"
 
-withGraph :: Graph (PersistRecord SqlBackend) Entity IO b -> IO b
-withGraph = runGraphula (persistGraph runTestDB)
+withGraph :: Graph Arbitrary ToJSON (PersistRecord SqlBackend) Entity IO b -> IO b
+withGraph = runGraphulaLogged (persistGraph runTestDB)
 ```
