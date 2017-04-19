@@ -71,7 +71,7 @@ runGraphulaLogged
   => (Frontend nodeConstraint entity (m a) -> m a) -> Graph Arbitrary ToJSON nodeConstraint entity m a -> m a
 runGraphulaLogged frontend f = do
   graphLog <- liftIO $ newIORef ""
-  catch (go graphLog) (handleFail graphLog)
+  catch (go graphLog) (logFail graphLog)
   where
     go graphLog =
       flip iterT f $ \case
@@ -82,9 +82,8 @@ runGraphulaReplay
   :: (MonadIO m, MonadCatch m)
   => (Frontend nodeConstraint entity (m a) -> m a) -> FilePath -> Graph FromJSON NoConstraint nodeConstraint entity m a -> m a
 runGraphulaReplay frontend replayFile f = do
-  graphLog <- liftIO $ newIORef ""
   replayLog <- liftIO $ newIORef =<< (lines <$> readFile replayFile)
-  catch (go replayLog) (handleFail graphLog)
+  catch (go replayLog) (replayFail replayFile)
   where
     go replayLog =
       flip iterT f $ \case
@@ -127,8 +126,8 @@ backendReplay replayRef = \case
   Throw e next ->
     next =<< throwM e
 
-handleFail :: (MonadIO m, MonadThrow m) => IORef ByteString -> HUnitFailure -> m a
-handleFail graphLog (HUnitFailure l r) = do
+logFail :: (MonadIO m, MonadThrow m) => IORef ByteString -> HUnitFailure -> m a
+logFail graphLog (HUnitFailure l r) = do
   path <- graphToTempFile graphLog
   throwM $ HUnitFailure l $ Reason
      $ "Graph dumped in temp file: " ++ path  ++ "\n\n"
@@ -140,6 +139,12 @@ graphToTempFile graphLog =
     (flip openTempFile "fail-.graphula" =<< getTemporaryDirectory)
     (hClose . snd)
     (\(path, handle) -> readIORef graphLog >>= hPutStr handle >> pure path )
+
+replayFail :: (MonadIO m, MonadThrow m) => FilePath -> HUnitFailure -> m a
+replayFail filePath (HUnitFailure l r) =
+  throwM $ HUnitFailure l $ Reason
+     $ "Using graph file: " ++ filePath  ++ "\n\n"
+    ++ formatFailureReason r
 
 liftLeft :: (Monad m, Functor f, Functor g) => FreeT f m a -> FreeT (Sum f g) m a
 liftLeft = transFreeT InL
