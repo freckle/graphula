@@ -72,14 +72,13 @@ main =
     it "should ensure graph values should match persisted values" $ withGraph $ do
       (a, b, c) <- makeSimpleGraph
       liftIO $ do
-        Just persistedA <- runTestDB . getEntity $ entityKey a
-        persistedA `shouldBe` a
+        persistedGraph <- runTestDB $ do
+          Just persistedA <- getEntity $ entityKey a
+          Just persistedB <- getEntity $ entityKey b
+          Just persistedC <- getEntity $ entityKey c
+          pure (persistedA, persistedB, persistedC)
 
-        Just persistedB <- runTestDB . getEntity $ entityKey b
-        persistedB `shouldBe` b
-
-        Just persistedC <- runTestDB . getEntity $ entityKey c
-        persistedC `shouldBe` c
+        persistedGraph `shouldBe` (a, b, c)
 
     it "should respect unique constraints" $ withGraph $ do
       (_, _, c) <- makeSimpleGraph
