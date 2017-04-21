@@ -70,8 +70,14 @@ main =
           pure (a, b, c)
 
     it "should ensure graph values should match persisted values" $ withGraph $ do
-      (_, _, c) <- makeSimpleGraph
+      (a, b, c) <- makeSimpleGraph
       liftIO $ do
+        Just persistedA <- runTestDB . getEntity $ entityKey a
+        persistedA `shouldBe` a
+
+        Just persistedB <- runTestDB . getEntity $ entityKey b
+        persistedB `shouldBe` b
+
         Just persistedC <- runTestDB . getEntity $ entityKey c
         persistedC `shouldBe` c
 
