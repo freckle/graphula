@@ -24,7 +24,10 @@ import Graphula
 import Graphula.Persist
 import Test.Hspec
 import Test.QuickCheck
+```
 
+## Declare Models
+```haskell
 share [mkPersist sqlSettings, mkMigrate "migrateAll"]
   [persistLowerCase|
     AT
@@ -49,7 +52,45 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"]
       UniqueFlag flag
       deriving Show Eq Generic
   |]
+```
 
+## Generate Relational Fixtures
+```haskell
+main :: IO ()
+main =
+  hspec $
+  beforeAll (runTestDB $ migrateTestDB *> truncateTestDB) $
+  describe "graphula-persistent" $ do
+
+    let makeC = do
+          a <- node
+          b <- nodeWith . keys $ only a
+          nodeEditWith (keys (a, b)) $ \n ->
+            n { cTC = "spanish" }
+
+    it "should ensure graph values should match persisted values" $ withGraph $ do
+      c <- makeC
+      liftIO $ do
+        Just persistedC <- runTestDB . getEntity $ entityKey c
+        persistedC `shouldBe` c
+
+    it "should respect unique constraints" $ withGraph $ do
+      c <- makeC
+      d1 <- nodeWith . keys $ only c
+      d2 <- nodeWith . keys $ only c
+      liftIO $ do
+        (persistedD1, persistedD2) <- runTestDB $ do
+          Just persistedD1 <- get $ entityKey d1
+          Just persistedD2 <- get $ entityKey d2
+          pure (persistedD1, persistedD2)
+
+        dTFlag persistedD1 `shouldNotBe` dTFlag persistedD2
+        persistedD1 `shouldBe` entityVal d1
+        persistedD2 `shouldBe` entityVal d2
+```
+
+
+```haskell
 instance Arbitrary AT where
   arbitrary = AT <$> arbitrary <*> arbitrary
 
@@ -86,7 +127,9 @@ instance HasDependencies DT where
 
 instance ToJSON DT
 instance FromJSON DT
+```
 
+```haskell
 migrateTestDB :: ReaderT SqlBackend (NoLoggingT (ResourceT IO)) ()
 migrateTestDB = runMigration migrateAll
 
@@ -96,26 +139,6 @@ truncateTestDB = do
   deleteWhere ([] :: [Filter CT])
   deleteWhere ([] :: [Filter BT])
   deleteWhere ([] :: [Filter AT])
-
-main :: IO ()
-main =
-  hspec $
-  beforeAll (runTestDB $ migrateTestDB *> truncateTestDB) $
-  describe "trivial test" $ do
-    it "should persist things correctly" $ withGraph $ do
-      a <- node
-      b <- nodeWith $ keys $ only a
-      c <- nodeEditWith (keys (a, b)) $ \n ->
-        n { cTC = "spanish" }
-      Entity d1Id _ <- nodeWith $ keys $ only c
-      Entity d2Id _ <- nodeWith $ keys $ only c
-      Just persistedC <- liftIO . runTestDB . getEntity $ entityKey c
-      liftIO $ persistedC `shouldBe` c
-      (d1, d2) <- liftIO . runTestDB $ do
-        Just d1 <- get d1Id
-        Just d2 <- get d2Id
-        pure (d1, d2)
-      liftIO $ dTFlag d1 `shouldNotBe` dTFlag d2
 
 runTestDB :: ReaderT SqlBackend (NoLoggingT (ResourceT IO)) a -> IO a
 runTestDB = runSqlite ":test:"
