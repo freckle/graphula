@@ -62,20 +62,21 @@ main =
   beforeAll (runTestDB $ migrateTestDB *> truncateTestDB) $
   describe "graphula-persistent" $ do
 
-    let makeC = do
+    let makeSimpleGraph = do
           a <- node
           b <- nodeWith . keys $ only a
-          nodeEditWith (keys (a, b)) $ \n ->
+          c <- nodeEditWith (keys (a, b)) $ \n ->
             n { cTC = "spanish" }
+          pure (a, b, c)
 
     it "should ensure graph values should match persisted values" $ withGraph $ do
-      c <- makeC
+      (_, _, c) <- makeSimpleGraph
       liftIO $ do
         Just persistedC <- runTestDB . getEntity $ entityKey c
         persistedC `shouldBe` c
 
     it "should respect unique constraints" $ withGraph $ do
-      c <- makeC
+      (_, _, c) <- makeSimpleGraph
       d1 <- nodeWith . keys $ only c
       d2 <- nodeWith . keys $ only c
       liftIO $ do
