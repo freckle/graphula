@@ -87,13 +87,13 @@ main =
       d2 <- nodeWith . keys $ only c
       liftIO $ do
         (persistedD1, persistedD2) <- runTestDB $ do
-          Just persistedD1 <- get $ entityKey d1
-          Just persistedD2 <- get $ entityKey d2
+          Just persistedD1 <- getEntity $ entityKey d1
+          Just persistedD2 <- getEntity $ entityKey d2
           pure (persistedD1, persistedD2)
 
-        dTFlag persistedD1 `shouldNotBe` dTFlag persistedD2
-        persistedD1 `shouldBe` entityVal d1
-        persistedD2 `shouldBe` entityVal d2
+        dTFlag (entityVal persistedD1) `shouldNotBe` dTFlag (entityVal persistedD2)
+        persistedD1 `shouldBe` d1
+        persistedD2 `shouldBe` d2
 ```
 
 
