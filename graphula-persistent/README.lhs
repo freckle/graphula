@@ -69,7 +69,7 @@ main =
             n { cTC = "spanish" }
           pure (a, b, c)
 
-    it "should ensure graph values should match persisted values" $ withGraph $ do
+    it "should ensure graph values match their persisted values" $ withGraph $ do
       (a, b, c) <- makeSimpleGraph
       liftIO $ do
         persistedGraph <- runTestDB $ do
