@@ -2,6 +2,7 @@ resolver: lts-8.6
 packages:
 - graphula-core
 - graphula-persistent
+- persistent-arbitrary
 extra-deps: []
 flags: {}
 extra-package-dbs: []

@@ -30,6 +30,7 @@ tests:
       - markdown-unlit
       - monad-logger
       - persistent
+      - persistent-arbitrary
       - persistent-template
       - persistent-sqlite
       - resourcet

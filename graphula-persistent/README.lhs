@@ -1,10 +1,6 @@
 ```haskell
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE EmptyDataDecls             #-}
-{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
@@ -20,6 +16,7 @@ import Control.Monad.Logger
 import Control.Monad.Trans.Resource
 import Data.Aeson
 import Database.Persist
+import Database.Persist.Arbitrary()
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import GHC.Generics
@@ -52,9 +49,6 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"]
       UniqueFlag flag
       deriving Show Eq Generic
   |]
-
-instance (ToBackendKey SqlBackend a) => Arbitrary (Key a) where
-  arbitrary = toSqlKey <$> arbitrary
 
 instance Arbitrary AT where
   arbitrary = AT <$> arbitrary <*> arbitrary
