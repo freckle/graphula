@@ -64,7 +64,7 @@ main =
 
     let makeSimpleGraph = do
           a <- node
-          b <- nodeWith . keys $ only a
+          b <- nodeWith $ key a
           c <- nodeEditWith (keys (a, b)) $ \n ->
             n { cTC = "spanish" }
           pure (a, b, c)
@@ -82,8 +82,8 @@ main =
 
     it "should respect unique constraints" $ withGraph $ do
       (_, _, c) <- makeSimpleGraph
-      d1 <- nodeWith . keys $ only c
-      d2 <- nodeWith . keys $ only c
+      d1 <- nodeWith $ key c
+      d2 <- nodeWith $ key c
       liftIO $ do
         (persistedD1, persistedD2) <- runTestDB $ do
           Just persistedD1 <- getEntity $ entityKey d1

@@ -254,8 +254,9 @@ tryInsert maxAttempts currentAttempts source
       Just a -> pure a
       Nothing -> tryInsert maxAttempts (succ currentAttempts) source
 
--- For entities that only have one dependency
-newtype Only a = Only { fromOnly :: a }
+-- For entities that only have one dependency. Uses data instead of newtype to
+-- match laziness of builtin tuples
+data Only a = Only { fromOnly :: a }
   deriving (Eq, Show, Ord, Generic, Functor, Foldable, Traversable)
 
 only :: a -> Only a
