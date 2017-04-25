@@ -7,7 +7,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
-module Graphula.Persist (persistGraph, key, keys, PersistRecord) where
+module Graphula.Persist (persistGraph, onlyKey, keys, PersistRecord) where
 
 import Graphula
 import Control.Monad.IO.Class
@@ -49,8 +49,8 @@ instance
   type Keys (Entity a) = Key a
   keys = entityKey
 
-key :: Entity a -> Only (Key a)
-key = keys . only
+onlyKey :: Entity a -> Only (Key a)
+onlyKey = keys . only
 
 instance EntityKeys (Only (Entity a)) where
   type Keys (Only (Entity a)) = Only (Key a)
