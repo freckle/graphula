@@ -7,7 +7,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
-module Graphula.Persist (persistGraph, keys, PersistRecord) where
+module Graphula.Persist (persistGraph, key, keys, PersistRecord) where
 
 import Graphula
 import Control.Monad.IO.Class
@@ -26,7 +26,7 @@ persistGraph runDB = \case
       mKey <- insertUnique n
       case mKey of
         Nothing -> pure Nothing
-        Just key -> getEntity key
+        Just key' -> getEntity key'
     next x
 
 class (PersistEntity a, PersistEntityBackend a ~ SqlBackend, PersistStoreWrite backend, PersistUniqueWrite backend) => PersistRecord backend a where
@@ -48,6 +48,9 @@ instance
   ) => EntityKeys (Entity a) where
   type Keys (Entity a) = Key a
   keys = entityKey
+
+key :: Entity a -> Only (Key a)
+key = keys . only
 
 instance EntityKeys (Only (Entity a)) where
   type Keys (Only (Entity a)) = Only (Key a)
