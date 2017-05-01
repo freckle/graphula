@@ -7,7 +7,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
-module Graphula.Persist (persistGraph, onlyKey, keys, PersistRecord) where
+module Graphula.Persist (persistGraph, onlyKey, keys, Keys, PersistRecord) where
 
 import Graphula
 import Control.Monad.IO.Class
