@@ -79,6 +79,19 @@ import System.Directory (getTemporaryDirectory)
 
 import Graphula.Internal
 
+-- | 'Graph' is a type alias for graphula's underlying monad. This type carries
+-- constraints via 'ConstraintKinds', which enable pluggable frontends and backends.
+--
+-- * __generate__: A constraint for pluggable node generation. 'runGraphula'
+--   utilizes 'Arbitrary', 'runGraphulaReplay' utilizes 'FromJSON'.
+-- * __log__: A constraint provided to log details of the graph to some form of
+--   persistence. This is used by 'runGraphulaLogged' to store graph nodes as
+--   JSON 'Value's.
+-- * __nodeConstraint__: A constraint applied to nodes. This is utilized during
+--   insertion and can be leveraged by frontends with typeclass interfaces
+--   to insertion.
+-- * __entity__: A wrapper type used to return relevant information about a given
+--   node. `graphula-persistent` returns all nodes in the 'Entity' type.
 type Graph generate log nodeConstraint entity
   = FreeT (Sum (Backend generate log) (Frontend nodeConstraint entity))
 
