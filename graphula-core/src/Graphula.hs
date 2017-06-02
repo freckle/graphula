@@ -1,3 +1,20 @@
+{-|
+  Graphula is a compact interface for generating data and linking its
+  dependencies. You can use this interface to generate fixtures for automated
+  testing.
+
+  The interface is extensible and supports pluggable front-ends.
+
+  @
+  runGraphula graphIdentity $ do
+    -- Compose dependencies at the value level
+    Identity vet <- node @Veterinarian
+    Identity owner <- nodeWith @Owner $ only vet
+    -- TypeApplications is not necessary, but recommended for clarity.
+    Identity dog <- nodeEditWith @Dog (owner, vet) $ \d ->
+      d { name = "fido" }
+  @
+-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE DeriveFunctor #-}
@@ -15,20 +32,26 @@
 {-# LANGUAGE TypeFamilies #-}
 
 module Graphula
-  ( node
+  ( -- * Graph Declaration
+    node
   , nodeEdit
   , nodeWith
   , nodeEditWith
+  -- * Declaring Dependencies
   , HasDependencies(..)
+  -- ** Singular Dependencies
+  , Only(..)
+  , only
+  -- * The Graph Monad
   , Graph
   , runGraphula
   , runGraphulaLogged
   , runGraphulaReplay
+  -- * Graph Implementation
   , Frontend(..)
   , Backend(..)
+  -- * Extras
   , NoConstraint
-  , Only(..)
-  , only
   ) where
 
 import Prelude hiding (readFile, lines)
@@ -56,6 +79,19 @@ import System.Directory (getTemporaryDirectory)
 
 import Graphula.Internal
 
+-- | 'Graph' is a type alias for graphula's underlying monad. This type carries
+-- constraints via 'ConstraintKinds', which enable pluggable frontends and backends.
+--
+-- * __generate__: A constraint for pluggable node generation. 'runGraphula'
+--   utilizes 'Arbitrary', 'runGraphulaReplay' utilizes 'FromJSON'.
+-- * __log__: A constraint provided to log details of the graph to some form of
+--   persistence. This is used by 'runGraphulaLogged' to store graph nodes as
+--   JSON 'Value's.
+-- * __nodeConstraint__: A constraint applied to nodes. This is utilized during
+--   insertion and can be leveraged by frontends with typeclass interfaces
+--   to insertion.
+-- * __entity__: A wrapper type used to return relevant information about a given
+--   node. `graphula-persistent` returns all nodes in the 'Entity' type.
 type Graph generate log nodeConstraint entity
   = FreeT (Sum (Backend generate log) (Frontend nodeConstraint entity))
 
@@ -188,14 +224,30 @@ logNode a = liftLeft . liftF $ LogNode a (const ())
 throw :: (Monad m, Exception e) => e -> Graph generate log nodeConstraint entity m a
 throw e = liftLeft . liftF $ Throw e id
 
+-- | `Graph` accepts constraints for various uses. Frontends do not always
+-- utilize these constraints. 'NoConstraint' is a universal class that all
+-- types inhabit. It has no behavior and no additional constraints.
 class NoConstraint a where
 
 instance NoConstraint a where
 
 class HasDependencies a where
+  -- | A data type that contains values to be injected into @a@ via
+  -- `dependsOn`. The default generic implementation of `dependsOn` supports
+  -- tuples as 'Dependencies'. Data types with a single dependency should use
+  -- 'Only' as a 1-tuple.
+  --
+  -- note: The contents of a tuple must be ordered as they appear in the
+  -- definition of @a@.
   type Dependencies a
   type instance Dependencies a = ()
 
+  -- | Assign values from the 'Dependencies' collection to a value.
+  -- 'dependsOn' must be an idempotent operation.
+  --
+  -- Law:
+  --
+  -- prop> dependsOn . dependsOn = dependsOn
   dependsOn :: a -> Dependencies a -> a
   default dependsOn
     ::
@@ -218,6 +270,14 @@ data GenerationFailure =
 
 instance Exception GenerationFailure
 
+{-|
+  Generate and edit a value with data dependencies. This leverages
+  'HasDependencies' to insert the specified data in the generated value. All
+  dependency data is inserted after editing operations.
+
+  > nodeEdit @Dog (ownerId, veterinarianId) $ \dog ->
+  >   dog {name = "fido"}
+-}
 nodeEditWith
   :: forall a generate log entity nodeConstraint m. (Monad m, nodeConstraint a, Typeable a, generate a, log a, HasDependencies a)
   => Dependencies a -> (a -> a) -> Graph generate log nodeConstraint entity m (entity a)
@@ -227,16 +287,30 @@ nodeEditWith dependencies edits =
     logNode x
     pure (edits x `dependsOn` dependencies)
 
+{-|
+  Generate a value with data dependencies. This leverages 'HasDependencies' to
+  insert the specified data in the generated value.
+
+  > nodeEdit @Dog (ownerId, veterinarianId)
+-}
 nodeWith
   :: forall a generate log entity nodeConstraint m. (Monad m, nodeConstraint a, Typeable a, generate a, log a, HasDependencies a)
   => Dependencies a -> Graph generate log nodeConstraint entity m (entity a)
 nodeWith = flip nodeEditWith id
 
+{-|
+  Generate and edit a value that does not have any dependencies.
+
+  > nodeEdit @Dog $ \dog -> dog {name = "fido"}
+-}
 nodeEdit
   :: forall a generate log entity nodeConstraint m. (Monad m, nodeConstraint a, Typeable a, generate a, log a, HasDependencies a, Dependencies a ~ ())
   => (a -> a) -> Graph generate log nodeConstraint entity m (entity a)
 nodeEdit = nodeEditWith ()
 
+-- | Generate a value that does not have any dependencies
+--
+-- > node @Dog
 node
   :: forall a generate log entity nodeConstraint m. (Monad m, nodeConstraint a, Typeable a, generate a, log a, HasDependencies a, Dependencies a ~ ())
   => Graph generate log nodeConstraint entity m (entity a)
@@ -254,8 +328,8 @@ tryInsert maxAttempts currentAttempts source
       Just a -> pure a
       Nothing -> tryInsert maxAttempts (succ currentAttempts) source
 
--- For entities that only have one dependency. Uses data instead of newtype to
--- match laziness of builtin tuples
+-- | For entities that only have singular 'Dependencies'. It uses data instead
+-- of newtype to match laziness of builtin tuples.
 data Only a = Only { fromOnly :: a }
   deriving (Eq, Show, Ord, Generic, Functor, Foldable, Traversable)
 
