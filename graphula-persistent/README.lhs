@@ -142,6 +142,6 @@ migrateTestDB = runMigration migrateAll
 runTestDB :: ReaderT SqlBackend (NoLoggingT (ResourceT IO)) a -> IO a
 runTestDB = runSqlite ":test:"
 
-withGraph :: Graph Arbitrary NoConstraint (PersistRecord SqlBackend) Entity IO b -> IO b
-withGraph = runGraphulaIdempotent (persistGraph runTestDB)
+withGraph :: Graph Arbitrary ToJSON (PersistRecord SqlBackend) Entity IO b -> IO b
+withGraph = runGraphulaIdempotentLogged (persistGraph runTestDB)
 ```

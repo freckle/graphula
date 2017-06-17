@@ -50,6 +50,7 @@ module Graphula
   , runGraphulaLoggedWithFile
   , runGraphulaReplay
   , runGraphulaIdempotent
+  , runGraphulaIdempotentLogged
   -- * Graph Implementation
   , Frontend(..)
   , Backend(..)
@@ -66,7 +67,7 @@ import Control.Monad.Catch (MonadCatch(..), MonadThrow(..))
 import Control.Monad.Trans (lift)
 import Control.Monad.Trans.Free (FreeT, iterT, liftF, transFreeT)
 import Control.Monad.IO.Class (MonadIO(..))
-import Control.Exception (Exception, bracket)
+import Control.Exception (Exception, SomeException, bracket)
 import Data.Semigroup ((<>))
 import Data.Aeson (ToJSON, FromJSON, encode, eitherDecode)
 import Data.ByteString (ByteString, hPutStr, readFile)
@@ -124,29 +125,40 @@ runGraphula = runGraphulaUsing backendArbitrary
 
 runGraphulaIdempotent
   :: (MonadIO m, MonadCatch m)
-  => (Frontend nodeConstraint entity (m a) -> m a) -> Graph Arbitrary NoConstraint nodeConstraint entity m a -> m a
-runGraphulaIdempotent frontend f = do
-  finalizersRef <- liftIO . newIORef $ pure ()
-  x <- flip iterT f $ \case
-    InR r -> iterT frontend $ finalizerFrontend finalizersRef r
-    InL l -> backendArbitrary l
-  finalizers <- liftIO $ readIORef finalizersRef
-  iterT frontend (finalizers >> pure x)
+  => (Frontend nodeConstraint entity (m a) -> m a)
+  -> Graph Arbitrary NoConstraint nodeConstraint entity m a -> m a
+runGraphulaIdempotent = runGraphulaIdempotent' backendArbitrary
 
-finalizerFrontend
-  :: (MonadThrow m, MonadIO m)
-  => IORef (FreeT (Frontend nodeConstraint entity) m ())
-  -> Frontend nodeConstraint entity (m a)
-  -> FreeT (Frontend nodeConstraint entity) m a
-finalizerFrontend finalizersRef f = case f of
-  Insert n next -> do
-    mEnt <- liftF $ Insert n id
-    for_ mEnt $ \ent ->
-      liftIO $ modifyIORef' finalizersRef ((>>) (liftF $ Remove ent ()))
-    lift $ next mEnt
-  Remove ent next -> do
-    liftF $ Remove ent ()
-    lift next
+runGraphulaIdempotentLogged
+  :: (MonadIO m, MonadCatch m)
+  => (Frontend nodeConstraint entity (m a) -> m a)
+  -> Graph Arbitrary ToJSON nodeConstraint entity m a -> m a
+runGraphulaIdempotentLogged frontend graph = do
+  graphLog <- liftIO $ newIORef ""
+  catch (go graphLog) (logFail graphLog)
+    where
+      go graphLog = runGraphulaIdempotent' (backendArbitraryLogged graphLog) frontend graph
+
+runGraphulaIdempotent'
+  :: (MonadIO m, MonadCatch m)
+  => (Backend generate log (m a) -> m a)
+  -> (Frontend nodeConstraint entity (m a) -> m a)
+  -> Graph generate log nodeConstraint entity m a -> m a
+runGraphulaIdempotent' backend frontend f = do
+  finalizersRef <- liftIO . newIORef $ pure ()
+  -- Cannot use bracket/finally because of the type of Frontend
+  x <- catch (interpret finalizersRef) (rollback finalizersRef)
+  runFinalizers finalizersRef $ pure x
+  where
+    runFinalizers finalizersRef x = do
+      finalizers <- liftIO $ readIORef finalizersRef
+      iterT frontend (finalizers >> x)
+    interpret finalizersRef =
+      flip iterT f $ \case
+        InR r -> iterT frontend $ finalizerFrontend finalizersRef r
+        InL l -> backend l
+    rollback finalizersRef (e :: SomeException) =
+      runFinalizers finalizersRef (throwM e)
 
 -- | An extension of 'runGraphula' that logs all json 'Value's to a temporary
 -- file on 'Exception' and re-throws the 'Exception'.
@@ -193,6 +205,21 @@ runGraphulaReplay replayFile frontend f = do
     `catch` rethrowHUnitReplay replayFile
 
 
+
+finalizerFrontend
+  :: (MonadThrow m, MonadIO m)
+  => IORef (FreeT (Frontend nodeConstraint entity) m ())
+  -> Frontend nodeConstraint entity (m a)
+  -> FreeT (Frontend nodeConstraint entity) m a
+finalizerFrontend finalizersRef f = case f of
+  Insert n next -> do
+    mEnt <- liftF $ Insert n id
+    for_ mEnt $ \ent ->
+      liftIO $ modifyIORef' finalizersRef ((>>) (liftF $ Remove ent ()))
+    lift $ next mEnt
+  Remove ent next -> do
+    liftF $ Remove ent ()
+    lift next
 
 backendArbitrary :: (MonadThrow m, MonadIO m) => Backend Arbitrary NoConstraint (m b) -> m b
 backendArbitrary = \case
