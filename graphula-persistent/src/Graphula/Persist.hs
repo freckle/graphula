@@ -28,6 +28,9 @@ persistGraph runDB = \case
         Nothing -> pure Nothing
         Just key' -> getEntity key'
     next x
+  Remove n next -> do
+    runDB $ delete $ entityKey n
+    next
 
 class (PersistEntity a, PersistEntityBackend a ~ SqlBackend, PersistStoreWrite backend, PersistUniqueWrite backend) => PersistRecord backend a where
 

@@ -49,6 +49,7 @@ module Graphula
   , runGraphulaLogged
   , runGraphulaLoggedWithFile
   , runGraphulaReplay
+  , runGraphulaIdempotent
   -- * Graph Implementation
   , Frontend(..)
   , Backend(..)
@@ -62,6 +63,7 @@ import Prelude hiding (readFile, lines)
 import Test.QuickCheck (Arbitrary(..), generate)
 import Test.HUnit.Lang (HUnitFailure(..), FailureReason(..), formatFailureReason)
 import Control.Monad.Catch (MonadCatch(..), MonadThrow(..))
+import Control.Monad.Trans (lift)
 import Control.Monad.Trans.Free (FreeT, iterT, liftF, transFreeT)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Exception (Exception, bracket)
@@ -70,6 +72,7 @@ import Data.Aeson (ToJSON, FromJSON, encode, eitherDecode)
 import Data.ByteString (ByteString, hPutStr, readFile)
 import Data.ByteString.Char8 (lines)
 import Data.ByteString.Lazy (toStrict, fromStrict)
+import Data.Foldable (for_)
 import Data.Functor.Sum (Sum(..))
 import Data.IORef (IORef, newIORef, readIORef, writeIORef, modifyIORef')
 import Data.Proxy (Proxy(..))
@@ -118,6 +121,32 @@ runGraphula
   -> Graph Arbitrary NoConstraint nodeConstraint entity m a
   -> m a
 runGraphula = runGraphulaUsing backendArbitrary
+
+runGraphulaIdempotent
+  :: (MonadIO m, MonadCatch m)
+  => (Frontend nodeConstraint entity (m a) -> m a) -> Graph Arbitrary NoConstraint nodeConstraint entity m a -> m a
+runGraphulaIdempotent frontend f = do
+  finalizersRef <- liftIO . newIORef $ pure ()
+  x <- flip iterT f $ \case
+    InR r -> iterT frontend $ finalizerFrontend finalizersRef r
+    InL l -> backendArbitrary l
+  finalizers <- liftIO $ readIORef finalizersRef
+  iterT frontend (finalizers >> pure x)
+
+finalizerFrontend
+  :: (MonadThrow m, MonadIO m)
+  => IORef (FreeT (Frontend nodeConstraint entity) m ())
+  -> Frontend nodeConstraint entity (m a)
+  -> FreeT (Frontend nodeConstraint entity) m a
+finalizerFrontend finalizersRef f = case f of
+  Insert n next -> do
+    mEnt <- liftF $ Insert n id
+    for_ mEnt $ \ent ->
+      liftIO $ modifyIORef' finalizersRef ((>>) (liftF $ Remove ent ()))
+    lift $ next mEnt
+  Remove ent next -> do
+    liftF $ Remove ent ()
+    lift next
 
 -- | An extension of 'runGraphula' that logs all json 'Value's to a temporary
 -- file on 'Exception' and re-throws the 'Exception'.
@@ -250,6 +279,7 @@ liftRight = transFreeT InR
 
 data Frontend (nodeConstraint :: * -> Constraint) entity next where
   Insert :: nodeConstraint a => a -> (Maybe (entity a) -> next) -> Frontend nodeConstraint entity next
+  Remove :: nodeConstraint a => entity a -> next -> Frontend nodeConstraint entity next
 
 deriving instance Functor (Frontend nodeConstraint entity)
 
