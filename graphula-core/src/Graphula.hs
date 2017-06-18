@@ -123,12 +123,17 @@ runGraphula
   -> m a
 runGraphula = runGraphulaUsing backendArbitrary
 
+-- | An extension of 'runGraphula' that produces finalizers to remove graph nodes
+-- on error or completion. An idempotent 'Graph' produces no data outside of its
+-- own closure.
 runGraphulaIdempotent
   :: (MonadIO m, MonadCatch m)
   => (Frontend nodeConstraint entity (m a) -> m a)
   -> Graph Arbitrary NoConstraint nodeConstraint entity m a -> m a
 runGraphulaIdempotent = runGraphulaIdempotent' backendArbitrary
 
+-- | An extension of 'runGraphulaIdemptotent' that produces replayable logs, like
+-- 'runGraphulaLogged'.
 runGraphulaIdempotentLogged
   :: (MonadIO m, MonadCatch m)
   => (Frontend nodeConstraint entity (m a) -> m a)
@@ -203,7 +208,6 @@ runGraphulaReplay replayFile frontend f = do
   replayLog <- liftIO $ newIORef =<< (lines <$> readFile replayFile)
   runGraphulaUsing (backendReplay replayLog) frontend f
     `catch` rethrowHUnitReplay replayFile
-
 
 
 finalizerFrontend
