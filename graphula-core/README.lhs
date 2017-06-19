@@ -150,7 +150,11 @@ graphIdentity :: Frontend NoConstraint Identity (IO r) -> IO r
 graphIdentity f = case f of
   Insert n next ->
     next $ Just $ Identity n
+```
 
+We can create other front-ends. For example, a front-end that always fails to insert.
+
+```haskell
 data InsertFails a = InsertFails a
 
 graphInsertFails :: Frontend NoConstraint InsertFails (IO r) -> IO r
