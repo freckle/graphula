@@ -99,14 +99,20 @@ import Graphula.Internal
 type Graph generate log nodeConstraint entity
   = FreeT (Sum (Backend generate log) (Frontend nodeConstraint entity))
 
+-- | Interpret a 'Graph' with a given 'Frontend' interpreter, utilizing
+-- 'Arbitrary' for node generation.
 runGraphula
   :: (MonadIO m, MonadCatch m)
-  => (Frontend nodeConstraint entity (m a) -> m a) -> Graph Arbitrary NoConstraint nodeConstraint entity m a -> m a
+  => (Frontend nodeConstraint entity (m a) -> m a)
+  -> Graph Arbitrary NoConstraint nodeConstraint entity m a
+  -> m a
 runGraphula frontend f =
   flip iterT f $ \case
     InR r -> frontend r
     InL l -> backendArbitrary l
 
+-- | An extension of 'runGraphula' that logs all json 'Value's to a temporary
+-- file on 'Exception' and re-throws the 'Exception'.
 runGraphulaLogged
   :: (MonadIO m, MonadCatch m)
   => (Frontend nodeConstraint entity (m a) -> m a)
@@ -115,6 +121,8 @@ runGraphulaLogged
 runGraphulaLogged =
   runGraphulaLoggedUsing logFailTemp
 
+-- | A variant of 'runGraphulaLogged' that accepts a file path to logged to
+-- instead of utilizing a temp file.
 runGraphulaLoggedWithFile
   :: (MonadIO m, MonadCatch m)
   => FilePath
@@ -139,6 +147,8 @@ runGraphulaLoggedUsing logFail frontend f = do
         InR r -> frontend r
         InL l -> backendArbitraryLogged graphLog l
 
+-- | Interpret a 'Graph' with a given 'Frontend' interpreter, utilizing a JSON
+-- file for node generation via 'FromJSON'.
 runGraphulaReplay
   :: (MonadIO m, MonadCatch m)
   => FilePath
