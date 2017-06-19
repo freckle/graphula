@@ -30,6 +30,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TupleSections #-}
 
 module Graphula
   ( -- * Graph Declaration
@@ -46,12 +47,15 @@ module Graphula
   , Graph
   , runGraphula
   , runGraphulaLogged
+  , runGraphulaLoggedWithFile
   , runGraphulaReplay
   -- * Graph Implementation
   , Frontend(..)
   , Backend(..)
   -- * Extras
   , NoConstraint
+  -- * Exceptions
+  , GenerationFailure(..)
   ) where
 
 import Prelude hiding (readFile, lines)
@@ -73,7 +77,7 @@ import Data.Typeable (Typeable, TypeRep, typeRep)
 import Generics.Eot (fromEot, toEot, Eot, HasEot)
 import GHC.Exts (Constraint)
 import GHC.Generics (Generic)
-import System.IO (hClose)
+import System.IO (hClose, openFile, IOMode(..), Handle)
 import System.IO.Temp (openTempFile)
 import System.Directory (getTemporaryDirectory)
 
@@ -105,8 +109,28 @@ runGraphula frontend f =
 
 runGraphulaLogged
   :: (MonadIO m, MonadCatch m)
-  => (Frontend nodeConstraint entity (m a) -> m a) -> Graph Arbitrary ToJSON nodeConstraint entity m a -> m a
-runGraphulaLogged frontend f = do
+  => (Frontend nodeConstraint entity (m a) -> m a)
+  -> Graph Arbitrary ToJSON nodeConstraint entity m a
+  -> m a
+runGraphulaLogged =
+  runGraphulaLoggedUsing logFailTemp
+
+runGraphulaLoggedWithFile
+  :: (MonadIO m, MonadCatch m)
+  => FilePath
+  -> (Frontend nodeConstraint entity (m a) -> m a)
+  -> Graph Arbitrary ToJSON nodeConstraint entity m a
+  -> m a
+runGraphulaLoggedWithFile logPath =
+  runGraphulaLoggedUsing (logFailFile logPath)
+
+runGraphulaLoggedUsing
+  :: (MonadIO m, MonadCatch m)
+  => (IORef ByteString -> HUnitFailure -> m a)
+  -> (Frontend nodeConstraint entity (m a) -> m a)
+  -> Graph Arbitrary ToJSON nodeConstraint entity m a
+  -> m a
+runGraphulaLoggedUsing logFail frontend f = do
   graphLog <- liftIO $ newIORef ""
   catch (go graphLog) (logFail graphLog)
   where
@@ -117,10 +141,12 @@ runGraphulaLogged frontend f = do
 
 runGraphulaReplay
   :: (MonadIO m, MonadCatch m)
-  => (Frontend nodeConstraint entity (m a) -> m a) -> FilePath -> Graph FromJSON NoConstraint nodeConstraint entity m a -> m a
-runGraphulaReplay frontend replayFile f = do
+  => FilePath
+  -> (Frontend nodeConstraint entity (m a) -> m a)
+  -> Graph FromJSON NoConstraint nodeConstraint entity m a -> m a
+runGraphulaReplay replayFile frontend f = do
   replayLog <- liftIO $ newIORef =<< (lines <$> readFile replayFile)
-  catch (go replayLog) (replayFail replayFile)
+  catch (go replayLog) (rethrowHUnitReplay replayFile)
   where
     go replayLog =
       flip iterT f $ \case
@@ -172,25 +198,38 @@ popReplay ref = liftIO $ do
       writeIORef ref ns
       pure $ Just n
 
-logFail :: (MonadIO m, MonadThrow m) => IORef ByteString -> HUnitFailure -> m a
-logFail graphLog (HUnitFailure l r) = do
-  path <- graphToTempFile graphLog
-  throwM $ HUnitFailure l $ Reason
-     $ "Graph dumped in temp file: " ++ path  ++ "\n\n"
-    ++ formatFailureReason r
+logFailUsing :: (MonadIO m, MonadThrow m) => IO (FilePath, Handle) -> IORef ByteString -> HUnitFailure -> m a
+logFailUsing f graphLog hunitfailure =
+  flip rethrowHUnitLogged hunitfailure =<< logGraphToHandle graphLog f
 
-graphToTempFile :: (MonadIO m) => IORef ByteString -> m FilePath
-graphToTempFile graphLog =
+logFailFile :: (MonadIO m, MonadThrow m) => FilePath -> IORef ByteString -> HUnitFailure -> m a
+logFailFile path =
+  logFailUsing ((path, ) <$> openFile path WriteMode)
+
+logFailTemp :: (MonadIO m, MonadThrow m) => IORef ByteString -> HUnitFailure -> m a
+logFailTemp =
+  logFailUsing (flip openTempFile "fail-.graphula" =<< getTemporaryDirectory)
+
+logGraphToHandle :: (MonadIO m) => IORef ByteString -> IO (FilePath, Handle) -> m FilePath
+logGraphToHandle graphLog openHandle =
   liftIO $ bracket
-    (flip openTempFile "fail-.graphula" =<< getTemporaryDirectory)
+    openHandle
     (hClose . snd)
     (\(path, handle) -> readIORef graphLog >>= hPutStr handle >> pure path )
 
-replayFail :: (MonadIO m, MonadThrow m) => FilePath -> HUnitFailure -> m a
-replayFail filePath (HUnitFailure l r) =
-  throwM $ HUnitFailure l $ Reason
-     $ "Using graph file: " ++ filePath  ++ "\n\n"
-    ++ formatFailureReason r
+
+rethrowHUnitWith :: MonadThrow m => String -> HUnitFailure -> m a
+rethrowHUnitWith message (HUnitFailure l r)  =
+  throwM . HUnitFailure l . Reason $ message ++ "\n\n" ++ formatFailureReason r
+
+rethrowHUnitLogged :: MonadThrow m => FilePath -> HUnitFailure -> m a
+rethrowHUnitLogged path  =
+  rethrowHUnitWith ("Graph dumped in temp file: " ++ path)
+
+rethrowHUnitReplay :: (MonadIO m, MonadThrow m) => FilePath -> HUnitFailure -> m a
+rethrowHUnitReplay filePath =
+  rethrowHUnitWith ("Using graph file: " ++ filePath)
+
 
 liftLeft :: (Monad m, Functor f, Functor g) => FreeT f m a -> FreeT (Sum f g) m a
 liftLeft = transFreeT InL
@@ -266,7 +305,7 @@ class HasDependencies a where
 
 data GenerationFailure =
   GenerationFailureMaxAttempts TypeRep
-  deriving (Show, Typeable)
+  deriving (Show, Typeable, Eq)
 
 instance Exception GenerationFailure
 
@@ -283,9 +322,9 @@ nodeEditWith
   => Dependencies a -> (a -> a) -> Graph generate log nodeConstraint entity m (entity a)
 nodeEditWith dependencies edits =
   tryInsert 10 0 $ do
-    x <- generateNode
+    x <- edits <$> generateNode
     logNode x
-    pure (edits x `dependsOn` dependencies)
+    pure (x `dependsOn` dependencies)
 
 {-|
   Generate a value with data dependencies. This leverages 'HasDependencies' to

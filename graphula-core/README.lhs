@@ -10,6 +10,7 @@ Graphula is a simple interface for generating data and linking its dependencies.
 module Main where
 
 import Data.Aeson
+import Data.Typeable
 import Data.Functor.Identity (Identity(..))
 import Control.Monad.IO.Class
 import Graphula
@@ -19,7 +20,7 @@ import Test.Hspec
 
 main :: IO ()
 main = hspec $
-  describe "graphula-core" $
+  describe "graphula-core" $ do
     it "generates and links arbitrary graphs of data" $
       runGraphula graphIdentity $ do
         -- Declare the graph at the term level
@@ -33,6 +34,33 @@ main = hspec $
         liftIO $ do
           cc c `shouldBe` "spanish"
           ca c `shouldBe` ba b
+
+    it "allows logging and replaying graphs" $ do
+      let
+        logFile = "test.graphula"
+
+        failingGraph = runGraphulaLoggedWithFile logFile graphIdentity $ do
+          Identity a <- nodeEdit @A $ \n ->
+            n {aa = "success"}
+          liftIO $ aa a `shouldBe` "failed"
+
+        replayGraph = runGraphulaReplay logFile graphIdentity $ do
+          Identity a <- node @A
+          liftIO $ aa a `shouldBe` "success"
+
+      failingGraph `shouldThrow` anyException
+
+      replayGraph
+
+    it "allows node generation to fail" $ do
+      let
+        failingGraph = runGraphula graphAlwaysFails $ do
+          AlwaysFails _ <- node @A
+          pure ()
+      failingGraph
+        `shouldThrow` (== (GenerationFailureMaxAttempts (typeRep $ Proxy @A)))
+
+
 ```
 
 ## Arbitrary Data
@@ -119,4 +147,11 @@ graphIdentity :: Frontend NoConstraint Identity (IO r) -> IO r
 graphIdentity f = case f of
   Insert n next ->
     next $ Just $ Identity n
+
+data AlwaysFails a = AlwaysFails a
+
+graphAlwaysFails :: Frontend NoConstraint AlwaysFails (IO r) -> IO r
+graphAlwaysFails f = case f of
+  Insert _ next ->
+    next $ Nothing
 ```
