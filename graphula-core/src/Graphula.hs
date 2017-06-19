@@ -141,8 +141,8 @@ runGraphulaIdempotentLogged
 runGraphulaIdempotentLogged frontend graph = do
   graphLog <- liftIO $ newIORef ""
   catch (go graphLog) (logFailTemp graphLog)
-    where
-      go graphLog = runGraphulaIdempotentUsing (backendArbitraryLogged graphLog) frontend graph
+  where
+    go graphLog = runGraphulaIdempotentUsing (backendArbitraryLogged graphLog) frontend graph
 
 runGraphulaIdempotentUsing
   :: (MonadIO m, MonadCatch m)
