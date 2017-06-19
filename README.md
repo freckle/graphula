@@ -1,1 +1,1 @@
-graphula-core/README.md
+graphula-core/README.lhs
