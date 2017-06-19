@@ -99,6 +99,17 @@ import Graphula.Internal
 type Graph generate log nodeConstraint entity
   = FreeT (Sum (Backend generate log) (Frontend nodeConstraint entity))
 
+runGraphulaUsing
+  :: (MonadIO m, MonadCatch m)
+  => (Backend generate log (m a) -> m a)
+  -> (Frontend nodeConstraint entity (m a) -> m a)
+  -> Graph generate log nodeConstraint entity m a
+  -> m a
+runGraphulaUsing backend frontend f =
+  flip iterT f $ \case
+    InR r -> frontend r
+    InL l -> backend l
+
 -- | Interpret a 'Graph' with a given 'Frontend' interpreter, utilizing
 -- 'Arbitrary' for node generation.
 runGraphula
@@ -106,10 +117,7 @@ runGraphula
   => (Frontend nodeConstraint entity (m a) -> m a)
   -> Graph Arbitrary NoConstraint nodeConstraint entity m a
   -> m a
-runGraphula frontend f =
-  flip iterT f $ \case
-    InR r -> frontend r
-    InL l -> backendArbitrary l
+runGraphula = runGraphulaUsing backendArbitrary
 
 -- | An extension of 'runGraphula' that logs all json 'Value's to a temporary
 -- file on 'Exception' and re-throws the 'Exception'.
@@ -140,12 +148,8 @@ runGraphulaLoggedUsing
   -> m a
 runGraphulaLoggedUsing logFail frontend f = do
   graphLog <- liftIO $ newIORef ""
-  catch (go graphLog) (logFail graphLog)
-  where
-    go graphLog =
-      flip iterT f $ \case
-        InR r -> frontend r
-        InL l -> backendArbitraryLogged graphLog l
+  runGraphulaUsing (backendArbitraryLogged graphLog) frontend f
+    `catch` logFail graphLog
 
 -- | Interpret a 'Graph' with a given 'Frontend' interpreter, utilizing a JSON
 -- file for node generation via 'FromJSON'.
@@ -156,12 +160,8 @@ runGraphulaReplay
   -> Graph FromJSON NoConstraint nodeConstraint entity m a -> m a
 runGraphulaReplay replayFile frontend f = do
   replayLog <- liftIO $ newIORef =<< (lines <$> readFile replayFile)
-  catch (go replayLog) (rethrowHUnitReplay replayFile)
-  where
-    go replayLog =
-      flip iterT f $ \case
-        InR r -> frontend r
-        InL l -> backendReplay replayLog l
+  runGraphulaUsing (backendReplay replayLog) frontend f
+    `catch` rethrowHUnitReplay replayFile
 
 
 
