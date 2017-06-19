@@ -3,6 +3,7 @@
 Graphula is a simple interface for generating data and linking its dependencies. We use this interface to generate fixtures for automated testing. The interface is extensible and supports pluggable front-ends.
 
 
+<!--
 ```haskell
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeApplications #-}
@@ -17,7 +18,10 @@ import Graphula
 import GHC.Generics (Generic)
 import Test.QuickCheck
 import Test.Hspec
+```
+-->
 
+```haskell
 main :: IO ()
 main = hspec $
   describe "graphula-core" $ do
