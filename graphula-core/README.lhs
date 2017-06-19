@@ -153,7 +153,7 @@ We can create other front-ends. For example, a front-end that always fails to in
 ```haskell
 data InsertFails a = InsertFails a
 
-graphInsertFails :: Frontend NoConstraint InsertFails (IO r) -> IO r
+graphInsertFails :: Monad m => Frontend NoConstraint InsertFails (m r) -> m r
 graphInsertFails f = case f of
   Insert _ next ->
     next $ Nothing
