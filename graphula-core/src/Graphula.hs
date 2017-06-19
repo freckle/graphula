@@ -140,7 +140,7 @@ runGraphulaIdempotentLogged
   -> Graph Arbitrary ToJSON nodeConstraint entity m a -> m a
 runGraphulaIdempotentLogged frontend graph = do
   graphLog <- liftIO $ newIORef ""
-  catch (go graphLog) (logFail graphLog)
+  catch (go graphLog) (logFailTemp graphLog)
     where
       go graphLog = runGraphulaIdempotent' (backendArbitraryLogged graphLog) frontend graph
 
