@@ -42,18 +42,17 @@ main = hspec $
     it "allows logging and replaying graphs" $ do
       let
         logFile = "test.graphula"
-
+        -- We'd typically use `runGraphulaLogged` which utilizes a temp file.
         failingGraph = runGraphulaLoggedWithFile logFile graphIdentity $ do
           Identity a <- nodeEdit @A $ \n ->
             n {aa = "success"}
           liftIO $ aa a `shouldBe` "failed"
-
         replayGraph = runGraphulaReplay logFile graphIdentity $ do
           Identity a <- node @A
           liftIO $ aa a `shouldBe` "success"
 
-      failingGraph `shouldThrow` anyException
-
+      failingGraph
+        `shouldThrow` anyException
       replayGraph
 
     it "allows node generation to fail" $ do
