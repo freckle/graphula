@@ -151,9 +151,7 @@ graphIdentity f = case f of
 We can create other front-ends. For example, a front-end that always fails to insert.
 
 ```haskell
-data InsertFails a = InsertFails a
-
-graphInsertFails :: Monad m => Frontend NoConstraint InsertFails (m r) -> m r
+graphInsertFails :: Monad m => Frontend NoConstraint Identity (m r) -> m r
 graphInsertFails f = case f of
   Insert _ next ->
     next $ Nothing
@@ -162,7 +160,7 @@ insertionFailureSpec :: IO ()
 insertionFailureSpec = do
   let
     failingGraph = runGraphula graphInsertFails $ do
-      InsertFails _ <- node @A
+      Identity _ <- node @A
       pure ()
   failingGraph
     `shouldThrow` (== (GenerationFailureMaxAttempts (typeRep $ Proxy @A)))
