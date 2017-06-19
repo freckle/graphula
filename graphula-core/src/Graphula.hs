@@ -63,11 +63,11 @@ module Graphula
 import Prelude hiding (readFile, lines)
 import Test.QuickCheck (Arbitrary(..), generate)
 import Test.HUnit.Lang (HUnitFailure(..), FailureReason(..), formatFailureReason)
-import Control.Monad.Catch (MonadCatch(..), MonadThrow(..))
+import Control.Monad.Catch (MonadCatch(..), MonadThrow(..), MonadMask(..), bracket)
 import Control.Monad.Trans (lift)
 import Control.Monad.Trans.Free (FreeT, iterT, liftF, transFreeT)
 import Control.Monad.IO.Class (MonadIO(..))
-import Control.Exception (Exception, SomeException, bracket)
+import Control.Exception (Exception, SomeException)
 import Data.Semigroup ((<>))
 import Data.Aeson (ToJSON, FromJSON, encode, eitherDecode)
 import Data.ByteString (ByteString, hPutStr, readFile)
@@ -127,7 +127,7 @@ runGraphula = runGraphulaUsing backendArbitrary
 -- on error or completion. An idempotent 'Graph' produces no data outside of its
 -- own closure.
 runGraphulaIdempotent
-  :: (MonadIO m, MonadCatch m)
+  :: (MonadIO m, MonadCatch m, MonadMask m)
   => (Frontend nodeConstraint entity (m a) -> m a)
   -> Graph Arbitrary NoConstraint nodeConstraint entity m a -> m a
 runGraphulaIdempotent = runGraphulaIdempotentUsing backendArbitrary
@@ -135,7 +135,7 @@ runGraphulaIdempotent = runGraphulaIdempotentUsing backendArbitrary
 -- | An extension of 'runGraphulaIdemptotent' that produces replayable logs, like
 -- 'runGraphulaLogged'.
 runGraphulaIdempotentLogged
-  :: (MonadIO m, MonadCatch m)
+  :: (MonadIO m, MonadCatch m, MonadMask m)
   => (Frontend nodeConstraint entity (m a) -> m a)
   -> Graph Arbitrary ToJSON nodeConstraint entity m a -> m a
 runGraphulaIdempotentLogged frontend graph = do
@@ -145,25 +145,25 @@ runGraphulaIdempotentLogged frontend graph = do
     go graphLog = runGraphulaIdempotentUsing (backendArbitraryLogged graphLog) frontend graph
 
 runGraphulaIdempotentUsing
-  :: (MonadIO m, MonadCatch m)
+  :: (MonadIO m, MonadCatch m, MonadMask m)
   => (Backend generate log (m a) -> m a)
   -> (Frontend nodeConstraint entity (m a) -> m a)
   -> Graph generate log nodeConstraint entity m a -> m a
-runGraphulaIdempotentUsing backend frontend f = do
-  finalizersRef <- liftIO . newIORef $ pure ()
-  -- Cannot use bracket/finally because of the type of Frontend
-  x <- catch (interpret finalizersRef) (rollback finalizersRef)
-  runFinalizers finalizersRef $ pure x
+runGraphulaIdempotentUsing backend frontend f =
+  mask $ \unmasked -> do
+    finalizersRef <- liftIO . newIORef $ pure ()
+    x <- unmasked $ interpret finalizersRef `catch` rollbackRethrow finalizersRef
+    rollback finalizersRef $ pure x
   where
-    runFinalizers finalizersRef x = do
-      finalizers <- liftIO $ readIORef finalizersRef
-      iterT frontend (finalizers >> x)
     interpret finalizersRef =
       flip iterT f $ \case
         InR r -> iterT frontend $ finalizerFrontend finalizersRef r
         InL l -> backend l
-    rollback finalizersRef (e :: SomeException) =
-      runFinalizers finalizersRef (throwM e)
+    rollback finalizersRef x = do
+      finalizers <- liftIO $ readIORef finalizersRef
+      iterT frontend (finalizers >> x)
+    rollbackRethrow finalizersRef (e :: SomeException) =
+      rollback finalizersRef (throwM e)
 
 -- | An extension of 'runGraphula' that logs all json 'Value's to a temporary
 -- file on 'Exception' and re-throws the 'Exception'.
