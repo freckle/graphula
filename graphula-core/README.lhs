@@ -18,52 +18,31 @@ import Graphula
 import GHC.Generics (Generic)
 import Test.QuickCheck
 import Test.Hspec
+
+main :: IO ()
+main = hspec $
+  describe "graphula-core" $ do
+    it "generates and links arbitrary graphs of data" simpleSpec
+    it "allows logging and replaying graphs" loggingAndReplaySpec
+    it "attempts to retry node generation on insertion failure" insertionFailureSpec
 ```
 -->
 
 ```haskell
-main :: IO ()
-main = hspec $
-  describe "graphula-core" $ do
-    it "generates and links arbitrary graphs of data" $
-      runGraphula graphIdentity $ do
-        -- Declare the graph at the term level
-        Identity a <- node @A
-        Identity b <- nodeWith @B (only a)
-        -- Type application is not necessary, but recommended for clarity.
-        Identity c <- nodeEditWith @C (a, b) $ \n ->
-          n { cc = "spanish" }
+simpleSpec :: IO ()
+simpleSpec =
+  runGraphula graphIdentity $ do
+    -- Declare the graph at the term level
+    Identity a <- node @A
+    Identity b <- nodeWith @B (only a)
+    -- Type application is not necessary, but recommended for clarity.
+    Identity c <- nodeEditWith @C (a, b) $ \n ->
+      n { cc = "spanish" }
 
-        -- Do something with your data
-        liftIO $ do
-          cc c `shouldBe` "spanish"
-          ca c `shouldBe` ba b
-
-    it "allows logging and replaying graphs" $ do
-      let
-        logFile = "test.graphula"
-        -- We'd typically use `runGraphulaLogged` which utilizes a temp file.
-        failingGraph = runGraphulaLoggedWithFile logFile graphIdentity $ do
-          Identity a <- nodeEdit @A $ \n ->
-            n {aa = "success"}
-          liftIO $ aa a `shouldBe` "failed"
-        replayGraph = runGraphulaReplay logFile graphIdentity $ do
-          Identity a <- node @A
-          liftIO $ aa a `shouldBe` "success"
-
-      failingGraph
-        `shouldThrow` anyException
-      replayGraph
-
-    it "attempts to retry node generation on insertion failure" $ do
-      let
-        failingGraph = runGraphula graphInsertFails $ do
-          InsertFails _ <- node @A
-          pure ()
-      failingGraph
-        `shouldThrow` (== (GenerationFailureMaxAttempts (typeRep $ Proxy @A)))
-
-
+    -- Do something with your data
+    liftIO $ do
+      cc c `shouldBe` "spanish"
+      ca c `shouldBe` ba b
 ```
 
 ## Arbitrary Data
@@ -139,6 +118,23 @@ instance FromJSON B
 
 instance ToJSON C
 instance FromJSON C
+
+loggingAndReplaySpec :: IO ()
+loggingAndReplaySpec = do
+  let
+    logFile = "test.graphula"
+    -- We'd typically use `runGraphulaLogged` which utilizes a temp file.
+    failingGraph = runGraphulaLoggedWithFile logFile graphIdentity $ do
+      Identity a <- nodeEdit @A $ \n ->
+        n {aa = "success"}
+      liftIO $ aa a `shouldBe` "failed"
+    replayGraph = runGraphulaReplay logFile graphIdentity $ do
+      Identity a <- node @A
+      liftIO $ aa a `shouldBe` "success"
+
+  failingGraph
+    `shouldThrow` anyException
+  replayGraph
 ```
 
 ## Running It
@@ -161,4 +157,13 @@ graphInsertFails :: Frontend NoConstraint InsertFails (IO r) -> IO r
 graphInsertFails f = case f of
   Insert _ next ->
     next $ Nothing
+
+insertionFailureSpec :: IO ()
+insertionFailureSpec = do
+  let
+    failingGraph = runGraphula graphInsertFails $ do
+      InsertFails _ <- node @A
+      pure ()
+  failingGraph
+    `shouldThrow` (== (GenerationFailureMaxAttempts (typeRep $ Proxy @A)))
 ```
