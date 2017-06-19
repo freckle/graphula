@@ -55,10 +55,10 @@ main = hspec $
         `shouldThrow` anyException
       replayGraph
 
-    it "allows node generation to fail" $ do
+    it "attempts to retry node generation on insertion failure" $ do
       let
-        failingGraph = runGraphula graphGenFails $ do
-          GenFails _ <- node @A
+        failingGraph = runGraphula graphInsertFails $ do
+          InsertFails _ <- node @A
           pure ()
       failingGraph
         `shouldThrow` (== (GenerationFailureMaxAttempts (typeRep $ Proxy @A)))
@@ -151,10 +151,10 @@ graphIdentity f = case f of
   Insert n next ->
     next $ Just $ Identity n
 
-data GenFails a = GenFails a
+data InsertFails a = InsertFails a
 
-graphGenFails :: Frontend NoConstraint GenFails (IO r) -> IO r
-graphGenFails f = case f of
+graphInsertFails :: Frontend NoConstraint InsertFails (IO r) -> IO r
+graphInsertFails f = case f of
   Insert _ next ->
     next $ Nothing
 ```
