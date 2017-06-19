@@ -270,8 +270,8 @@ generateNode = liftLeft . liftF $ GenerateNode id
 logNode :: (Monad m, log a) => a -> Graph generate log nodeConstraint entity m ()
 logNode a = liftLeft . liftF $ LogNode a (const ())
 
-throw :: (Monad m, Exception e) => e -> Graph generate log nodeConstraint entity m a
-throw e = liftLeft . liftF $ Throw e id
+throwF :: (Monad m, Exception e) => e -> Graph generate log nodeConstraint entity m a
+throwF e = liftLeft . liftF $ Throw e id
 
 -- | `Graph` accepts constraints for various uses. Frontends do not always
 -- utilize these constraints. 'NoConstraint' is a universal class that all
@@ -370,7 +370,7 @@ tryInsert
   => Int -> Int -> Graph generate log nodeConstraint entity m a -> Graph generate log nodeConstraint entity m (entity a)
 tryInsert maxAttempts currentAttempts source
   | currentAttempts >= maxAttempts =
-      throw . GenerationFailureMaxAttempts $ typeRep (Proxy :: Proxy a)
+      throwF . GenerationFailureMaxAttempts $ typeRep (Proxy :: Proxy a)
   | otherwise = do
     value <- source
     insert value >>= \case
