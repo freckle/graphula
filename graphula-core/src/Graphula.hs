@@ -130,7 +130,7 @@ runGraphulaIdempotent
   :: (MonadIO m, MonadCatch m)
   => (Frontend nodeConstraint entity (m a) -> m a)
   -> Graph Arbitrary NoConstraint nodeConstraint entity m a -> m a
-runGraphulaIdempotent = runGraphulaIdempotent' backendArbitrary
+runGraphulaIdempotent = runGraphulaIdempotentUsing backendArbitrary
 
 -- | An extension of 'runGraphulaIdemptotent' that produces replayable logs, like
 -- 'runGraphulaLogged'.
@@ -142,14 +142,14 @@ runGraphulaIdempotentLogged frontend graph = do
   graphLog <- liftIO $ newIORef ""
   catch (go graphLog) (logFailTemp graphLog)
     where
-      go graphLog = runGraphulaIdempotent' (backendArbitraryLogged graphLog) frontend graph
+      go graphLog = runGraphulaIdempotentUsing (backendArbitraryLogged graphLog) frontend graph
 
-runGraphulaIdempotent'
+runGraphulaIdempotentUsing
   :: (MonadIO m, MonadCatch m)
   => (Backend generate log (m a) -> m a)
   -> (Frontend nodeConstraint entity (m a) -> m a)
   -> Graph generate log nodeConstraint entity m a -> m a
-runGraphulaIdempotent' backend frontend f = do
+runGraphulaIdempotentUsing backend frontend f = do
   finalizersRef <- liftIO . newIORef $ pure ()
   -- Cannot use bracket/finally because of the type of Frontend
   x <- catch (interpret finalizersRef) (rollback finalizersRef)
