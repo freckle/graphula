@@ -156,9 +156,7 @@ runGraphulaIdempotentUsing backend frontend f =
     rollback finalizersRef $ pure x
   where
     interpret finalizersRef =
-      flip iterT f $ \case
-        InR r -> iterT frontend $ finalizerFrontend finalizersRef r
-        InL l -> backend l
+      runGraphulaUsing backend (iterT frontend . finalizerFrontend finalizersRef) f
     rollback finalizersRef x = do
       finalizers <- liftIO $ readIORef finalizersRef
       iterT frontend (finalizers >> x)
