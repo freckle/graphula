@@ -57,8 +57,8 @@ main = hspec $
 
     it "allows node generation to fail" $ do
       let
-        failingGraph = runGraphula graphAlwaysFails $ do
-          AlwaysFails _ <- node @A
+        failingGraph = runGraphula graphGenFails $ do
+          GenFails _ <- node @A
           pure ()
       failingGraph
         `shouldThrow` (== (GenerationFailureMaxAttempts (typeRep $ Proxy @A)))
@@ -151,10 +151,10 @@ graphIdentity f = case f of
   Insert n next ->
     next $ Just $ Identity n
 
-data AlwaysFails a = AlwaysFails a
+data GenFails a = GenFails a
 
-graphAlwaysFails :: Frontend NoConstraint AlwaysFails (IO r) -> IO r
-graphAlwaysFails f = case f of
+graphGenFails :: Frontend NoConstraint GenFails (IO r) -> IO r
+graphGenFails f = case f of
   Insert _ next ->
     next $ Nothing
 ```
