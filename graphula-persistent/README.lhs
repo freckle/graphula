@@ -59,7 +59,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"]
 main :: IO ()
 main =
   hspec $
-  beforeAll (runTestDB $ migrateTestDB *> truncateTestDB) $
+  beforeAll (runTestDB $ migrateTestDB) $
   describe "graphula-persistent" $ do
 
     let makeSimpleGraph = do
@@ -139,16 +139,9 @@ instance FromJSON DT
 migrateTestDB :: ReaderT SqlBackend (NoLoggingT (ResourceT IO)) ()
 migrateTestDB = runMigration migrateAll
 
-truncateTestDB :: ReaderT SqlBackend (NoLoggingT (ResourceT IO)) ()
-truncateTestDB = do
-  deleteWhere ([] :: [Filter DT])
-  deleteWhere ([] :: [Filter CT])
-  deleteWhere ([] :: [Filter BT])
-  deleteWhere ([] :: [Filter AT])
-
 runTestDB :: ReaderT SqlBackend (NoLoggingT (ResourceT IO)) a -> IO a
 runTestDB = runSqlite ":test:"
 
 withGraph :: Graph Arbitrary ToJSON (PersistRecord SqlBackend) Entity IO b -> IO b
-withGraph = runGraphulaLogged (persistGraph runTestDB)
+withGraph = runGraphulaIdempotentLogged (persistGraph runTestDB)
 ```

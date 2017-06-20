@@ -21,7 +21,7 @@ import Test.Hspec
 
 main :: IO ()
 main = hspec $
-  describe "graphula-core" $ do
+  describe "graphula-core" . parallel $ do
     it "generates and links arbitrary graphs of data" simpleSpec
     it "allows logging and replaying graphs" loggingAndReplaySpec
     it "attempts to retry node generation on insertion failure" insertionFailureSpec
@@ -146,6 +146,8 @@ graphIdentity :: Frontend NoConstraint Identity (IO r) -> IO r
 graphIdentity f = case f of
   Insert n next ->
     next $ Just $ Identity n
+  Remove _ next ->
+    next
 ```
 
 We can create other front-ends. For example, a front-end that always fails to insert.

@@ -49,6 +49,8 @@ module Graphula
   , runGraphulaLogged
   , runGraphulaLoggedWithFile
   , runGraphulaReplay
+  , runGraphulaIdempotent
+  , runGraphulaIdempotentLogged
   -- * Graph Implementation
   , Frontend(..)
   , Backend(..)
@@ -61,15 +63,17 @@ module Graphula
 import Prelude hiding (readFile, lines)
 import Test.QuickCheck (Arbitrary(..), generate)
 import Test.HUnit.Lang (HUnitFailure(..), FailureReason(..), formatFailureReason)
-import Control.Monad.Catch (MonadCatch(..), MonadThrow(..))
+import Control.Monad.Catch (MonadCatch(..), MonadThrow(..), MonadMask(..), bracket)
+import Control.Monad.Trans (lift)
 import Control.Monad.Trans.Free (FreeT, iterT, liftF, transFreeT)
 import Control.Monad.IO.Class (MonadIO(..))
-import Control.Exception (Exception, bracket)
+import Control.Exception (Exception, SomeException)
 import Data.Semigroup ((<>))
 import Data.Aeson (ToJSON, FromJSON, encode, eitherDecode)
 import Data.ByteString (ByteString, hPutStr, readFile)
 import Data.ByteString.Char8 (lines)
 import Data.ByteString.Lazy (toStrict, fromStrict)
+import Data.Foldable (for_)
 import Data.Functor.Sum (Sum(..))
 import Data.IORef (IORef, newIORef, readIORef, writeIORef, modifyIORef')
 import Data.Proxy (Proxy(..))
@@ -119,6 +123,46 @@ runGraphula
   -> m a
 runGraphula = runGraphulaUsing backendArbitrary
 
+-- | An extension of 'runGraphula' that produces finalizers to remove graph nodes
+-- on error or completion. An idempotent 'Graph' produces no data outside of its
+-- own closure.
+runGraphulaIdempotent
+  :: (MonadIO m, MonadCatch m, MonadMask m)
+  => (Frontend nodeConstraint entity (m a) -> m a)
+  -> Graph Arbitrary NoConstraint nodeConstraint entity m a -> m a
+runGraphulaIdempotent = runGraphulaIdempotentUsing backendArbitrary
+
+-- | An extension of 'runGraphulaIdemptotent' that produces replayable logs, like
+-- 'runGraphulaLogged'.
+runGraphulaIdempotentLogged
+  :: (MonadIO m, MonadCatch m, MonadMask m)
+  => (Frontend nodeConstraint entity (m a) -> m a)
+  -> Graph Arbitrary ToJSON nodeConstraint entity m a -> m a
+runGraphulaIdempotentLogged frontend graph = do
+  graphLog <- liftIO $ newIORef ""
+  go graphLog `catch` logFailTemp graphLog
+  where
+    go graphLog = runGraphulaIdempotentUsing (backendArbitraryLogged graphLog) frontend graph
+
+runGraphulaIdempotentUsing
+  :: (MonadIO m, MonadCatch m, MonadMask m)
+  => (Backend generate log (m a) -> m a)
+  -> (Frontend nodeConstraint entity (m a) -> m a)
+  -> Graph generate log nodeConstraint entity m a -> m a
+runGraphulaIdempotentUsing backend frontend f =
+  mask $ \unmasked -> do
+    finalizersRef <- liftIO . newIORef $ pure ()
+    x <- unmasked $ interpret finalizersRef `catch` rollbackRethrow finalizersRef
+    rollback finalizersRef $ pure x
+  where
+    interpret finalizersRef =
+      runGraphulaUsing backend (iterT frontend . finalizerFrontend finalizersRef) f
+    rollback finalizersRef x = do
+      finalizers <- liftIO $ readIORef finalizersRef
+      iterT frontend (finalizers >> x)
+    rollbackRethrow finalizersRef (e :: SomeException) =
+      rollback finalizersRef (throwM e)
+
 -- | An extension of 'runGraphula' that logs all json 'Value's to a temporary
 -- file on 'Exception' and re-throws the 'Exception'.
 runGraphulaLogged
@@ -164,6 +208,20 @@ runGraphulaReplay replayFile frontend f = do
     `catch` rethrowHUnitReplay replayFile
 
 
+finalizerFrontend
+  :: (MonadThrow m, MonadIO m)
+  => IORef (FreeT (Frontend nodeConstraint entity) m ())
+  -> Frontend nodeConstraint entity (m a)
+  -> FreeT (Frontend nodeConstraint entity) m a
+finalizerFrontend finalizersRef f = case f of
+  Insert n next -> do
+    mEnt <- liftF $ Insert n id
+    for_ mEnt $ \ent ->
+      liftIO $ modifyIORef' finalizersRef (remove ent >>)
+    lift $ next mEnt
+  Remove ent next -> do
+    remove ent
+    lift next
 
 backendArbitrary :: (MonadThrow m, MonadIO m) => Backend Arbitrary NoConstraint (m b) -> m b
 backendArbitrary = \case
@@ -250,11 +308,15 @@ liftRight = transFreeT InR
 
 data Frontend (nodeConstraint :: * -> Constraint) entity next where
   Insert :: nodeConstraint a => a -> (Maybe (entity a) -> next) -> Frontend nodeConstraint entity next
+  Remove :: nodeConstraint a => entity a -> next -> Frontend nodeConstraint entity next
 
 deriving instance Functor (Frontend nodeConstraint entity)
 
 insert :: (Monad m, nodeConstraint a) => a -> Graph generate log nodeConstraint entity m (Maybe (entity a))
 insert n = liftRight $ liftF (Insert n id)
+
+remove :: (Monad m, nodeConstraint a) => entity a -> FreeT (Frontend nodeConstraint entity) m ()
+remove n = liftF (Remove n ())
 
 
 data Backend (generate :: * -> Constraint) (log :: * -> Constraint) next where
