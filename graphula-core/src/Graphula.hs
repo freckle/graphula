@@ -217,10 +217,10 @@ finalizerFrontend finalizersRef f = case f of
   Insert n next -> do
     mEnt <- liftF $ Insert n id
     for_ mEnt $ \ent ->
-      liftIO $ modifyIORef' finalizersRef ((>>) (liftF $ Remove ent ()))
+      liftIO $ modifyIORef' finalizersRef (remove ent >>)
     lift $ next mEnt
   Remove ent next -> do
-    liftF $ Remove ent ()
+    remove ent
     lift next
 
 backendArbitrary :: (MonadThrow m, MonadIO m) => Backend Arbitrary NoConstraint (m b) -> m b
@@ -314,6 +314,9 @@ deriving instance Functor (Frontend nodeConstraint entity)
 
 insert :: (Monad m, nodeConstraint a) => a -> Graph generate log nodeConstraint entity m (Maybe (entity a))
 insert n = liftRight $ liftF (Insert n id)
+
+remove :: (Monad m, nodeConstraint a) => entity a -> FreeT (Frontend nodeConstraint entity) m ()
+remove n = liftF (Remove n ())
 
 
 data Backend (generate :: * -> Constraint) (log :: * -> Constraint) next where
