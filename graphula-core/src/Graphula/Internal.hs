@@ -9,20 +9,12 @@
 
 module Graphula.Internal where
 
-import Data.Proxy (Proxy(..))
-import Generics.Eot (Void)
+import Generics.Eot (Void, Proxy(..))
 import GHC.TypeLits (TypeError, ErrorMessage(..))
 
 data Match t
   = NoMatch t
   | Match t
-
--- This looks over-specified, but if we can tolerate some overlap in the type-family,
--- then we can avoid overlap in the typeclasses below.
-data List a
-  = None
-  | Last a
-  | Cons a (List a)
 
 type family DependenciesTypeInstance nodeTy depsTy where
   DependenciesTypeInstance nodeTy depsTy =
@@ -30,7 +22,7 @@ type family DependenciesTypeInstance nodeTy depsTy where
     'Text " = " ':<>: 'ShowType depsTy ':<>: 'Text "’"
 
 -- Walk through the fields of our node and match them up with fields from the dependencies.
-type family FindMatches nodeTy depsTy as ds where
+type family FindMatches nodeTy depsTy as ds :: [Match *] where
   -- Excess dependencies
   FindMatches nodeTy depsTy () (d, ds) =
     TypeError
@@ -40,24 +32,17 @@ type family FindMatches nodeTy depsTy as ds where
         'ShowType nodeTy ':<>: 'Text "’"
       )
 
-  -- No dependencies
-  FindMatches nodeTy depsTy () () = 'None
+  -- No more fields or dependencies left
+  FindMatches nodeTy depsTy () () = '[]
 
-  -- Last non-match
-  FindMatches nodeTy depsTy (a, ()) () = 'Last ('NoMatch a)
+  -- Fields left, but no more dependencies
+  FindMatches nodeTy depsTy (a, as) () = 'NoMatch a ': FindMatches nodeTy depsTy as ()
 
-  -- Only non-matches left
-  FindMatches nodeTy depsTy (a, as) () = 'Cons ('NoMatch a) (FindMatches nodeTy depsTy as ())
+  -- Field matches dependency, keep going
+  FindMatches nodeTy depsTy (a, as) (a, ds) = 'Match a ': FindMatches nodeTy depsTy as ds
 
-  -- Last match
-  FindMatches nodeTy depsTy (a, ()) (a, ()) = 'Last ('Match a)
-
-  -- Match in the middle
-  -- If we wanted, we could require the match to be on `Key a` instead of `a`
-  FindMatches nodeTy depsTy (a, as) (a, ds) = 'Cons ('Match a) (FindMatches nodeTy depsTy as ds)
-
-  -- Non-match in the middle
-  FindMatches nodeTy depsTy (a, as) (d, ds) = 'Cons ('NoMatch a) (FindMatches nodeTy depsTy as (d, ds))
+  -- Field does not match dependency, keep going
+  FindMatches nodeTy depsTy (a, as) (d, ds) = 'NoMatch a ': FindMatches nodeTy depsTy as (d, ds)
 
 class GHasDependencies nodeTyProxy depsTyProxy node deps where
   genericDependsOn :: nodeTyProxy -> depsTyProxy -> node -> deps -> node
@@ -107,21 +92,17 @@ instance
 instance
   ( a ~ dep
   , GHasDependenciesRecursive (Proxy fields) as deps
-  ) => GHasDependenciesRecursive (Proxy ('Cons ('Match a) fields)) (a, as) (dep, deps) where
+  ) => GHasDependenciesRecursive (Proxy ('Match a ': fields)) (a, as) (dep, deps) where
   genericDependsOnRecursive _ (_, as) (dep, deps) =
     (dep, genericDependsOnRecursive (Proxy :: Proxy fields) as deps)
 
 instance
   ( GHasDependenciesRecursive (Proxy fields) as deps
-  ) => GHasDependenciesRecursive (Proxy ('Cons ('NoMatch a) fields)) (a, as) deps where
+  ) => GHasDependenciesRecursive (Proxy ('NoMatch a ': fields)) (a, as) deps where
   genericDependsOnRecursive _ (a, as) deps =
     (a, genericDependsOnRecursive (Proxy :: Proxy fields) as deps)
 
-instance GHasDependenciesRecursive (Proxy ('Last ('NoMatch a))) (a, ()) () where
-  genericDependsOnRecursive _ (a, ()) () = (a, ())
-
-instance (a ~ dep) => GHasDependenciesRecursive (Proxy ('Last ('Match a))) (a, ()) (dep, ()) where
-  genericDependsOnRecursive _ (_, ()) (dep, ()) = (dep, ())
-
-instance GHasDependenciesRecursive (Proxy 'None) () () where
-  genericDependsOnRecursive _ () () = ()
+-- Without the kind-signature for '[], ghc will fail to find this
+-- instance for nullary constructors
+instance GHasDependenciesRecursive (Proxy ('[] :: [Match *])) () () where
+  genericDependsOnRecursive _ _ _ = ()
