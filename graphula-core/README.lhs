@@ -157,6 +157,8 @@ graphInsertFails :: Monad m => Frontend NoConstraint Identity (m r) -> m r
 graphInsertFails f = case f of
   Insert _ next ->
     next $ Nothing
+  Remove _ next ->
+    next
 
 insertionFailureSpec :: IO ()
 insertionFailureSpec = do

@@ -51,6 +51,11 @@ class GHasDependenciesRecursive fieldsProxy node deps where
   genericDependsOnRecursive :: fieldsProxy -> node -> deps -> node
 
 -- This instance head only matches EoT representations of
+-- datatypes with no constructors. Ignore dependencies.
+instance GHasDependencies (Proxy nodeTy) (Proxy depsTy) Void deps where
+  genericDependsOn _ _ node _ = node
+
+-- This instance head only matches EoT representations of
 -- datatypes with a single constructor
 instance
   ( FindMatches nodeTy depsTy node deps ~ fields
