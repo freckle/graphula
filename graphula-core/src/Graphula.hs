@@ -68,15 +68,14 @@ import Control.Monad.Trans (lift)
 import Control.Monad.Trans.Free (FreeT, iterT, liftF, transFreeT)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Exception (Exception, SomeException)
-import Data.Semigroup ((<>))
-import Data.Aeson (ToJSON, FromJSON, encode, eitherDecode)
-import Data.ByteString (ByteString, hPutStr, readFile)
-import Data.ByteString.Char8 (lines)
-import Data.ByteString.Lazy (toStrict, fromStrict)
+import Data.Aeson (ToJSON, FromJSON, Value, Result(..), toJSON, fromJSON, encode, eitherDecodeStrict')
+import Data.ByteString (readFile)
+import Data.ByteString.Lazy (hPutStr)
 import Data.Foldable (for_)
 import Data.Functor.Sum (Sum(..))
 import Data.IORef (IORef, newIORef, readIORef, writeIORef, modifyIORef')
 import Data.Proxy (Proxy(..))
+import Data.Sequence (Seq, ViewL(..), viewl, empty, (|>))
 import Data.Typeable (Typeable, TypeRep, typeRep)
 import Generics.Eot (fromEot, toEot, Eot, HasEot)
 import GHC.Exts (Constraint)
@@ -139,7 +138,7 @@ runGraphulaIdempotentLogged
   => (Frontend nodeConstraint entity (m a) -> m a)
   -> Graph Arbitrary ToJSON nodeConstraint entity m a -> m a
 runGraphulaIdempotentLogged frontend graph = do
-  graphLog <- liftIO $ newIORef ""
+  graphLog <- liftIO $ newIORef empty
   go graphLog `catch` logFailTemp graphLog
   where
     go graphLog = runGraphulaIdempotentUsing (backendArbitraryLogged graphLog) frontend graph
@@ -186,12 +185,12 @@ runGraphulaLoggedWithFile logPath =
 
 runGraphulaLoggedUsing
   :: (MonadIO m, MonadCatch m)
-  => (IORef ByteString -> HUnitFailure -> m a)
+  => (IORef (Seq Value) -> HUnitFailure -> m a)
   -> (Frontend nodeConstraint entity (m a) -> m a)
   -> Graph Arbitrary ToJSON nodeConstraint entity m a
   -> m a
 runGraphulaLoggedUsing logFail frontend f = do
-  graphLog <- liftIO $ newIORef ""
+  graphLog <- liftIO $ newIORef empty
   runGraphulaUsing (backendArbitraryLogged graphLog) frontend f
     `catch` logFail graphLog
 
@@ -203,7 +202,12 @@ runGraphulaReplay
   -> (Frontend nodeConstraint entity (m a) -> m a)
   -> Graph FromJSON NoConstraint nodeConstraint entity m a -> m a
 runGraphulaReplay replayFile frontend f = do
-  replayLog <- liftIO $ newIORef =<< (lines <$> readFile replayFile)
+  replayLog <-
+    liftIO $ do
+      bytes <- readFile replayFile
+      case eitherDecodeStrict' bytes of
+        Left err -> throwM $ userError err
+        Right nodes -> newIORef nodes
   runGraphulaUsing (backendReplay replayLog) frontend f
     `catch` rethrowHUnitReplay replayFile
 
@@ -232,58 +236,58 @@ backendArbitrary = \case
   Throw e next ->
     next =<< throwM e
 
-backendArbitraryLogged :: (MonadThrow m, MonadIO m) => IORef ByteString -> Backend Arbitrary ToJSON (m b) -> m b
+backendArbitraryLogged :: (MonadThrow m, MonadIO m) => IORef (Seq Value) -> Backend Arbitrary ToJSON (m b) -> m b
 backendArbitraryLogged graphLog = \case
   GenerateNode next -> do
     a <- liftIO . generate $ arbitrary
     next a
   LogNode a next -> do
-    liftIO $ modifyIORef' graphLog (<> (toStrict (encode a) <> "\n"))
+    liftIO $ modifyIORef' graphLog (|> toJSON a)
     next ()
   Throw e next ->
     next =<< throwM e
 
-backendReplay :: (MonadThrow m, MonadIO m) => IORef [ByteString] -> Backend FromJSON NoConstraint (m b) -> m b
+backendReplay :: (MonadThrow m, MonadIO m) => IORef (Seq Value) -> Backend FromJSON NoConstraint (m b) -> m b
 backendReplay replayRef = \case
   GenerateNode next -> do
     mJsonNode <- popReplay replayRef
     case mJsonNode of
       Nothing -> throwM $ userError "Not enough replay data to fullfill graph."
       Just jsonNode ->
-        case eitherDecode $ fromStrict jsonNode of
-          Left err -> throwM $ userError err
-          Right a -> next a
+        case fromJSON jsonNode of
+          Error err -> throwM $ userError err
+          Success a -> next a
   LogNode _ next -> next ()
   Throw e next ->
     next =<< throwM e
 
-popReplay :: MonadIO m => IORef [ByteString] -> m (Maybe ByteString)
+popReplay :: MonadIO m => IORef (Seq Value) -> m (Maybe Value)
 popReplay ref = liftIO $ do
   nodes <- readIORef ref
-  case nodes of
-    [] -> pure Nothing
-    n:ns -> do
+  case viewl nodes of
+    EmptyL -> pure Nothing
+    n :< ns -> do
       writeIORef ref ns
       pure $ Just n
 
-logFailUsing :: (MonadIO m, MonadThrow m) => IO (FilePath, Handle) -> IORef ByteString -> HUnitFailure -> m a
+logFailUsing :: (MonadIO m, MonadThrow m) => IO (FilePath, Handle) -> IORef (Seq Value) -> HUnitFailure -> m a
 logFailUsing f graphLog hunitfailure =
   flip rethrowHUnitLogged hunitfailure =<< logGraphToHandle graphLog f
 
-logFailFile :: (MonadIO m, MonadThrow m) => FilePath -> IORef ByteString -> HUnitFailure -> m a
+logFailFile :: (MonadIO m, MonadThrow m) => FilePath -> IORef (Seq Value) -> HUnitFailure -> m a
 logFailFile path =
   logFailUsing ((path, ) <$> openFile path WriteMode)
 
-logFailTemp :: (MonadIO m, MonadThrow m) => IORef ByteString -> HUnitFailure -> m a
+logFailTemp :: (MonadIO m, MonadThrow m) => IORef (Seq Value) -> HUnitFailure -> m a
 logFailTemp =
   logFailUsing (flip openTempFile "fail-.graphula" =<< getTemporaryDirectory)
 
-logGraphToHandle :: (MonadIO m) => IORef ByteString -> IO (FilePath, Handle) -> m FilePath
+logGraphToHandle :: (MonadIO m) => IORef (Seq Value) -> IO (FilePath, Handle) -> m FilePath
 logGraphToHandle graphLog openHandle =
   liftIO $ bracket
     openHandle
     (hClose . snd)
-    (\(path, handle) -> readIORef graphLog >>= hPutStr handle >> pure path )
+    (\(path, handle) -> readIORef graphLog >>= hPutStr handle . encode >> pure path )
 
 
 rethrowHUnitWith :: MonadThrow m => String -> HUnitFailure -> m a
