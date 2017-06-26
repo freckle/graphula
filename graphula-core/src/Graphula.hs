@@ -398,9 +398,9 @@ nodeEditWith
   => Dependencies a -> (a -> a) -> Graph generate log nodeConstraint entity m (entity a)
 nodeEditWith dependencies edits =
   tryInsert 10 0 $ do
-    x <- edits <$> generateNode
+    x <- (`dependsOn` dependencies) . edits <$> generateNode
     logNode x
-    pure (x `dependsOn` dependencies)
+    pure x
 
 {-|
   Generate a value with data dependencies. This leverages 'HasDependencies' to
