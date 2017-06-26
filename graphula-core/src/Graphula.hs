@@ -397,7 +397,7 @@ nodeEditWith
   :: forall a generate log entity nodeConstraint m. (Monad m, nodeConstraint a, Typeable a, generate a, log a, HasDependencies a)
   => Dependencies a -> (a -> a) -> Graph generate log nodeConstraint entity m (entity a)
 nodeEditWith dependencies edits =
-  tryInsert 10 0 $ do
+  10 `attemptsToInsertWith` do
     x <- (`dependsOn` dependencies) . edits <$> generateNode
     logNode x
     pure x
@@ -431,17 +431,19 @@ node
   => Graph generate log nodeConstraint entity m (entity a)
 node = nodeWith ()
 
-tryInsert
+attemptsToInsertWith
   :: forall a generate log entity nodeConstraint m. (Monad m, nodeConstraint a, Typeable a)
-  => Int -> Int -> Graph generate log nodeConstraint entity m a -> Graph generate log nodeConstraint entity m (entity a)
-tryInsert maxAttempts currentAttempts source
-  | currentAttempts >= maxAttempts =
+  => Int
+  -> Graph generate log nodeConstraint entity m a
+  -> Graph generate log nodeConstraint entity m (entity a)
+attemptsToInsertWith attempts source
+  | 0 >= attempts =
       throwF . GenerationFailureMaxAttempts $ typeRep (Proxy :: Proxy a)
   | otherwise = do
     value <- source
     insert value >>= \case
       Just a -> pure a
-      Nothing -> tryInsert maxAttempts (succ currentAttempts) source
+      Nothing -> pred attempts `attemptsToInsertWith` source
 
 -- | For entities that only have singular 'Dependencies'. It uses data instead
 -- of newtype to match laziness of builtin tuples.
