@@ -2,3 +2,4 @@
 *.stack-work
 :test:
 *.graphula
+*.tix
