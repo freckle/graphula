@@ -51,6 +51,22 @@ class GHasDependenciesRecursive fieldsProxy node deps where
   genericDependsOnRecursive :: fieldsProxy -> node -> deps -> node
 
 -- This instance head only matches EoT representations of
+-- datatypes with no constructors and no dependencies
+instance {-# OVERLAPPING #-} GHasDependencies (Proxy nodeTy) (Proxy depsTy) Void (Either () Void) where
+  genericDependsOn _ _ node _ = node
+
+-- This instance warns the user if they give dependencies
+-- to a datatype with no constructors
+instance
+  {-# OVERLAPPABLE #-}
+  ( TypeError
+    ( 'Text "A datatype with no constructors can't use the dependencies in" ':$$:
+      DependenciesTypeInstance nodeTy depsTy
+    )
+  ) => GHasDependencies (Proxy nodeTy) (Proxy depsTy) Void (Either deps rest) where
+    genericDependsOn _ _ _ _ = error "Impossible"
+
+-- This instance head only matches EoT representations of
 -- datatypes with a single constructor
 instance
   ( FindMatches nodeTy depsTy node deps ~ fields
@@ -87,6 +103,15 @@ instance
       DependenciesTypeInstance nodeTy depsTy
     )
   ) => GHasDependencies (Proxy nodeTy) (Proxy depsTy) (Either left1 (Either right1 rest1)) (Either left2 (Either right2 rest2)) where
+    genericDependsOn _ _ _ _ = error "Impossible"
+
+-- Don't let the user specify `Void` as a dependency
+instance
+  ( TypeError
+    ( 'Text "Use ‘()’ instead of ‘Void’ for datatypes with no dependencies in" ':$$:
+      DependenciesTypeInstance nodeTy depsTy
+    )
+  ) => GHasDependencies (Proxy nodeTy) (Proxy depsTy) node Void where
     genericDependsOn _ _ _ _ = error "Impossible"
 
 instance
