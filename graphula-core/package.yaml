@@ -34,3 +34,13 @@ tests:
       - graphula-core
       - hspec
       - markdown-unlit
+
+benchmarks:
+  bench:
+    source-dirs:
+      - bench
+    main: Main.hs
+    ghc-options: -Wall -O2
+    dependencies:
+      - criterion
+      - graphula-core
