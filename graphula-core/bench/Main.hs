@@ -55,7 +55,7 @@ newtype TagglessGraphula a = TagglessGraphula { runTagglessGraphula :: IO a }
 
 instance MonadGraphulaFrontend TagglessGraphula where
   type NodeConstraint TagglessGraphula = NoConstraint
-  type Entity TagglessGraphula = Identity
+  type Node TagglessGraphula = Identity
   insert = pure . Just . Identity
   remove = const (pure ())
 

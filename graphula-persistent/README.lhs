@@ -21,6 +21,7 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import GHC.Generics
 import Graphula
+import Graphula.Free
 import Graphula.Persist
 import Test.Hspec
 import Test.QuickCheck

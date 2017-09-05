@@ -10,6 +10,7 @@
 module Graphula.Persist (persistGraph, onlyKey, keys, Keys, PersistRecord) where
 
 import Graphula
+import qualified Graphula.Free as Free
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
 import Database.Persist
@@ -19,16 +20,16 @@ import GHC.TypeLits (TypeError, ErrorMessage(..))
 persistGraph
   :: (SqlBackendCanWrite backend, MonadIO m, MonadIO n)
   => (forall b. ReaderT backend n b -> m b)
-  -> Frontend (PersistRecord backend) Entity (m a) -> m a
+  -> Free.Frontend (PersistRecord backend) Entity (m a) -> m a
 persistGraph runDB = \case
-  Insert n next -> do
+  Free.Insert n next -> do
     x <- runDB $ do
       mKey <- insertUnique n
       case mKey of
         Nothing -> pure Nothing
         Just key' -> getEntity key'
     next x
-  Remove n next -> do
+  Free.Remove n next -> do
     runDB . delete $ entityKey n
     next
 
