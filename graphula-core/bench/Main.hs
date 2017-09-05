@@ -56,7 +56,7 @@ instance MonadGraphulaFrontend TagglessGraphula where
   type NodeConstraint TagglessGraphula = NoConstraint
   type Entity TagglessGraphula = Identity
   insert = pure . Just . Identity
-  removeM = const (pure ())
+  remove = const (pure ())
 
 instance MonadGraphulaBackend TagglessGraphula where
   type Logging TagglessGraphula = NoConstraint

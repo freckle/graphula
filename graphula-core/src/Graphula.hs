@@ -109,19 +109,19 @@ class MonadGraphulaFrontend m where
   type NodeConstraint m :: * -> Constraint
   type Entity m :: * -> *
   insert :: (Monad m, NodeConstraint m a) => a -> m (Maybe (Entity m a))
-  removeM :: (Monad m, NodeConstraint m a) => Entity m a -> m ()
+  remove :: (Monad m, NodeConstraint m a) => Entity m a -> m ()
 
 instance Monad m => MonadGraphulaFrontend (Graph generate log nodeConstraint entity m) where
   type NodeConstraint (Graph generate log nodeConstraint entity m) = nodeConstraint
   type Entity (Graph generate log nodeConstraint entity m) = entity
   insert = liftRight . insert
-  removeM = liftRight . removeM
+  remove = liftRight . remove
 
 instance Monad m => MonadGraphulaFrontend (FreeT (Frontend nodeConstraint entity) m) where
   type NodeConstraint (FreeT (Frontend nodeConstraint entity) m) = nodeConstraint
   type Entity (FreeT (Frontend nodeConstraint entity) m) = entity
   insert n = liftF (Insert n id)
-  removeM n = liftF (Remove n ())
+  remove n = liftF (Remove n ())
 
 class MonadGraphulaBackend m where
   type Logging m :: * -> Constraint
@@ -342,9 +342,6 @@ data Frontend (nodeConstraint :: * -> Constraint) entity next where
   Remove :: nodeConstraint a => entity a -> next -> Frontend nodeConstraint entity next
 
 deriving instance Functor (Frontend nodeConstraint entity)
-
-remove :: (Monad m, nodeConstraint a) => entity a -> FreeT (Frontend nodeConstraint entity) m ()
-remove n = liftF (Remove n ())
 
 data Backend (generate :: * -> Constraint) (log :: * -> Constraint) next where
   GenerateNode :: (generate a) => (a -> next) -> Backend generate log next
