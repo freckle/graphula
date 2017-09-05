@@ -16,6 +16,7 @@
   @
 -}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE ConstrainedClassMethods #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveFoldable #-}
@@ -53,7 +54,9 @@ module Graphula
   , runGraphulaIdempotentLogged
   -- * Graph Implementation
   , Frontend(..)
+  , MonadGraphulaFrontend(..)
   , Backend(..)
+  , MonadGraphulaBackend(..)
   -- * Extras
   , NoConstraint
   -- * Exceptions
@@ -101,6 +104,36 @@ import Graphula.Internal
 --   node. `graphula-persistent` returns all nodes in the 'Entity' type.
 type Graph generate log nodeConstraint entity
   = FreeT (Sum (Backend generate log) (Frontend nodeConstraint entity))
+
+class MonadGraphulaFrontend m where
+  type NodeConstraint m :: * -> Constraint
+  type Entity m :: * -> *
+  insert :: (Monad m, NodeConstraint m a) => a -> m (Maybe (Entity m a))
+  removeM :: (Monad m, NodeConstraint m a) => Entity m a -> m ()
+
+instance Monad m => MonadGraphulaFrontend (Graph generate log nodeConstraint entity m) where
+  type NodeConstraint (Graph generate log nodeConstraint entity m) = nodeConstraint
+  type Entity (Graph generate log nodeConstraint entity m) = entity
+  insert = liftRight . insert
+  removeM = liftRight . removeM
+
+instance Monad m => MonadGraphulaFrontend (FreeT (Frontend nodeConstraint entity) m) where
+  type NodeConstraint (FreeT (Frontend nodeConstraint entity) m) = nodeConstraint
+  type Entity (FreeT (Frontend nodeConstraint entity) m) = entity
+  insert n = liftF (Insert n id)
+  removeM n = liftF (Remove n ())
+
+class MonadGraphulaBackend m where
+  type Logging m :: * -> Constraint
+  type Generate m :: * -> Constraint
+  generateNode :: Generate m a => m a
+  logNode :: Logging m a => a -> m ()
+
+instance Monad m => MonadGraphulaBackend (Graph generate log nodeConstraint entity m) where
+  type Logging (Graph generate log nodeConstraint entity m) = log
+  type Generate (Graph generate log nodeConstraint entity m) = generate
+  generateNode = liftLeft . liftF $ GenerateNode id
+  logNode a = liftLeft . liftF $ LogNode a (const ())
 
 runGraphulaUsing
   :: (MonadIO m, MonadCatch m)
@@ -233,8 +266,6 @@ backendArbitrary = \case
     a <- liftIO . generate $ arbitrary
     next a
   LogNode _ next -> next ()
-  Throw e next ->
-    next =<< throwM e
 
 backendArbitraryLogged :: (MonadThrow m, MonadIO m) => IORef (Seq Value) -> Backend Arbitrary ToJSON (m b) -> m b
 backendArbitraryLogged graphLog = \case
@@ -244,8 +275,6 @@ backendArbitraryLogged graphLog = \case
   LogNode a next -> do
     liftIO $ modifyIORef' graphLog (|> toJSON a)
     next ()
-  Throw e next ->
-    next =<< throwM e
 
 backendReplay :: (MonadThrow m, MonadIO m) => IORef (Seq Value) -> Backend FromJSON NoConstraint (m b) -> m b
 backendReplay replayRef = \case
@@ -258,8 +287,6 @@ backendReplay replayRef = \case
           Error err -> throwM $ userError err
           Success a -> next a
   LogNode _ next -> next ()
-  Throw e next ->
-    next =<< throwM e
 
 popReplay :: MonadIO m => IORef (Seq Value) -> m (Maybe Value)
 popReplay ref = liftIO $ do
@@ -316,28 +343,14 @@ data Frontend (nodeConstraint :: * -> Constraint) entity next where
 
 deriving instance Functor (Frontend nodeConstraint entity)
 
-insert :: (Monad m, nodeConstraint a) => a -> Graph generate log nodeConstraint entity m (Maybe (entity a))
-insert n = liftRight $ liftF (Insert n id)
-
 remove :: (Monad m, nodeConstraint a) => entity a -> FreeT (Frontend nodeConstraint entity) m ()
 remove n = liftF (Remove n ())
-
 
 data Backend (generate :: * -> Constraint) (log :: * -> Constraint) next where
   GenerateNode :: (generate a) => (a -> next) -> Backend generate log next
   LogNode :: (log a) => a -> (() -> next) -> Backend generate log next
-  Throw :: Exception e => e -> (a -> next) -> Backend generate log next
 
 deriving instance Functor (Backend generate log)
-
-generateNode :: (Monad m, generate a) => Graph generate log nodeConstraint entity m a
-generateNode = liftLeft . liftF $ GenerateNode id
-
-logNode :: (Monad m, log a) => a -> Graph generate log nodeConstraint entity m ()
-logNode a = liftLeft . liftF $ LogNode a (const ())
-
-throwF :: (Monad m, Exception e) => e -> Graph generate log nodeConstraint entity m a
-throwF e = liftLeft . liftF $ Throw e id
 
 -- | `Graph` accepts constraints for various uses. Frontends do not always
 -- utilize these constraints. 'NoConstraint' is a universal class that all
@@ -394,8 +407,18 @@ instance Exception GenerationFailure
   >   dog {name = "fido"}
 -}
 nodeEditWith
-  :: forall a generate log entity nodeConstraint m. (Monad m, nodeConstraint a, Typeable a, generate a, log a, HasDependencies a)
-  => Dependencies a -> (a -> a) -> Graph generate log nodeConstraint entity m (entity a)
+  :: forall a m
+   . (Monad m
+     , NodeConstraint m a
+     , Typeable a
+     , Generate m a
+     , Logging m a
+     , HasDependencies a
+     , MonadGraphulaFrontend m
+     , MonadGraphulaBackend m
+     , MonadThrow m
+     )
+  => Dependencies a -> (a -> a) -> m (Entity m a)
 nodeEditWith dependencies edits =
   10 `attemptsToInsertWith` do
     x <- (`dependsOn` dependencies) . edits <$> generateNode
@@ -409,8 +432,18 @@ nodeEditWith dependencies edits =
   > nodeEdit @Dog (ownerId, veterinarianId)
 -}
 nodeWith
-  :: forall a generate log entity nodeConstraint m. (Monad m, nodeConstraint a, Typeable a, generate a, log a, HasDependencies a)
-  => Dependencies a -> Graph generate log nodeConstraint entity m (entity a)
+  :: forall a m
+   . (Monad m
+     , NodeConstraint m a
+     , Typeable a
+     , Generate m a
+     , Logging m a
+     , HasDependencies a
+     , MonadGraphulaFrontend m
+     , MonadGraphulaBackend m
+     , MonadThrow m
+     )
+  => Dependencies a -> m (Entity m a)
 nodeWith = flip nodeEditWith id
 
 {-|
@@ -419,26 +452,55 @@ nodeWith = flip nodeEditWith id
   > nodeEdit @Dog $ \dog -> dog {name = "fido"}
 -}
 nodeEdit
-  :: forall a generate log entity nodeConstraint m. (Monad m, nodeConstraint a, Typeable a, generate a, log a, HasDependencies a, Dependencies a ~ ())
-  => (a -> a) -> Graph generate log nodeConstraint entity m (entity a)
+  :: forall a m
+   . ( Monad m
+     , NodeConstraint m a
+     , Typeable a
+     , Generate m a
+     , Logging m a
+     , HasDependencies a
+     , Dependencies a ~ ()
+     , MonadGraphulaFrontend m
+     , MonadGraphulaBackend m
+     , MonadThrow m
+     )
+  => (a -> a) -> m (Entity m a)
 nodeEdit = nodeEditWith ()
 
 -- | Generate a value that does not have any dependencies
 --
 -- > node @Dog
 node
-  :: forall a generate log entity nodeConstraint m. (Monad m, nodeConstraint a, Typeable a, generate a, log a, HasDependencies a, Dependencies a ~ ())
-  => Graph generate log nodeConstraint entity m (entity a)
+  :: forall a m
+   . ( Monad m
+     , NodeConstraint m a
+     , Typeable a
+     , Generate m a
+     , Logging m a
+     , HasDependencies a
+     , Dependencies a ~ ()
+     , MonadGraphulaFrontend m
+     , MonadGraphulaBackend m
+     , MonadThrow m
+     )
+  => m (Entity m a)
 node = nodeWith ()
 
 attemptsToInsertWith
-  :: forall a generate log entity nodeConstraint m. (Monad m, nodeConstraint a, Typeable a)
+  :: forall a m
+    . ( Monad m
+      , NodeConstraint m a
+      , Typeable a
+      , MonadGraphulaFrontend m
+      , MonadGraphulaBackend m
+      , MonadThrow m
+      )
   => Int
-  -> Graph generate log nodeConstraint entity m a
-  -> Graph generate log nodeConstraint entity m (entity a)
+  -> m a
+  -> m (Entity m a)
 attemptsToInsertWith attempts source
   | 0 >= attempts =
-      throwF . GenerationFailureMaxAttempts $ typeRep (Proxy :: Proxy a)
+      throwM . GenerationFailureMaxAttempts $ typeRep (Proxy :: Proxy a)
   | otherwise = do
     value <- source
     insert value >>= \case
