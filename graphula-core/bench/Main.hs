@@ -6,6 +6,7 @@ module Main where
 
 import Criterion.Main
 import Graphula
+import qualified Graphula.Free as Free
 import Test.QuickCheck.Arbitrary
 import Test.QuickCheck (generate)
 import Control.Monad.Trans
@@ -39,15 +40,15 @@ instance Arbitrary A where
 
 instance HasDependencies A
 
-graphIdentity :: Frontend NoConstraint Identity (IO r) -> IO r
+graphIdentity :: Free.Frontend NoConstraint Identity (IO r) -> IO r
 graphIdentity f = case f of
-  Insert n next ->
+  Free.Insert n next ->
     next $ Just $ Identity n
-  Remove _ next ->
+  Free.Remove _ next ->
     next
 
 replicateNodeInitial :: Int -> IO ()
-replicateNodeInitial i = void . runGraphula graphIdentity . replicateM i $ node @A
+replicateNodeInitial i = void . Free.runGraphula graphIdentity . replicateM i $ node @A
 
 newtype TagglessGraphula a = TagglessGraphula { runTagglessGraphula :: IO a }
   deriving (Functor, Applicative, Monad, MonadIO, MonadThrow)

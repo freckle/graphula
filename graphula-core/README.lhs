@@ -15,6 +15,7 @@ import Data.Typeable
 import Data.Functor.Identity (Identity(..))
 import Control.Monad.IO.Class
 import Graphula
+import Graphula.Free
 import GHC.Generics (Generic)
 import Test.QuickCheck
 import Test.Hspec
