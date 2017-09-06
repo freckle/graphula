@@ -6,7 +6,7 @@
   The interface is extensible and supports pluggable front-ends.
 
   @
-  runGraphula graphIdentity $ do
+  runGraphIdentity . runGraphulaT $ do
     -- Compose dependencies at the value level
     Identity vet <- node @Veterinarian
     Identity owner <- nodeWith @Owner $ only vet
@@ -110,6 +110,7 @@ class MonadGraphulaBackend m where
   generateNode :: Generate m a => m a
   logNode :: Logging m a => a -> m ()
 
+-- | Run a graphu utilizing 'Arbitrary' for node generation.
 newtype GraphulaT m a = GraphulaT {runGraphulaT :: m a}
   deriving (Functor, Applicative, Monad, MonadThrow, MonadIO)
 
@@ -147,8 +148,9 @@ instance (Monad m, MonadIO m, MonadGraphulaFrontend m) => MonadGraphulaFrontend 
     pure mEnt
   remove = lift . remove
 
--- | Interpret a 'Graph' with a given 'Frontend' interpreter, utilizing a JSON
--- file for node generation via 'FromJSON'.
+-- | A wrapper around a graphula frontend that produces finalizers to remove
+-- graph nodes on error or completion. An idempotent graph produces no data
+-- outside of its own closure.
 runGraphulaIdempotentT
   :: (MonadCatch m, MonadThrow m, MonadMask m, MonadIO m, MonadGraphulaFrontend m)
   => GraphulaIdempotentT m a -> m a
@@ -188,10 +190,14 @@ instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaLo
   insert = lift . insert
   remove = lift . remove
 
+-- | An extension of 'runGraphulaT' that logs all json 'Value's to a temporary
+-- file on 'Exception' and re-throws the 'Exception'.
 runGraphulaLoggedT :: (MonadCatch m, MonadThrow m, MonadIO m) => GraphulaLoggedT m a -> m a
 runGraphulaLoggedT =
   runGraphulaLoggedUsingT logFailTemp
 
+-- | A variant of 'runGraphulaLoggedT' that accepts a file path to logged to
+-- instead of utilizing a temp file.
 runGraphulaLoggedWithFileT
   :: (MonadCatch m, MonadThrow m, MonadIO m)
   => FilePath -> GraphulaLoggedT m a -> m a
@@ -234,8 +240,7 @@ instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaRe
   insert = lift . insert
   remove = lift . remove
 
--- | Interpret a 'Graph' with a given 'Frontend' interpreter, utilizing a JSON
--- file for node generation via 'FromJSON'.
+-- | Run a graph utilizing a JSON file for node generation via 'FromJSON'.
 runGraphulaReplayT
   :: (MonadCatch m, MonadThrow m, MonadIO m)
   => FilePath -> GraphulaReplayT m a -> m a
@@ -292,7 +297,7 @@ rethrowHUnitReplay filePath =
   rethrowHUnitWith ("Using graph file: " ++ filePath)
 
 
--- | `Graph` accepts constraints for various uses. Frontends do not always
+-- | Graphula accepts constraints for various uses. Frontends do not always
 -- utilize these constraints. 'NoConstraint' is a universal class that all
 -- types inhabit. It has no behavior and no additional constraints.
 class NoConstraint a where
