@@ -346,14 +346,14 @@ instance Exception GenerationFailure
 
 type GraphulaContext m a =
   ( Monad m
+  , MonadGraphulaBackend m
+  , MonadGraphulaFrontend m
+  , MonadThrow m
+  , Generate m a
+  , HasDependencies a
+  , Logging m a
   , NodeConstraint m a
   , Typeable a
-  , Generate m a
-  , Logging m a
-  , HasDependencies a
-  , MonadGraphulaFrontend m
-  , MonadGraphulaBackend m
-  , MonadThrow m
   )
 
 {-|
