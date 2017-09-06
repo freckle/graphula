@@ -97,8 +97,8 @@ class MonadGraphulaFrontend m where
   type Node m :: * -> *
   -- ^ A wrapper type used to return relevant information about a given
   --   node. `graphula-persistent` returns all nodes in the 'Database.Persist.Entity' type.
-  insert :: (Monad m, NodeConstraint m a) => a -> m (Maybe (Node m a))
-  remove :: (Monad m, NodeConstraint m a) => Node m a -> m ()
+  insert :: NodeConstraint m a => a -> m (Maybe (Node m a))
+  remove :: NodeConstraint m a => Node m a -> m ()
 
 class MonadGraphulaBackend m where
   type Logging m :: * -> Constraint
