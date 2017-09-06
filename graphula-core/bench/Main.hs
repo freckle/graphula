@@ -8,10 +8,10 @@ import Criterion.Main
 import Graphula
 import qualified Graphula.Free as Free
 import Test.QuickCheck.Arbitrary
-import Test.QuickCheck (generate)
 import Control.Monad.Trans
 import Control.Monad.Catch
 import Data.Functor.Identity
+import Data.Aeson
 import Control.Monad (void, replicateM)
 import GHC.Generics
 
@@ -27,6 +27,16 @@ main = defaultMain
     , bench "100"  . nfIO $ replicateNodeFinal 100
     , bench "1000"  . nfIO $ replicateNodeFinal 1000
     ]
+  , bgroup "logged"
+    [ bench "1"  . nfIO $ replicateNodeLogged 1
+    , bench "100"  . nfIO $ replicateNodeLogged 100
+    , bench "1000"  . nfIO $ replicateNodeLogged 1000
+    ]
+  , bgroup "idempotent"
+    [ bench "1"  . nfIO $ replicateNodeIdempotent 1
+    , bench "100"  . nfIO $ replicateNodeIdempotent 100
+    , bench "1000"  . nfIO $ replicateNodeIdempotent 1000
+    ]
   ]
 
 data A
@@ -37,6 +47,8 @@ data A
 
 instance Arbitrary A where
   arbitrary = A <$> arbitrary <*> arbitrary
+
+instance ToJSON A
 
 instance HasDependencies A
 
@@ -50,20 +62,20 @@ graphIdentity f = case f of
 replicateNodeInitial :: Int -> IO ()
 replicateNodeInitial i = void . Free.runGraphula graphIdentity . replicateM i $ node @A
 
-newtype TagglessGraphula a = TagglessGraphula { runTagglessGraphula :: IO a }
-  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow)
+newtype GraphulaIdentity a = GraphulaIdentity { runGraphulaIdentity :: IO a }
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadMask)
 
-instance MonadGraphulaFrontend TagglessGraphula where
-  type NodeConstraint TagglessGraphula = NoConstraint
-  type Node TagglessGraphula = Identity
+instance MonadGraphulaFrontend GraphulaIdentity where
+  type NodeConstraint GraphulaIdentity = NoConstraint
+  type Node GraphulaIdentity = Identity
   insert = pure . Just . Identity
   remove = const (pure ())
 
-instance MonadGraphulaBackend TagglessGraphula where
-  type Logging TagglessGraphula = NoConstraint
-  type Generate TagglessGraphula = Arbitrary
-  generateNode = liftIO $ generate arbitrary
-  logNode _ = pure ()
-
 replicateNodeFinal :: Int -> IO ()
-replicateNodeFinal i = void . runTagglessGraphula . replicateM i $ node @A
+replicateNodeFinal i = void . runGraphulaIdentity . runGraphulaT . replicateM i $ node @A
+
+replicateNodeLogged :: Int -> IO ()
+replicateNodeLogged i = void . runGraphulaIdentity . runGraphulaLoggedT . replicateM i $ node @A
+
+replicateNodeIdempotent :: Int -> IO ()
+replicateNodeIdempotent i = void . runGraphulaIdentity . runGraphulaIdempotentT . runGraphulaT . replicateM i $ node @A
