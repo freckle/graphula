@@ -49,15 +49,15 @@ module Graphula
   -- * The Graph Monad
   , MonadGraphulaFrontend(..)
   , MonadGraphulaBackend(..)
-  , GraphulaT
   , runGraphulaT
-  , GraphulaLoggedT
+  , GraphulaT
   , runGraphulaLoggedT
   , runGraphulaLoggedWithFileT
-  , GraphulaReplayT
+  , GraphulaLoggedT
   , runGraphulaReplayT
-  , GraphulaIdempotentT
+  , GraphulaReplayT
   , runGraphulaIdempotentT
+  , GraphulaIdempotentT
   -- * Extras
   , NoConstraint
   -- * Exceptions
@@ -111,8 +111,10 @@ class MonadGraphulaBackend m where
   generateNode :: Generate m a => m a
   logNode :: Logging m a => a -> m ()
 
--- | Run a graphu utilizing 'Arbitrary' for node generation.
-newtype GraphulaT m a = GraphulaT {runGraphulaT :: m a}
+newtype GraphulaT m a = GraphulaT
+  { runGraphulaT :: m a
+  -- ^ Run a graphu utilizing 'Arbitrary' for node generation.
+  }
   deriving (Functor, Applicative, Monad, MonadThrow, MonadIO)
 
 instance MonadTrans GraphulaT where
