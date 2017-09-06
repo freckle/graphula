@@ -21,7 +21,6 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import GHC.Generics
 import Graphula
-import Graphula.Free
 import Graphula.Persist
 import Test.Hspec
 import Test.QuickCheck
@@ -143,6 +142,6 @@ migrateTestDB = runMigration migrateAll
 runTestDB :: ReaderT SqlBackend (NoLoggingT (ResourceT IO)) a -> IO a
 runTestDB = runSqlite ":test:"
 
-withGraph :: Graph Arbitrary ToJSON (PersistRecord SqlBackend) Entity IO b -> IO b
-withGraph = runGraphulaIdempotentLogged (persistGraph runTestDB)
+withGraph :: GraphulaLoggedT (GraphulaIdempotentT (GraphulaPersistT SqlBackend (NoLoggingT (ResourceT IO)) IO)) b -> IO b
+withGraph = runGraphulaPersistT runTestDB . runGraphulaIdempotentT . runGraphulaLoggedT
 ```

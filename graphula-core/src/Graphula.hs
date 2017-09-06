@@ -48,10 +48,14 @@ module Graphula
   -- * The Graph Monad
   , MonadGraphulaFrontend(..)
   , MonadGraphulaBackend(..)
+  , GraphulaT
   , runGraphulaT
+  , GraphulaLoggedT
   , runGraphulaLoggedT
   , runGraphulaLoggedWithFileT
+  , GraphulaReplayT
   , runGraphulaReplayT
+  , GraphulaIdempotentT
   , runGraphulaIdempotentT
   -- * Extras
   , NoConstraint

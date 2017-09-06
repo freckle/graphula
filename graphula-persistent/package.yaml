@@ -7,6 +7,7 @@ extra-source-files:
 
 dependencies:
   - base
+  - exceptions
   - graphula-core
   - mtl
   - persistent

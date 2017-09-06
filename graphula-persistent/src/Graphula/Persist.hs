@@ -1,37 +1,51 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
-module Graphula.Persist (persistGraph, onlyKey, keys, Keys, PersistRecord) where
+module Graphula.Persist (GraphulaPersistT, runGraphulaPersistT, onlyKey, keys, Keys, PersistRecord) where
 
 import Graphula
-import qualified Graphula.Free as Free
 import Control.Monad.IO.Class
-import Control.Monad.Trans.Reader
+import Control.Monad.Reader
+import Control.Monad.Catch (MonadCatch, MonadThrow, MonadMask)
 import Database.Persist
 import Database.Persist.Sql
 import GHC.TypeLits (TypeError, ErrorMessage(..))
 
-persistGraph
-  :: (SqlBackendCanWrite backend, MonadIO m, MonadIO n)
-  => (forall b. ReaderT backend n b -> m b)
-  -> Free.Frontend (PersistRecord backend) Entity (m a) -> m a
-persistGraph runDB = \case
-  Free.Insert n next -> do
-    x <- runDB $ do
+newtype RunDB backend n m = RunDB (forall b. ReaderT backend n b -> m b)
+
+newtype GraphulaPersistT backend n m a =
+  GraphulaPersistT { runGraphulaPersistT' :: ReaderT (RunDB backend n m) m a }
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadMask, MonadReader (RunDB backend n m))
+
+instance MonadTrans (GraphulaPersistT backend n) where
+  lift = GraphulaPersistT . lift
+
+instance (MonadIO m, Applicative n, MonadIO n, SqlBackendCanWrite backend) => MonadGraphulaFrontend (GraphulaPersistT backend n m) where
+  type NodeConstraint (GraphulaPersistT backend n m) = PersistRecord backend
+  type Node (GraphulaPersistT backend n m) = Entity
+  insert n = do
+    RunDB runDB <- ask
+    lift . runDB $ do
       mKey <- insertUnique n
       case mKey of
         Nothing -> pure Nothing
         Just key' -> getEntity key'
-    next x
-  Free.Remove n next -> do
-    runDB . delete $ entityKey n
-    next
+  remove ent = do
+    RunDB runDB <- ask
+    lift . runDB . delete $ entityKey ent
+
+runGraphulaPersistT
+  :: (SqlBackendCanWrite backend, MonadIO m)
+  => (forall b. ReaderT backend n b -> m b) -> GraphulaPersistT backend n m a -> m a
+runGraphulaPersistT runDB action =
+  runGraphulaPersistT' action `runReaderT` RunDB runDB
 
 class (PersistEntity a, PersistEntityBackend a ~ SqlBackend, PersistStoreWrite backend, PersistUniqueWrite backend) => PersistRecord backend a where
 
