@@ -66,7 +66,7 @@ import System.IO (hClose, openFile, IOMode(..), Handle)
 import System.IO.Temp (openTempFile)
 import System.Directory (getTemporaryDirectory)
 
-import Graphula hiding (runGraphula)
+import Graphula
 
 
 -- | 'Graph' is a type alias for graphula's underlying monad. This type carries
