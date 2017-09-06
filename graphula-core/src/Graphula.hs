@@ -40,6 +40,7 @@ module Graphula
   , nodeEdit
   , nodeWith
   , nodeEditWith
+  , GraphulaNode
   , GraphulaContext
   -- * Declaring Dependencies
   , HasDependencies(..)
@@ -47,8 +48,11 @@ module Graphula
   , Only(..)
   , only
   -- * The Graph Monad
+  -- ** Type Classes
+  , MonadGraphula
   , MonadGraphulaFrontend(..)
   , MonadGraphulaBackend(..)
+  -- ** Backends
   , runGraphulaT
   , GraphulaT
   , runGraphulaLoggedT
@@ -56,6 +60,7 @@ module Graphula
   , GraphulaLoggedT
   , runGraphulaReplayT
   , GraphulaReplayT
+  -- ** Frontends
   , runGraphulaIdempotentT
   , GraphulaIdempotentT
   -- * Extras
@@ -88,6 +93,13 @@ import System.IO.Temp (openTempFile)
 import System.Directory (getTemporaryDirectory)
 
 import Graphula.Internal
+
+type MonadGraphula m =
+  ( Monad m
+  , MonadGraphulaBackend m
+  , MonadGraphulaFrontend m
+  , MonadThrow m
+  )
 
 class MonadGraphulaFrontend m where
   type NodeConstraint m :: * -> Constraint
@@ -154,6 +166,11 @@ instance (Monad m, MonadIO m, MonadGraphulaFrontend m) => MonadGraphulaFrontend 
 -- | A wrapper around a graphula frontend that produces finalizers to remove
 -- graph nodes on error or completion. An idempotent graph produces no data
 -- outside of its own closure.
+--
+-- @
+-- runGraphIdentity . runGraphulaIdempotentT . runGraphulaT $ do
+--   node @PancakeBreakfast
+-- @
 runGraphulaIdempotentT
   :: (MonadCatch m, MonadThrow m, MonadMask m, MonadIO m, MonadGraphulaFrontend m)
   => GraphulaIdempotentT m a -> m a
@@ -346,12 +363,10 @@ data GenerationFailure =
 
 instance Exception GenerationFailure
 
-type GraphulaContext m a =
-  ( Monad m
-  , MonadGraphulaBackend m
-  , MonadGraphulaFrontend m
-  , MonadThrow m
-  , Generate m a
+type GraphulaContext m a = (MonadGraphula m, GraphulaNode m a)
+
+type GraphulaNode m a =
+  ( Generate m a
   , HasDependencies a
   , Logging m a
   , NodeConstraint m a
@@ -397,14 +412,7 @@ node :: forall a m. (GraphulaContext m a, Dependencies a ~ ()) => m (Node m a)
 node = nodeWith ()
 
 attemptsToInsertWith
-  :: forall a m
-    . ( Monad m
-      , NodeConstraint m a
-      , Typeable a
-      , MonadGraphulaFrontend m
-      , MonadGraphulaBackend m
-      , MonadThrow m
-      )
+  :: forall a m . (NodeConstraint m a, Typeable a, MonadGraphula m)
   => Int
   -> m a
   -> m (Node m a)
