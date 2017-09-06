@@ -40,6 +40,7 @@ module Graphula
   , nodeEdit
   , nodeWith
   , nodeEditWith
+  , GraphulaContext
   -- * Declaring Dependencies
   , HasDependencies(..)
   -- ** Singular Dependencies
@@ -343,6 +344,18 @@ data GenerationFailure =
 
 instance Exception GenerationFailure
 
+type GraphulaContext m a =
+  ( Monad m
+  , NodeConstraint m a
+  , Typeable a
+  , Generate m a
+  , Logging m a
+  , HasDependencies a
+  , MonadGraphulaFrontend m
+  , MonadGraphulaBackend m
+  , MonadThrow m
+  )
+
 {-|
   Generate and edit a value with data dependencies. This leverages
   'HasDependencies' to insert the specified data in the generated value. All
@@ -351,19 +364,7 @@ instance Exception GenerationFailure
   > nodeEdit @Dog (ownerId, veterinarianId) $ \dog ->
   >   dog {name = "fido"}
 -}
-nodeEditWith
-  :: forall a m
-   . (Monad m
-     , NodeConstraint m a
-     , Typeable a
-     , Generate m a
-     , Logging m a
-     , HasDependencies a
-     , MonadGraphulaFrontend m
-     , MonadGraphulaBackend m
-     , MonadThrow m
-     )
-  => Dependencies a -> (a -> a) -> m (Node m a)
+nodeEditWith :: forall a m. GraphulaContext m a => Dependencies a -> (a -> a) -> m (Node m a)
 nodeEditWith dependencies edits =
   10 `attemptsToInsertWith` do
     x <- (`dependsOn` dependencies) . edits <$> generateNode
@@ -376,19 +377,7 @@ nodeEditWith dependencies edits =
 
   > nodeEdit @Dog (ownerId, veterinarianId)
 -}
-nodeWith
-  :: forall a m
-   . (Monad m
-     , NodeConstraint m a
-     , Typeable a
-     , Generate m a
-     , Logging m a
-     , HasDependencies a
-     , MonadGraphulaFrontend m
-     , MonadGraphulaBackend m
-     , MonadThrow m
-     )
-  => Dependencies a -> m (Node m a)
+nodeWith :: forall a m. GraphulaContext m a => Dependencies a -> m (Node m a)
 nodeWith = flip nodeEditWith id
 
 {-|
@@ -396,39 +385,13 @@ nodeWith = flip nodeEditWith id
 
   > nodeEdit @Dog $ \dog -> dog {name = "fido"}
 -}
-nodeEdit
-  :: forall a m
-   . ( Monad m
-     , NodeConstraint m a
-     , Typeable a
-     , Generate m a
-     , Logging m a
-     , HasDependencies a
-     , Dependencies a ~ ()
-     , MonadGraphulaFrontend m
-     , MonadGraphulaBackend m
-     , MonadThrow m
-     )
-  => (a -> a) -> m (Node m a)
+nodeEdit :: forall a m. (GraphulaContext m a, Dependencies a ~ ()) => (a -> a) -> m (Node m a)
 nodeEdit = nodeEditWith ()
 
 -- | Generate a value that does not have any dependencies
 --
 -- > node @Dog
-node
-  :: forall a m
-   . ( Monad m
-     , NodeConstraint m a
-     , Typeable a
-     , Generate m a
-     , Logging m a
-     , HasDependencies a
-     , Dependencies a ~ ()
-     , MonadGraphulaFrontend m
-     , MonadGraphulaBackend m
-     , MonadThrow m
-     )
-  => m (Node m a)
+node :: forall a m. (GraphulaContext m a, Dependencies a ~ ()) => m (Node m a)
 node = nodeWith ()
 
 attemptsToInsertWith
