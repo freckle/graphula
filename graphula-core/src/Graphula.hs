@@ -125,7 +125,7 @@ class MonadGraphulaBackend m where
 
 newtype GraphulaT m a = GraphulaT
   { runGraphulaT :: m a
-  -- ^ Run a graphu utilizing 'Arbitrary' for node generation.
+  -- ^ Run a graph utilizing 'Arbitrary' for node generation.
   }
   deriving (Functor, Applicative, Monad, MonadThrow, MonadIO)
 
