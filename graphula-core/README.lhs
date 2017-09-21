@@ -8,11 +8,13 @@ Graphula is a simple interface for generating data and linking its dependencies.
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Main where
 
 import Data.Aeson
 import Data.Typeable
 import Data.Functor.Identity (Identity(..))
+import Control.Monad.Catch
 import Control.Monad.IO.Class
 import Graphula
 import GHC.Generics (Generic)
@@ -31,7 +33,7 @@ main = hspec $
 ```haskell
 simpleSpec :: IO ()
 simpleSpec =
-  runGraphula graphIdentity $ do
+  runGraphulaIdentity . runGraphulaT $ do
     -- Declare the graph at the term level
     Identity a <- node @A
     Identity b <- nodeWith @B (only a)
@@ -124,11 +126,11 @@ loggingAndReplaySpec = do
   let
     logFile = "test.graphula"
     -- We'd typically use `runGraphulaLogged` which utilizes a temp file.
-    failingGraph = runGraphulaLoggedWithFile logFile graphIdentity $ do
+    failingGraph = runGraphulaIdentity . runGraphulaLoggedWithFileT logFile $ do
       Identity a <- nodeEdit @A $ \n ->
         n {aa = "success"}
       liftIO $ aa a `shouldBe` "failed"
-    replayGraph = runGraphulaReplay logFile graphIdentity $ do
+    replayGraph = runGraphulaIdentity . runGraphulaReplayT logFile $ do
       Identity a <- node @A
       liftIO $ aa a `shouldBe` "success"
 
@@ -142,28 +144,32 @@ loggingAndReplaySpec = do
 `runGraphula` requires you to provide a front-end. This carries the instructions for evaluating a graph. Our simple `Frontend` is not constraining types and it is wrapping insert results in `Identity`. [`Graphula.Persist`](https://github.com/frontrowed/graphula/tree/master/graphula-persistent) is an example of a more complex frontend utilizing `Database.Persist`.
 
 ```haskell
-graphIdentity :: Frontend NoConstraint Identity (IO r) -> IO r
-graphIdentity f = case f of
-  Insert n next ->
-    next $ Just $ Identity n
-  Remove _ next ->
-    next
+newtype GraphulaIdentity a = GraphulaIdentity { runGraphulaIdentity :: IO a }
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadMask)
+
+instance MonadGraphulaFrontend GraphulaIdentity where
+  type NodeConstraint GraphulaIdentity = NoConstraint
+  type Node GraphulaIdentity = Identity
+  insert = pure . Just . Identity
+  remove = const (pure ())
 ```
 
 We can create other front-ends. For example, a front-end that always fails to insert.
 
 ```haskell
-graphInsertFails :: Monad m => Frontend NoConstraint Identity (m r) -> m r
-graphInsertFails f = case f of
-  Insert _ next ->
-    next $ Nothing
-  Remove _ next ->
-    next
+newtype GraphulaFail a = GraphulaFail { runGraphulaFail :: IO a }
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadMask)
+
+instance MonadGraphulaFrontend GraphulaFail where
+  type NodeConstraint GraphulaFail = NoConstraint
+  type Node GraphulaFail = Identity
+  insert _ = pure $ Nothing
+  remove = const (pure ())
 
 insertionFailureSpec :: IO ()
 insertionFailureSpec = do
   let
-    failingGraph = runGraphula graphInsertFails $ do
+    failingGraph =  runGraphulaFail . runGraphulaT $ do
       Identity _ <- node @A
       pure ()
   failingGraph
