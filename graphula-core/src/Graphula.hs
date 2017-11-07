@@ -83,6 +83,7 @@ import Data.ByteString (readFile)
 import Data.ByteString.Lazy (hPutStr)
 import Data.Foldable (for_)
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef, writeIORef)
+import Data.Kind (Type)
 import Data.Proxy (Proxy(..))
 import Data.Sequence (Seq, ViewL(..), empty, viewl, (|>))
 import Data.Typeable (TypeRep, Typeable, typeRep)
@@ -116,7 +117,7 @@ type MonadGraphula m =
 --     n { cc = "spanish" }
 -- @
 --
-type family GraphulaContext m ts :: Constraint where
+type family GraphulaContext (m :: Type -> Type) (ts :: [Type]) :: Constraint where
    GraphulaContext m '[] = MonadGraphula m
    GraphulaContext m (t ': ts) = (GraphulaNode m t, GraphulaContext m ts)
 
