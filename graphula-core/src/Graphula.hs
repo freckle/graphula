@@ -15,11 +15,12 @@
       d { name = "fido" }
   @
 -}
-{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE ConstrainedClassMethods #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveFoldable #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -31,8 +32,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Graphula
   ( -- * Graph Declaration
@@ -42,6 +44,7 @@ module Graphula
   , nodeEditWith
   , GraphulaNode
   , GraphulaContext
+  , Graphula
   -- * Declaring Dependencies
   , HasDependencies(..)
   -- ** Singular Dependencies
@@ -100,6 +103,21 @@ type MonadGraphula m =
   , MonadGraphulaFrontend m
   , MonadThrow m
   )
+
+-- | A constraint over lists of nodes for 'MonadGraphula', and 'GraphulaNode'.
+--   Helpful for defining utility functions over many nodes.
+--
+-- @
+-- mkABC :: (Graphula m '[A, B, C]) => m (Node m C)
+-- mkABC = do
+--   a <- node @A
+--   b <- nodeWith @B (only a)
+--   nodeEditWith @C (a, b) $ \n ->
+--     n { cc = "spanish" }
+-- @
+type family Graphula m ts :: Constraint where
+   Graphula m '[] = MonadGraphula m
+   Graphula m (t ': ts) = (GraphulaNode m t, Graphula m ts)
 
 class MonadGraphulaFrontend m where
   type NodeConstraint m :: * -> Constraint
