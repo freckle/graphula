@@ -72,6 +72,8 @@ module Graphula
   , GenerationFailure(..)
   ) where
 
+import Prelude hiding (lines, readFile)
+
 import Control.Exception (Exception, SomeException)
 import Control.Monad.Catch (MonadCatch(..), MonadMask(..), MonadThrow(..), bracket)
 import Control.Monad.IO.Class (MonadIO(..))
@@ -88,14 +90,12 @@ import Data.Typeable (TypeRep, Typeable, typeRep)
 import Generics.Eot (Eot, HasEot, fromEot, toEot)
 import GHC.Exts (Constraint)
 import GHC.Generics (Generic)
-import Prelude hiding (lines, readFile)
+import Graphula.Internal
 import System.Directory (getTemporaryDirectory)
 import System.IO (Handle, IOMode(..), hClose, openFile)
 import System.IO.Temp (openTempFile)
 import Test.HUnit.Lang (FailureReason(..), HUnitFailure(..), formatFailureReason)
 import Test.QuickCheck (Arbitrary(..), generate)
-
-import Graphula.Internal
 
 type MonadGraphula m =
   ( Monad m
