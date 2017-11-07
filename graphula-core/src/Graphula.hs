@@ -44,7 +44,6 @@ module Graphula
   , nodeEditWith
   , GraphulaNode
   , GraphulaContext
-  , Graphula
   -- * Declaring Dependencies
   , HasDependencies(..)
   -- ** Singular Dependencies
@@ -105,19 +104,21 @@ type MonadGraphula m =
   )
 
 -- | A constraint over lists of nodes for 'MonadGraphula', and 'GraphulaNode'.
---   Helpful for defining utility functions over many nodes.
+--
+-- Helpful for defining utility functions over many nodes.
 --
 -- @
--- mkABC :: (Graphula m '[A, B, C]) => m (Node m C)
+-- mkABC :: (GraphulaContext m '[A, B, C]) => m (Node m C)
 -- mkABC = do
 --   a <- node @A
 --   b <- nodeWith @B (only a)
 --   nodeEditWith @C (a, b) $ \n ->
 --     n { cc = "spanish" }
 -- @
-type family Graphula m ts :: Constraint where
-   Graphula m '[] = MonadGraphula m
-   Graphula m (t ': ts) = (GraphulaNode m t, Graphula m ts)
+--
+type family GraphulaContext m ts :: Constraint where
+   GraphulaContext m '[] = MonadGraphula m
+   GraphulaContext m (t ': ts) = (GraphulaNode m t, GraphulaContext m ts)
 
 class MonadGraphulaFrontend m where
   type NodeConstraint m :: * -> Constraint
@@ -381,8 +382,6 @@ data GenerationFailure =
 
 instance Exception GenerationFailure
 
-type GraphulaContext m a = (MonadGraphula m, GraphulaNode m a)
-
 type GraphulaNode m a =
   ( Generate m a
   , HasDependencies a
@@ -399,7 +398,7 @@ type GraphulaNode m a =
   > nodeEdit @Dog (ownerId, veterinarianId) $ \dog ->
   >   dog {name = "fido"}
 -}
-nodeEditWith :: forall a m. GraphulaContext m a => Dependencies a -> (a -> a) -> m (Node m a)
+nodeEditWith :: forall a m. GraphulaContext m '[a] => Dependencies a -> (a -> a) -> m (Node m a)
 nodeEditWith dependencies edits =
   10 `attemptsToInsertWith` do
     x <- (`dependsOn` dependencies) . edits <$> generateNode
@@ -412,7 +411,7 @@ nodeEditWith dependencies edits =
 
   > nodeEdit @Dog (ownerId, veterinarianId)
 -}
-nodeWith :: forall a m. GraphulaContext m a => Dependencies a -> m (Node m a)
+nodeWith :: forall a m. GraphulaContext m '[a] => Dependencies a -> m (Node m a)
 nodeWith = flip nodeEditWith id
 
 {-|
@@ -420,17 +419,17 @@ nodeWith = flip nodeEditWith id
 
   > nodeEdit @Dog $ \dog -> dog {name = "fido"}
 -}
-nodeEdit :: forall a m. (GraphulaContext m a, Dependencies a ~ ()) => (a -> a) -> m (Node m a)
+nodeEdit :: forall a m. (GraphulaContext m '[a], Dependencies a ~ ()) => (a -> a) -> m (Node m a)
 nodeEdit = nodeEditWith ()
 
 -- | Generate a value that does not have any dependencies
 --
 -- > node @Dog
-node :: forall a m. (GraphulaContext m a, Dependencies a ~ ()) => m (Node m a)
+node :: forall a m. (GraphulaContext m '[a], Dependencies a ~ ()) => m (Node m a)
 node = nodeWith ()
 
 attemptsToInsertWith
-  :: forall a m . (NodeConstraint m a, Typeable a, MonadGraphula m)
+  :: forall a m . (Typeable a, GraphulaContext m '[a])
   => Int
   -> m a
   -> m (Node m a)
