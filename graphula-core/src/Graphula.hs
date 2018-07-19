@@ -72,7 +72,6 @@ module Graphula
 
 import Prelude hiding (readFile)
 
---import Control.Exception (Exception, SomeException)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift
 import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)

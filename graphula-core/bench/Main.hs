@@ -5,7 +5,6 @@
 module Main where
 
 import Control.Monad (replicateM, void)
-import Control.Monad.Catch
 import Control.Monad.Trans
 import Criterion.Main
 import Data.Aeson
