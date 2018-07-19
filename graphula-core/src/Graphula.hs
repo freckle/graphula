@@ -463,7 +463,7 @@ attemptsToInsertWith attempts source
 
 -- | For entities that only have singular 'Dependencies'. It uses data instead
 -- of newtype to match laziness of builtin tuples.
-newtype Only a = Only { fromOnly :: a }
+data Only a = Only { fromOnly :: a }
   deriving (Eq, Show, Ord, Generic, Functor, Foldable, Traversable)
 
 only :: a -> Only a
