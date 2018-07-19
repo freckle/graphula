@@ -1,33 +1,42 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -fno-warn-missing-methods #-}
 module Graphula.Persist (GraphulaPersistT, runGraphulaPersistT, onlyKey, keys, Keys, PersistRecord) where
 
-import Graphula
 import Control.Monad.IO.Class
+import Control.Monad.IO.Unlift
 import Control.Monad.Reader
-import Control.Monad.Catch (MonadCatch, MonadThrow, MonadMask)
 import Database.Persist
 import Database.Persist.Sql
-import GHC.TypeLits (TypeError, ErrorMessage(..))
+import GHC.TypeLits (ErrorMessage(..), TypeError)
+import Graphula
 
 newtype RunDB backend n m = RunDB (forall b. ReaderT backend n b -> m b)
 
 newtype GraphulaPersistT backend n m a =
   GraphulaPersistT { runGraphulaPersistT' :: ReaderT (RunDB backend n m) m a }
-  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadMask, MonadReader (RunDB backend n m))
+  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (RunDB backend n m))
+
+instance MonadUnliftIO m => MonadUnliftIO (GraphulaPersistT backend n m) where
+  {-# INLINE askUnliftIO #-}
+  askUnliftIO = GraphulaPersistT $ withUnliftIO $ \u ->
+    return $ UnliftIO $ unliftIO u . runGraphulaPersistT'
+  {-# INLINE withRunInIO #-}
+  withRunInIO inner = GraphulaPersistT $ withRunInIO $ \run ->
+    inner $ run . runGraphulaPersistT'
 
 instance MonadTrans (GraphulaPersistT backend n) where
   lift = GraphulaPersistT . lift
 
-instance (MonadIO m, Applicative n, MonadIO n, SqlBackendCanWrite backend) => MonadGraphulaFrontend (GraphulaPersistT backend n m) where
+instance (MonadIO m, Applicative n, MonadIO n, SqlBackendCanWrite backend, BaseBackend backend ~ SqlBackend) => MonadGraphulaFrontend (GraphulaPersistT backend n m) where
   type NodeConstraint (GraphulaPersistT backend n m) = PersistRecord backend
   type Node (GraphulaPersistT backend n m) = Entity
   insert n = do

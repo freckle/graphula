@@ -31,7 +31,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -71,14 +70,23 @@ module Graphula
   , GenerationFailure(..)
   ) where
 
-import Prelude hiding (lines, readFile)
+import Prelude hiding (readFile)
 
-import Control.Exception (Exception, SomeException)
-import Control.Monad.Catch (MonadCatch(..), MonadMask(..), MonadThrow(..), bracket)
+--import Control.Exception (Exception, SomeException)
 import Control.Monad.IO.Class (MonadIO(..))
+import Control.Monad.IO.Unlift
 import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
 import Control.Monad.Trans (MonadTrans, lift)
-import Data.Aeson (FromJSON, Result(..), ToJSON, Value, eitherDecodeStrict', encode, fromJSON, toJSON)
+import Data.Aeson
+    ( FromJSON
+    , Result(..)
+    , ToJSON
+    , Value
+    , eitherDecodeStrict'
+    , encode
+    , fromJSON
+    , toJSON
+    )
 import Data.ByteString (readFile)
 import Data.ByteString.Lazy (hPutStr)
 import Data.Foldable (for_)
@@ -94,14 +102,17 @@ import Graphula.Internal
 import System.Directory (getTemporaryDirectory)
 import System.IO (Handle, IOMode(..), hClose, openFile)
 import System.IO.Temp (openTempFile)
-import Test.HUnit.Lang (FailureReason(..), HUnitFailure(..), formatFailureReason)
+import Test.HUnit.Lang
+    (FailureReason(..), HUnitFailure(..), formatFailureReason)
 import Test.QuickCheck (Arbitrary(..), generate)
+import UnliftIO.Exception
+    (Exception, SomeException, bracket, catch, mask, throwIO)
 
 type MonadGraphula m =
   ( Monad m
   , MonadGraphulaBackend m
   , MonadGraphulaFrontend m
-  , MonadThrow m
+  , MonadIO m
   )
 
 -- | A constraint over lists of nodes for 'MonadGraphula', and 'GraphulaNode'.
@@ -147,7 +158,7 @@ newtype GraphulaT m a = GraphulaT
   { runGraphulaT :: m a
   -- ^ Run a graph utilizing 'Arbitrary' for node generation.
   }
-  deriving (Functor, Applicative, Monad, MonadThrow, MonadIO)
+  deriving (Functor, Applicative, Monad, MonadIO)
 
 instance MonadTrans GraphulaT where
   lift = GraphulaT
@@ -167,7 +178,15 @@ instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaT 
 
 newtype GraphulaIdempotentT m a =
   GraphulaIdempotentT {runGraphulaIdempotentT' :: ReaderT (IORef (m ())) m a}
-  deriving (Functor, Applicative, Monad, MonadThrow, MonadCatch, MonadMask, MonadIO, MonadReader (IORef (m ())))
+  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (IORef (m ())))
+
+instance MonadUnliftIO m => MonadUnliftIO (GraphulaIdempotentT m) where
+  {-# INLINE askUnliftIO #-}
+  askUnliftIO = GraphulaIdempotentT $ withUnliftIO $ \u ->
+    return $ UnliftIO $ unliftIO u . runGraphulaIdempotentT'
+  {-# INLINE withRunInIO #-}
+  withRunInIO inner = GraphulaIdempotentT $ withRunInIO $ \run ->
+    inner $ run . runGraphulaIdempotentT'
 
 instance MonadTrans GraphulaIdempotentT where
   lift = GraphulaIdempotentT . lift
@@ -192,7 +211,7 @@ instance (Monad m, MonadIO m, MonadGraphulaFrontend m) => MonadGraphulaFrontend 
 --   node @PancakeBreakfast
 -- @
 runGraphulaIdempotentT
-  :: (MonadCatch m, MonadThrow m, MonadMask m, MonadIO m, MonadGraphulaFrontend m)
+  :: (MonadUnliftIO m, MonadGraphulaFrontend m)
   => GraphulaIdempotentT m a -> m a
 runGraphulaIdempotentT action =
   mask $ \unmasked -> do
@@ -206,12 +225,12 @@ runGraphulaIdempotentT action =
       finalizers <- liftIO $ readIORef finalizersRef
       finalizers >> x
     rollbackRethrow finalizersRef (e :: SomeException) =
-      rollback finalizersRef (throwM e)
+      rollback finalizersRef (throwIO e)
 
 
 newtype GraphulaLoggedT m a =
   GraphulaLoggedT {runGraphulaLoggedT' :: ReaderT (IORef (Seq Value)) m a}
-  deriving (Functor, Applicative, Monad, MonadThrow, MonadIO, MonadReader (IORef (Seq Value)))
+  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (IORef (Seq Value)))
 
 instance MonadTrans GraphulaLoggedT where
   lift = GraphulaLoggedT . lift
@@ -232,20 +251,20 @@ instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaLo
 
 -- | An extension of 'runGraphulaT' that logs all json 'Value's to a temporary
 -- file on 'Exception' and re-throws the 'Exception'.
-runGraphulaLoggedT :: (MonadCatch m, MonadThrow m, MonadIO m) => GraphulaLoggedT m a -> m a
+runGraphulaLoggedT :: MonadUnliftIO m => GraphulaLoggedT m a -> m a
 runGraphulaLoggedT =
   runGraphulaLoggedUsingT logFailTemp
 
 -- | A variant of 'runGraphulaLoggedT' that accepts a file path to logged to
 -- instead of utilizing a temp file.
 runGraphulaLoggedWithFileT
-  :: (MonadCatch m, MonadThrow m, MonadIO m)
+  :: MonadUnliftIO m
   => FilePath -> GraphulaLoggedT m a -> m a
 runGraphulaLoggedWithFileT logPath =
   runGraphulaLoggedUsingT $ logFailFile logPath
 
 runGraphulaLoggedUsingT
-  :: (MonadCatch m, MonadThrow m, MonadIO m)
+  :: MonadUnliftIO m
   => (IORef (Seq Value) -> HUnitFailure -> m a) -> GraphulaLoggedT m a -> m a
 runGraphulaLoggedUsingT logFail action = do
   graphLog <- liftIO $ newIORef empty
@@ -255,22 +274,22 @@ runGraphulaLoggedUsingT logFail action = do
 
 newtype GraphulaReplayT m a =
   GraphulaReplayT {runGraphulaReplayT' :: ReaderT (IORef (Seq Value)) m a}
-  deriving (Functor, Applicative, Monad, MonadThrow, MonadIO, MonadReader (IORef (Seq Value)))
+  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (IORef (Seq Value)))
 
 instance MonadTrans GraphulaReplayT where
   lift = GraphulaReplayT . lift
 
-instance (MonadIO m, MonadThrow m) => MonadGraphulaBackend (GraphulaReplayT m) where
+instance MonadIO m => MonadGraphulaBackend (GraphulaReplayT m) where
   type Logging (GraphulaReplayT m) = NoConstraint
   type Generate (GraphulaReplayT m) = FromJSON
   generateNode = do
     replayRef <- ask
     mJsonNode <- popReplay replayRef
     case mJsonNode of
-      Nothing -> throwM $ userError "Not enough replay data to fullfill graph."
+      Nothing -> throwIO $ userError "Not enough replay data to fullfill graph."
       Just jsonNode ->
         case fromJSON jsonNode of
-          Error err -> throwM $ userError err
+          Error err -> throwIO $ userError err
           Success a -> pure a
   logNode _ = pure ()
 
@@ -282,14 +301,14 @@ instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaRe
 
 -- | Run a graph utilizing a JSON file for node generation via 'FromJSON'.
 runGraphulaReplayT
-  :: (MonadCatch m, MonadThrow m, MonadIO m)
+  :: MonadUnliftIO m
   => FilePath -> GraphulaReplayT m a -> m a
 runGraphulaReplayT replayFile action = do
   replayLog <-
     liftIO $ do
       bytes <- readFile replayFile
       case eitherDecodeStrict' bytes of
-        Left err -> throwM $ userError err
+        Left err -> throwIO $ userError err
         Right nodes -> newIORef nodes
   runReaderT (runGraphulaReplayT' action) replayLog
     `catch` rethrowHUnitReplay replayFile
@@ -304,15 +323,15 @@ popReplay ref = liftIO $ do
       pure $ Just n
 
 
-logFailUsing :: (MonadIO m, MonadThrow m) => IO (FilePath, Handle) -> IORef (Seq Value) -> HUnitFailure -> m a
+logFailUsing :: MonadIO m => IO (FilePath, Handle) -> IORef (Seq Value) -> HUnitFailure -> m a
 logFailUsing f graphLog hunitfailure =
   flip rethrowHUnitLogged hunitfailure =<< logGraphToHandle graphLog f
 
-logFailFile :: (MonadIO m, MonadThrow m) => FilePath -> IORef (Seq Value) -> HUnitFailure -> m a
+logFailFile :: MonadIO m => FilePath -> IORef (Seq Value) -> HUnitFailure -> m a
 logFailFile path =
   logFailUsing ((path, ) <$> openFile path WriteMode)
 
-logFailTemp :: (MonadIO m, MonadThrow m) => IORef (Seq Value) -> HUnitFailure -> m a
+logFailTemp :: MonadIO m => IORef (Seq Value) -> HUnitFailure -> m a
 logFailTemp =
   logFailUsing (flip openTempFile "fail-.graphula" =<< getTemporaryDirectory)
 
@@ -324,15 +343,15 @@ logGraphToHandle graphLog openHandle =
     (\(path, handle) -> readIORef graphLog >>= hPutStr handle . encode >> pure path )
 
 
-rethrowHUnitWith :: MonadThrow m => String -> HUnitFailure -> m a
+rethrowHUnitWith :: MonadIO m => String -> HUnitFailure -> m a
 rethrowHUnitWith message (HUnitFailure l r)  =
-  throwM . HUnitFailure l . Reason $ message ++ "\n\n" ++ formatFailureReason r
+  throwIO . HUnitFailure l . Reason $ message ++ "\n\n" ++ formatFailureReason r
 
-rethrowHUnitLogged :: MonadThrow m => FilePath -> HUnitFailure -> m a
+rethrowHUnitLogged :: MonadIO m => FilePath -> HUnitFailure -> m a
 rethrowHUnitLogged path  =
   rethrowHUnitWith ("Graph dumped in temp file: " ++ path)
 
-rethrowHUnitReplay :: (MonadIO m, MonadThrow m) => FilePath -> HUnitFailure -> m a
+rethrowHUnitReplay :: MonadIO m => FilePath -> HUnitFailure -> m a
 rethrowHUnitReplay filePath =
   rethrowHUnitWith ("Using graph file: " ++ filePath)
 
@@ -436,7 +455,7 @@ attemptsToInsertWith
   -> m (Node m a)
 attemptsToInsertWith attempts source
   | 0 >= attempts =
-      throwM . GenerationFailureMaxAttempts $ typeRep (Proxy :: Proxy a)
+      throwIO . GenerationFailureMaxAttempts $ typeRep (Proxy :: Proxy a)
   | otherwise = do
     value <- source
     insert value >>= \case
@@ -445,7 +464,7 @@ attemptsToInsertWith attempts source
 
 -- | For entities that only have singular 'Dependencies'. It uses data instead
 -- of newtype to match laziness of builtin tuples.
-data Only a = Only { fromOnly :: a }
+newtype Only a = Only { fromOnly :: a }
   deriving (Eq, Show, Ord, Generic, Functor, Foldable, Traversable)
 
 only :: a -> Only a

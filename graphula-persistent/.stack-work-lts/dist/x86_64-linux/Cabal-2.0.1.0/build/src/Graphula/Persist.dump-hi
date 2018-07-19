@@ -1,0 +1,1520 @@
+
+==================== FINAL INTERFACE ====================
+2018-07-19 19:09:18.680392 UTC
+
+interface graphula-persistent-0.1.0-4e7yTwa5KSn8T6sZnXQlEO:Graphula.Persist [family instance module] 8022
+  interface hash: 51e3cc3eb9cb8e23ce1576d29fd6aa6c
+  ABI hash: fe51c53d281563d2ee068071c1876d2f
+  export-list hash: 5d90f1d15f3b75ac72a8888287a37d4c
+  orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
+  flag hash: 7b06da0d6bd2f0fd7394bfffed87198a
+  sig of: Nothing
+  used TH splices: False
+  where
+exports:
+  Graphula.Persist.onlyKey
+  Graphula.Persist.runGraphulaPersistT
+  Graphula.Persist.EntityKeys|{Graphula.Persist.Keys Graphula.Persist.keys}
+  Graphula.Persist.GraphulaPersistT
+  Graphula.Persist.PersistRecord
+module dependencies:
+package dependencies: HUnit-1.6.0.0 QuickCheck-2.10.1 aeson-1.2.4.0
+                      array-0.5.2.0 attoparsec-0.13.2.2 attoparsec-iso8601-1.0.0.0
+                      auto-update-0.1.4 base-4.10.1.0 base-compat-0.9.3
+                      base64-bytestring-1.0.0.1 binary-0.8.5.1 blaze-html-0.9.1.1
+                      blaze-markup-0.8.2.1 bytestring-0.10.8.2 call-stack-0.1.0
+                      case-insensitive-1.2.0.11 conduit-1.3.0.3 conduit-extra-1.3.0
+                      containers-0.5.10.2 deepseq-1.4.3.0 directory-1.3.0.2 dlist-0.8.0.4
+                      easy-file-0.2.2 exceptions-0.8.3 fast-logger-2.4.11
+                      filepath-1.4.1.2 generics-eot-0.2.1.2 ghc-boot-th-8.2.2
+                      ghc-prim-0.5.1.1 graphula-core-0.3.0 hashable-1.2.7.0
+                      haskell-src-exts-1.20.2 haskell-src-meta-0.8.0.3
+                      http-api-data-0.3.7.2 http-types-0.12.1 integer-gmp-1.0.1.0
+                      integer-logarithms-1.0.2.1 lifted-base-0.2.3.12
+                      monad-control-1.0.2.3 monad-logger-0.3.28.5 monad-loops-0.4.3
+                      mtl-2.2.2 old-locale-1.0.0.7 old-time-1.1.0.3 path-pieces-0.2.1
+                      persistent-2.8.2 pretty-1.1.3.3 primitive-0.6.4.0 random-1.1
+                      resource-pool-0.2.3.2 resourcet-1.2.1 scientific-0.3.6.2
+                      silently-1.2.5 stm-2.4.5.0 stm-chans-3.0.0.4 tagged-0.8.6
+                      template-haskell-2.12.0.0 temporary-1.2.1.1 text-1.2.3.0
+                      tf-random-0.5 time-1.8.0.2 time-locale-compat-0.1.1.4
+                      transformers-0.5.2.0 transformers-base-0.4.4 unix-2.7.2.2
+                      unix-time-0.3.8 unliftio-0.2.7.0 unliftio-core-0.1.1.0
+                      unordered-containers-0.2.9.0 uuid-types-1.0.3 vector-0.12.0.1
+orphans: haskell-src-exts-1.20.2:Language.Haskell.Exts.Parser
+         persistent-2.8.2:Database.Persist.Sql.Orphan.PersistQuery
+         persistent-2.8.2:Database.Persist.Sql.Orphan.PersistUnique
+         persistent-2.8.2:Database.Persist.Sql.Orphan.PersistStore
+         unix-time-0.3.8:Data.UnixTime.Diff
+         attoparsec-0.13.2.2:Data.Attoparsec.Text.Internal
+         attoparsec-0.13.2.2:Data.Attoparsec.ByteString.Char8
+         vector-0.12.0.1:Data.Vector.Unboxed
+         hashable-1.2.7.0:Data.Hashable.Generic text-1.2.3.0:Data.Text.Lazy
+         text-1.2.3.0:Data.Text binary-0.8.5.1:Data.Binary.Generic
+         bytestring-0.10.8.2:Data.ByteString.Builder
+         text-1.2.3.0:Data.Text.Show
+         vector-0.12.0.1:Data.Vector.Fusion.Bundle
+         stm-2.4.5.0:Control.Monad.STM
+         transformers-0.5.2.0:Control.Monad.Trans.Error
+         time-1.8.0.2:Data.Time.Format.Parse
+         time-1.8.0.2:Data.Time.LocalTime.Internal.ZonedTime
+         time-1.8.0.2:Data.Time.LocalTime.Internal.LocalTime
+         time-1.8.0.2:Data.Time.Calendar.Gregorian base-4.10.1.0:GHC.Float
+         base-4.10.1.0:GHC.Base
+family instance modules: aeson-1.2.4.0:Data.Aeson.Types.Internal
+                         attoparsec-0.13.2.2:Data.Attoparsec.Internal.Types
+                         base-4.10.1.0:Control.Applicative base-4.10.1.0:Data.Complex
+                         base-4.10.1.0:Data.Either base-4.10.1.0:Data.Functor.Compose
+                         base-4.10.1.0:Data.Functor.Const
+                         base-4.10.1.0:Data.Functor.Identity
+                         base-4.10.1.0:Data.Functor.Product base-4.10.1.0:Data.Functor.Sum
+                         base-4.10.1.0:Data.List.NonEmpty base-4.10.1.0:Data.Monoid
+                         base-4.10.1.0:Data.Semigroup base-4.10.1.0:Data.Type.Equality
+                         base-4.10.1.0:Data.Version base-4.10.1.0:Data.Void
+                         base-4.10.1.0:GHC.Exts base-4.10.1.0:GHC.Generics
+                         base-4.10.1.0:GHC.IO.Exception base-4.10.1.0:GHC.TypeLits
+                         base-4.10.1.0:GHC.TypeNats
+                         conduit-1.3.0.3:Data.Conduit.Internal.Conduit
+                         conduit-1.3.0.3:Data.Conduit.Internal.Pipe
+                         containers-0.5.10.2:Data.IntMap.Internal
+                         containers-0.5.10.2:Data.IntSet.Internal
+                         containers-0.5.10.2:Data.Map.Internal
+                         containers-0.5.10.2:Data.Sequence.Internal
+                         containers-0.5.10.2:Data.Set.Internal containers-0.5.10.2:Data.Tree
+                         dlist-0.8.0.4:Data.DList generics-eot-0.2.1.2:Generics.Eot
+                         generics-eot-0.2.1.2:Generics.Eot.Eot
+                         ghc-boot-th-8.2.2:GHC.ForeignSrcLang.Type
+                         ghc-boot-th-8.2.2:GHC.LanguageExtensions.Type
+                         graphula-core-0.3.0:Graphula
+                         haskell-src-exts-1.20.2:Language.Haskell.Exts.SrcLoc
+                         haskell-src-exts-1.20.2:Language.Haskell.Exts.Syntax
+                         monad-control-1.0.2.3:Control.Monad.Trans.Control
+                         monad-logger-0.3.28.5:Control.Monad.Logger
+                         persistent-2.8.2:Database.Persist.Class.PersistConfig
+                         persistent-2.8.2:Database.Persist.Class.PersistEntity
+                         persistent-2.8.2:Database.Persist.Sql.Orphan.PersistStore
+                         persistent-2.8.2:Database.Persist.Sql.Types.Internal
+                         pretty-1.1.3.3:Text.PrettyPrint.Annotated.HughesPJ
+                         pretty-1.1.3.3:Text.PrettyPrint.HughesPJ
+                         primitive-0.6.4.0:Control.Monad.Primitive
+                         primitive-0.6.4.0:Data.Primitive.Array
+                         primitive-0.6.4.0:Data.Primitive.ByteArray
+                         primitive-0.6.4.0:Data.Primitive.PrimArray
+                         primitive-0.6.4.0:Data.Primitive.SmallArray
+                         primitive-0.6.4.0:Data.Primitive.UnliftedArray
+                         resourcet-1.2.1:Control.Monad.Trans.Resource.Internal
+                         tagged-0.8.6:Data.Tagged
+                         template-haskell-2.12.0.0:Language.Haskell.TH.Syntax
+                         text-1.2.3.0:Data.Text text-1.2.3.0:Data.Text.Lazy
+                         unordered-containers-0.2.9.0:Data.HashMap.Base
+                         unordered-containers-0.2.9.0:Data.HashSet
+                         uuid-types-1.0.3:Data.UUID.Types.Internal
+                         uuid-types-1.0.3:Data.UUID.Types.Internal.Builder
+                         vector-0.12.0.1:Data.Vector vector-0.12.0.1:Data.Vector.Primitive
+                         vector-0.12.0.1:Data.Vector.Storable
+                         vector-0.12.0.1:Data.Vector.Unboxed
+                         vector-0.12.0.1:Data.Vector.Unboxed.Base
+import  -/  base-4.10.1.0:Control.Monad.IO.Class 9d78cd0f73a837f3c00753bd212b9f2c
+import  -/  base-4.10.1.0:Data.Type.Equality ca4e91e1727dfab58cd5d13c463acc81
+import  -/  base-4.10.1.0:GHC.Base 782fd99b5e36f3698a26179a49afca64
+import  -/  base-4.10.1.0:GHC.TypeLits a30ca383bbe44df787aab4993b49dce1
+import  -/  base-4.10.1.0:Prelude 31945b7d0084063347fc52506d3a4020
+import  -/  ghc-prim-0.5.1.1:GHC.Types b1fd0716441595db508c1a74387bf394
+import  -/  graphula-core-0.3.0:Graphula 3c0934c5e0c9362a0c87ecaea3f2271a
+import  -/  mtl-2.2.2:Control.Monad.Reader 8d63edf5dfaf25ad085eae4468bdd77e
+import  -/  mtl-2.2.2:Control.Monad.Reader.Class 6d33756d93a5919f9374afec232249f4
+import  -/  persistent-2.8.2:Database.Persist a9a9638d4da6cb37bdb67e429aab6afb
+import  -/  persistent-2.8.2:Database.Persist.Class.PersistEntity 635e376ec464b0e1587c94aae7e4f0b1
+import  -/  persistent-2.8.2:Database.Persist.Class.PersistStore e652480c0207d32148e470e23e9954b2
+import  -/  persistent-2.8.2:Database.Persist.Class.PersistUnique da7e33923413ecb70b71d9ff1f4256e4
+import  -/  persistent-2.8.2:Database.Persist.Sql a0e2eb7e9ff3ac1cf5592845c0c007be
+import  -/  persistent-2.8.2:Database.Persist.Sql.Types.Internal ccfa1389571a9a43928e933fe73bbb82
+import  -/  transformers-0.5.2.0:Control.Monad.Trans.Class 4bfa8c2d5ed6a6a465f9f6f92f7ab1d4
+import  -/  transformers-0.5.2.0:Control.Monad.Trans.Reader cc12564dc0d2121844a0316ee821dfff
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  $fApplicativeGraphulaPersistT ::
+    GHC.Base.Applicative m =>
+    GHC.Base.Applicative
+      (Graphula.Persist.GraphulaPersistT backend n m)
+  DFunId
+  {- Arity: 1, HasNoCafRefs,
+     Strictness: <L,U(U(C(C(U)),A),C(U),C(C1(U)),A,A,A)>m,
+     Inline: CONLIKE,
+     Unfolding: DFun: @ backend
+                      @ n :: * -> *
+                      @ m :: * -> *
+                      (v :: GHC.Base.Applicative m).
+                  @ (Graphula.Persist.GraphulaPersistT backend n m)
+                  (Graphula.Persist.$fApplicativeGraphulaPersistT_$cp1Applicative
+                     @ backend
+                     @ n
+                     @ m
+                     v)
+                  (\ @ a ->
+                   Control.Monad.Trans.Reader.$fApplicativeReaderT_$cpure
+                     @ m
+                     @ (Graphula.Persist.RunDB backend n m)
+                     v
+                     @ a)
+                    `cast`
+                  (forall (a :: <*>_N).
+                   <a>_R
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <a>_N)
+                  (\ @ a @ b ->
+                   Control.Monad.Trans.Reader.$fApplicativeReaderT_$c<*>
+                     @ m
+                     @ (Graphula.Persist.RunDB backend n m)
+                     v
+                     @ a
+                     @ b)
+                    `cast`
+                  (forall (a :: <*>_N) (b :: <*>_N).
+                   Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                            <backend>_R <n>_R <m>_R) <a -> b>_N
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <a>_N
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <b>_N)
+                  (\ @ a @ b @ c ->
+                   Control.Monad.Trans.Reader.$fApplicativeReaderT_$cliftA2
+                     @ m
+                     @ (Graphula.Persist.RunDB backend n m)
+                     v
+                     @ a
+                     @ b
+                     @ c)
+                    `cast`
+                  (forall (a :: <*>_N) (b :: <*>_N) (c :: <*>_N).
+                   <a -> b -> c>_R
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <a>_N
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <b>_N
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <c>_N)
+                  (\ @ a @ b ->
+                   Control.Monad.Trans.Reader.$fApplicativeReaderT_$c*>
+                     @ m
+                     @ (Graphula.Persist.RunDB backend n m)
+                     v
+                     @ a
+                     @ b)
+                    `cast`
+                  (forall (a :: <*>_N) (b :: <*>_N).
+                   Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                            <backend>_R <n>_R <m>_R) <a>_N
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <b>_N
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <b>_N)
+                  (\ @ a @ b ->
+                   Control.Monad.Trans.Reader.$fApplicativeReaderT_$c<*
+                     @ m
+                     @ (Graphula.Persist.RunDB backend n m)
+                     v
+                     @ a
+                     @ b)
+                    `cast`
+                  (forall (a :: <*>_N) (b :: <*>_N).
+                   Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                            <backend>_R <n>_R <m>_R) <a>_N
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <b>_N
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <a>_N) -}
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  $fApplicativeGraphulaPersistT_$cp1Applicative ::
+    GHC.Base.Applicative m =>
+    GHC.Base.Functor (Graphula.Persist.GraphulaPersistT backend n m)
+  {- Arity: 1, HasNoCafRefs,
+     Strictness: <L,1*U(1*U(C(C(U)),A),A,A,A,A,A)>m,
+     Unfolding: InlineRule (1, True, False)
+                (\ @ backend
+                   @ n :: * -> *
+                   @ m :: * -> *
+                   ($dApplicative :: GHC.Base.Applicative m) ->
+                 Graphula.Persist.$fFunctorGraphulaPersistT
+                   @ backend
+                   @ n
+                   @ m
+                   (GHC.Base.$p1Applicative @ m $dApplicative)) -}
+792619837ba4da3e38c02ea4dd4196ce
+  $fEntityKeys(,) ::
+    Graphula.Persist.EntityKeys
+      (Database.Persist.Class.PersistEntity.Entity a,
+       Database.Persist.Class.PersistEntity.Entity b)
+  DFunId
+  {- Arity: 1, HasNoCafRefs,
+     Strictness: <S,1*U(1*U(1*U,A),1*U(1*U,A))>m, Inline: (sat-args=0),
+     Unfolding: InlineRule (0, False, True)
+                Graphula.Persist.$fEntityKeys(,)_$ckeys
+                  `cast`
+                (forall (a :: <*>_N) (b :: <*>_N).
+                 Sym (Graphula.Persist.N:EntityKeys[0]
+                          <(Database.Persist.Class.PersistEntity.Entity a,
+                            Database.Persist.Class.PersistEntity.Entity b)>_N)) -}
+792619837ba4da3e38c02ea4dd4196ce
+  $fEntityKeys(,)_$ckeys ::
+    (Database.Persist.Class.PersistEntity.Entity a,
+     Database.Persist.Class.PersistEntity.Entity b)
+    -> Graphula.Persist.Keys
+         (Database.Persist.Class.PersistEntity.Entity a,
+          Database.Persist.Class.PersistEntity.Entity b)
+  {- Arity: 1, HasNoCafRefs,
+     Strictness: <S,1*U(1*U(1*U,A),1*U(1*U,A))>m,
+     Unfolding: InlineRule (1, True, False)
+                (\ @ a
+                   @ b
+                   (ds :: (Database.Persist.Class.PersistEntity.Entity a,
+                           Database.Persist.Class.PersistEntity.Entity b)) ->
+                 case ds of wild { (,) a1 b1 ->
+                 (Database.Persist.Class.PersistEntity.entityKey @ a a1,
+                  Database.Persist.Class.PersistEntity.entityKey @ b b1)
+                   `cast`
+                 (Sub (Sym (Graphula.Persist.D:R:Keys(,)[0] <a>_N <b>_N))) }) -}
+792619837ba4da3e38c02ea4dd4196ce
+  $fEntityKeys(,,) ::
+    Graphula.Persist.EntityKeys
+      (Database.Persist.Class.PersistEntity.Entity a,
+       Database.Persist.Class.PersistEntity.Entity b,
+       Database.Persist.Class.PersistEntity.Entity c)
+  DFunId
+  {- Arity: 1, HasNoCafRefs,
+     Strictness: <S,1*U(1*U(1*U,A),1*U(1*U,A),1*U(1*U,A))>m,
+     Inline: (sat-args=0),
+     Unfolding: InlineRule (0, False, True)
+                Graphula.Persist.$fEntityKeys(,,)_$ckeys
+                  `cast`
+                (forall (a :: <*>_N) (b :: <*>_N) (c :: <*>_N).
+                 Sym (Graphula.Persist.N:EntityKeys[0]
+                          <(Database.Persist.Class.PersistEntity.Entity a,
+                            Database.Persist.Class.PersistEntity.Entity b,
+                            Database.Persist.Class.PersistEntity.Entity c)>_N)) -}
+792619837ba4da3e38c02ea4dd4196ce
+  $fEntityKeys(,,)_$ckeys ::
+    (Database.Persist.Class.PersistEntity.Entity a,
+     Database.Persist.Class.PersistEntity.Entity b,
+     Database.Persist.Class.PersistEntity.Entity c)
+    -> Graphula.Persist.Keys
+         (Database.Persist.Class.PersistEntity.Entity a,
+          Database.Persist.Class.PersistEntity.Entity b,
+          Database.Persist.Class.PersistEntity.Entity c)
+  {- Arity: 1, HasNoCafRefs,
+     Strictness: <S,1*U(1*U(1*U,A),1*U(1*U,A),1*U(1*U,A))>m,
+     Unfolding: InlineRule (1, True, False)
+                (\ @ a
+                   @ b
+                   @ c
+                   (ds :: (Database.Persist.Class.PersistEntity.Entity a,
+                           Database.Persist.Class.PersistEntity.Entity b,
+                           Database.Persist.Class.PersistEntity.Entity c)) ->
+                 case ds of wild { (,,) a1 b1 c1 ->
+                 (Database.Persist.Class.PersistEntity.entityKey @ a a1,
+                  Database.Persist.Class.PersistEntity.entityKey @ b b1,
+                  Database.Persist.Class.PersistEntity.entityKey @ c c1)
+                   `cast`
+                 (Sub (Sym (Graphula.Persist.D:R:Keys(,,)[0]
+                                <a>_N <b>_N <c>_N))) }) -}
+792619837ba4da3e38c02ea4dd4196ce
+  $fEntityKeys(,,,) ::
+    Graphula.Persist.EntityKeys
+      (Database.Persist.Class.PersistEntity.Entity a,
+       Database.Persist.Class.PersistEntity.Entity b,
+       Database.Persist.Class.PersistEntity.Entity c,
+       Database.Persist.Class.PersistEntity.Entity d)
+  DFunId
+  {- Arity: 1, HasNoCafRefs,
+     Strictness: <S,1*U(1*U(1*U,A),1*U(1*U,A),1*U(1*U,A),1*U(1*U,A))>m,
+     Inline: (sat-args=0),
+     Unfolding: InlineRule (0, False, True)
+                Graphula.Persist.$fEntityKeys(,,,)_$ckeys
+                  `cast`
+                (forall (a :: <*>_N) (b :: <*>_N) (c :: <*>_N) (d :: <*>_N).
+                 Sym (Graphula.Persist.N:EntityKeys[0]
+                          <(Database.Persist.Class.PersistEntity.Entity a,
+                            Database.Persist.Class.PersistEntity.Entity b,
+                            Database.Persist.Class.PersistEntity.Entity c,
+                            Database.Persist.Class.PersistEntity.Entity d)>_N)) -}
+792619837ba4da3e38c02ea4dd4196ce
+  $fEntityKeys(,,,)_$ckeys ::
+    (Database.Persist.Class.PersistEntity.Entity a,
+     Database.Persist.Class.PersistEntity.Entity b,
+     Database.Persist.Class.PersistEntity.Entity c,
+     Database.Persist.Class.PersistEntity.Entity d)
+    -> Graphula.Persist.Keys
+         (Database.Persist.Class.PersistEntity.Entity a,
+          Database.Persist.Class.PersistEntity.Entity b,
+          Database.Persist.Class.PersistEntity.Entity c,
+          Database.Persist.Class.PersistEntity.Entity d)
+  {- Arity: 1, HasNoCafRefs,
+     Strictness: <S,1*U(1*U(1*U,A),1*U(1*U,A),1*U(1*U,A),1*U(1*U,A))>m,
+     Inline: [0],
+     Unfolding: InlineRule (1, True, False)
+                (\ @ a
+                   @ b
+                   @ c
+                   @ d
+                   (w :: (Database.Persist.Class.PersistEntity.Entity a,
+                          Database.Persist.Class.PersistEntity.Entity b,
+                          Database.Persist.Class.PersistEntity.Entity c,
+                          Database.Persist.Class.PersistEntity.Entity d)) ->
+                 case w of ww { (,,,) ww1 ww2 ww3 ww4 ->
+                 (Database.Persist.Class.PersistEntity.entityKey @ a ww1,
+                  Database.Persist.Class.PersistEntity.entityKey @ b ww2,
+                  Database.Persist.Class.PersistEntity.entityKey @ c ww3,
+                  Database.Persist.Class.PersistEntity.entityKey @ d ww4)
+                   `cast`
+                 (Sub (Sym (Graphula.Persist.D:R:Keys(,,,)[0]
+                                <a>_N <b>_N <c>_N <d>_N))) }) -}
+792619837ba4da3e38c02ea4dd4196ce
+  $fEntityKeysEntity ::
+    (TypeError ...) =>
+    Graphula.Persist.EntityKeys
+      (Database.Persist.Class.PersistEntity.Entity a)
+  DFunId
+  {- Arity: 2, HasNoCafRefs, Strictness: <L,A>, Inline: (sat-args=0),
+     Unfolding: InlineRule (1, False, True)
+                (\ @ a (irred :: (TypeError ...)) ->
+                 Database.Persist.Class.PersistEntity.entityKey @ a)
+                  `cast`
+                (forall (a :: <*>_N).
+                 <(TypeError ...)>_R
+                 ->_R Trans
+                          (<Database.Persist.Class.PersistEntity.Entity a>_R
+                           ->_R Sub (Sym (Graphula.Persist.D:R:KeysEntity[0] <a>_N)))
+                          (Sym (Graphula.Persist.N:EntityKeys[0]
+                                    <Database.Persist.Class.PersistEntity.Entity a>_N))) -}
+792619837ba4da3e38c02ea4dd4196ce
+  $fEntityKeysOnly ::
+    Graphula.Persist.EntityKeys
+      (Graphula.Only (Database.Persist.Class.PersistEntity.Entity a))
+  DFunId
+  {- Arity: 1, HasNoCafRefs, Strictness: <S(SL),1*U(1*U,A)>,
+     Inline: (sat-args=0),
+     Unfolding: InlineRule (0, False, True)
+                Database.Persist.Class.PersistEntity.entityKey
+                  `cast`
+                (forall (a :: <*>_N).
+                 Trans
+                     (Sym (Graphula.N:Only[0]
+                               <Database.Persist.Class.PersistEntity.Entity a>_R)
+                      ->_R <Database.Persist.Class.PersistEntity.Key a>_R)
+                     (Trans
+                          (<Graphula.Only (Database.Persist.Class.PersistEntity.Entity a)>_R
+                           ->_R Trans
+                                    (Sym (Graphula.N:Only[0]
+                                              <Database.Persist.Class.PersistEntity.Key a>_R))
+                                    (Sub (Sym (Graphula.Persist.D:R:KeysOnly[0] <a>_N))))
+                          (Sym (Graphula.Persist.N:EntityKeys[0]
+                                    <Graphula.Only
+                                       (Database.Persist.Class.PersistEntity.Entity a)>_N)))) -}
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  $fFunctorGraphulaPersistT ::
+    GHC.Base.Functor m =>
+    GHC.Base.Functor (Graphula.Persist.GraphulaPersistT backend n m)
+  DFunId
+  {- Arity: 1, HasNoCafRefs, Strictness: <L,U(C(C(U)),A)>m,
+     Inline: CONLIKE,
+     Unfolding: DFun: @ backend
+                      @ n :: * -> *
+                      @ m :: * -> *
+                      (v :: GHC.Base.Functor m).
+                  @ (Graphula.Persist.GraphulaPersistT backend n m)
+                  (\ @ a @ b ->
+                   Control.Monad.Trans.Reader.$fFunctorReaderT_$cfmap
+                     @ m
+                     @ (Graphula.Persist.RunDB backend n m)
+                     v
+                     @ a
+                     @ b)
+                    `cast`
+                  (forall (a :: <*>_N) (b :: <*>_N).
+                   <a -> b>_R
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <a>_N
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <b>_N)
+                  (\ @ a @ b ->
+                   Control.Monad.Trans.Reader.$fFunctorReaderT_$c<$
+                     @ m
+                     @ (Graphula.Persist.RunDB backend n m)
+                     v
+                     @ a
+                     @ b)
+                    `cast`
+                  (forall (a :: <*>_N) (b :: <*>_N).
+                   <a>_R
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <b>_N
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <a>_N) -}
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  $fMonadGraphulaFrontendGraphulaPersistT ::
+    (Control.Monad.IO.Class.MonadIO m, GHC.Base.Applicative n,
+     Control.Monad.IO.Class.MonadIO n,
+     Database.Persist.Sql.Types.Internal.SqlBackendCanWrite backend,
+     (Database.Persist.Class.PersistStore.BaseBackend backend :: *)
+     Data.Type.Equality.~
+     (Database.Persist.Sql.Types.Internal.SqlBackend :: *)) =>
+    Graphula.MonadGraphulaFrontend
+      (Graphula.Persist.GraphulaPersistT backend n m)
+  DFunId
+  {- Arity: 5, HasNoCafRefs,
+     Strictness: <L,U(U(A,C(C1(U)),A,C(U),A),A)><L,U(A,C(U),A,A,A,A)><L,U(U(U(U,U,U,U,U,U),U,U,U,U),U)><L,U(U(A,A,U(A,A,A,A,A,A,A,A,C(C1(C1(C(U)))),A),A),A,U(A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,C(C1(C1(U))),A,A),U(A,A,A,C(C1(C1(C(U)))),A,A,A))><L,U(U)>m,
+     Inline: CONLIKE,
+     Unfolding: DFun: @ m :: * -> *
+                      @ n :: * -> *
+                      @ backend
+                      (v :: Control.Monad.IO.Class.MonadIO m)
+                      (v1 :: GHC.Base.Applicative n)
+                      (v2 :: Control.Monad.IO.Class.MonadIO n)
+                      (v3 :: Database.Persist.Sql.Types.Internal.SqlBackendCanWrite
+                               backend)
+                      (v4 :: (Database.Persist.Class.PersistStore.BaseBackend
+                                backend :: *)
+                             Data.Type.Equality.~
+                             (Database.Persist.Sql.Types.Internal.SqlBackend :: *)).
+                  @ (Graphula.Persist.GraphulaPersistT backend n m)
+                  (Graphula.Persist.$fMonadGraphulaFrontendGraphulaPersistT2
+                     @ m
+                     @ n
+                     @ backend
+                     v
+                     v1
+                     v2
+                     v3
+                     v4)
+                    `cast`
+                  (forall (a :: <*>_N).
+                   <Graphula.NodeConstraint
+                      (Graphula.Persist.GraphulaPersistT backend n m) a>_R
+                   ->_R <a>_R
+                   ->_R Trans
+                            (Sym (Control.Monad.Trans.Reader.N:ReaderT[0]
+                                      <*>_N
+                                      <Graphula.Persist.RunDB backend n m>_R
+                                      <m>_R
+                                      <GHC.Base.Maybe
+                                         (Graphula.Node
+                                            (Graphula.Persist.GraphulaPersistT backend n m) a)>_N))
+                            (Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                      <backend>_R <n>_R <m>_R) <GHC.Base.Maybe
+                                                                  (Graphula.Node
+                                                                     (Graphula.Persist.GraphulaPersistT
+                                                                        backend n m)
+                                                                     a)>_N))
+                  (Graphula.Persist.$fMonadGraphulaFrontendGraphulaPersistT1
+                     @ m
+                     @ n
+                     @ backend
+                     v
+                     v1
+                     v2
+                     v3
+                     v4)
+                    `cast`
+                  (forall (a :: <*>_N).
+                   <Graphula.NodeConstraint
+                      (Graphula.Persist.GraphulaPersistT backend n m) a>_R
+                   ->_R <Graphula.Node
+                           (Graphula.Persist.GraphulaPersistT backend n m) a>_R
+                   ->_R Trans
+                            (Sym (Control.Monad.Trans.Reader.N:ReaderT[0]
+                                      <*>_N <Graphula.Persist.RunDB backend n m>_R <m>_R <()>_N))
+                            (Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                      <backend>_R <n>_R <m>_R) <()>_N)) -}
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  $fMonadGraphulaFrontendGraphulaPersistT1 ::
+    (Control.Monad.IO.Class.MonadIO m, GHC.Base.Applicative n,
+     Control.Monad.IO.Class.MonadIO n,
+     Database.Persist.Sql.Types.Internal.SqlBackendCanWrite backend,
+     (Database.Persist.Class.PersistStore.BaseBackend backend :: *)
+     Data.Type.Equality.~
+     (Database.Persist.Sql.Types.Internal.SqlBackend :: *)) =>
+    forall a.
+    Graphula.NodeConstraint
+      (Graphula.Persist.GraphulaPersistT backend n m) a =>
+    Graphula.Node (Graphula.Persist.GraphulaPersistT backend n m) a
+    -> Graphula.Persist.RunDB backend n m -> m ()
+  {- Arity: 8, HasNoCafRefs,
+     Strictness: <S(S(LC(C(S))LLL)L),1*U(1*U(A,1*C1(C1(U)),A,1*C1(U),A),A)><L,A><L,U><L,1*U(A,A,1*U(A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,1*C1(C1(C1(U))),A,A),A)><S(S),U(U)><S(LS(S)LL),U(U,U(U),A,A)><L,1*U(1*U,A)><L,U>,
+     Inline: [0],
+     Unfolding: InlineRule (8, True, True)
+                (\ @ m :: * -> *
+                   @ n :: * -> *
+                   @ backend
+                   (w :: Control.Monad.IO.Class.MonadIO m)
+                   (w1 :: GHC.Base.Applicative n)
+                   (w2 :: Control.Monad.IO.Class.MonadIO n)
+                   (w3 :: Database.Persist.Sql.Types.Internal.SqlBackendCanWrite
+                            backend)
+                   (w4 :: (Database.Persist.Class.PersistStore.BaseBackend
+                             backend :: *)
+                          Data.Type.Equality.~
+                          (Database.Persist.Sql.Types.Internal.SqlBackend :: *))
+                   @ a
+                   (w5 :: Graphula.NodeConstraint
+                            (Graphula.Persist.GraphulaPersistT backend n m) a)
+                   (w6 :: Graphula.Node
+                            (Graphula.Persist.GraphulaPersistT backend n m) a)
+                   (w7 :: Graphula.Persist.RunDB backend n m) ->
+                 Graphula.Persist.$w$cremove
+                   @ m
+                   @ n
+                   @ backend
+                   w
+                   w2
+                   w3
+                   w4
+                   @ a
+                   w5
+                   w6
+                   w7) -}
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  $fMonadGraphulaFrontendGraphulaPersistT2 ::
+    (Control.Monad.IO.Class.MonadIO m, GHC.Base.Applicative n,
+     Control.Monad.IO.Class.MonadIO n,
+     Database.Persist.Sql.Types.Internal.SqlBackendCanWrite backend,
+     (Database.Persist.Class.PersistStore.BaseBackend backend :: *)
+     Data.Type.Equality.~
+     (Database.Persist.Sql.Types.Internal.SqlBackend :: *)) =>
+    forall a.
+    Graphula.NodeConstraint
+      (Graphula.Persist.GraphulaPersistT backend n m) a =>
+    a
+    -> Graphula.Persist.RunDB backend n m
+    -> m (GHC.Base.Maybe
+            (Graphula.Node (Graphula.Persist.GraphulaPersistT backend n m) a))
+  {- Arity: 8, HasNoCafRefs,
+     Strictness: <S(S(LC(C(S))LLL)L),1*U(1*U(A,1*C1(C1(U)),A,1*C1(U),A),A)><L,1*U(A,1*C1(U),A,A,A,A)><L,U(U(U(U,U,U,U,U,U),U,U,U,U),U)><L,U(1*U(A,A,1*U(A,A,A,A,A,A,A,A,C(C1(C1(C(U)))),A),A),A,A,1*U(A,A,A,1*C1(C1(C1(C(U)))),A,A,A))><S(S),U(U)><S(LS(S)LL),U(1*U,1*U(1*U),A,A)><L,U><L,U>,
+     Unfolding: (\ @ m :: * -> *
+                   @ n :: * -> *
+                   @ backend
+                   ($dMonadIO :: Control.Monad.IO.Class.MonadIO m)
+                   ($dApplicative :: GHC.Base.Applicative n)
+                   ($dMonadIO1 :: Control.Monad.IO.Class.MonadIO n)
+                   ($d(%,,,%) :: Database.Persist.Sql.Types.Internal.SqlBackendCanWrite
+                                   backend)
+                   ($d~ :: (Database.Persist.Class.PersistStore.BaseBackend
+                              backend :: *)
+                           Data.Type.Equality.~
+                           (Database.Persist.Sql.Types.Internal.SqlBackend :: *))
+                   @ a
+                   (eta :: Graphula.NodeConstraint
+                             (Graphula.Persist.GraphulaPersistT backend n m) a)
+                   (eta1 :: a)
+                   (eta2 :: Graphula.Persist.RunDB backend n m) ->
+                 case GHC.Types.HEq_sc
+                        @ *
+                        @ *
+                        @ (Database.Persist.Class.PersistStore.BaseBackend backend)
+                        @ Database.Persist.Sql.Types.Internal.SqlBackend
+                        $d~
+                          `cast`
+                        (Data.Type.Equality.N:~[0]
+                             <*>_N <Database.Persist.Class.PersistStore.BaseBackend
+                                      backend>_N <Database.Persist.Sql.Types.Internal.SqlBackend>_N) of cobox { DEFAULT ->
+                 case GHC.Types.HEq_sc
+                        @ *
+                        @ *
+                        @ (Database.Persist.Class.PersistEntity.PersistEntityBackend a)
+                        @ Database.Persist.Sql.Types.Internal.SqlBackend
+                        (Graphula.Persist.$p2PersistRecord
+                           @ backend
+                           @ a
+                           eta
+                             `cast`
+                           (Sub (Graphula.Persist.D:R:NodeConstraintGraphulaPersistT[0]
+                                     <backend>_N <n>_N <m>_N) <a>_N))
+                          `cast`
+                        (Data.Type.Equality.N:~[0]
+                             <*>_N <Database.Persist.Class.PersistEntity.PersistEntityBackend
+                                      a>_N <Database.Persist.Sql.Types.Internal.SqlBackend>_N) of cobox1 { DEFAULT ->
+                 let {
+                   $dMonad :: GHC.Base.Monad m
+                   = Control.Monad.IO.Class.$p1MonadIO @ m $dMonadIO
+                 } in
+                 let {
+                   $d(%,,,%)1 :: Database.Persist.Sql.Types.Internal.SqlBackendCanRead
+                                   backend
+                   = GHC.Classes.$p1(%,,,%)
+                       @ (Database.Persist.Sql.Types.Internal.SqlBackendCanRead backend)
+                       @ (Database.Persist.Class.PersistQuery.PersistQueryWrite backend)
+                       @ (Database.Persist.Class.PersistStore.PersistStoreWrite backend)
+                       @ (Database.Persist.Class.PersistUnique.PersistUniqueWrite backend)
+                       $d(%,,,%)
+                 } in
+                 let {
+                   $dPersistStoreRead :: Database.Persist.Class.PersistStore.PersistStoreRead
+                                           backend
+                   = GHC.Classes.$p3(%,,,%)
+                       @ (Database.Persist.Class.PersistStore.BackendCompatible
+                            Database.Persist.Sql.Types.Internal.SqlBackend backend)
+                       @ (Database.Persist.Class.PersistQuery.PersistQueryRead backend)
+                       @ (Database.Persist.Class.PersistStore.PersistStoreRead backend)
+                       @ (Database.Persist.Class.PersistUnique.PersistUniqueRead backend)
+                       $d(%,,,%)1
+                 } in
+                 let {
+                   $dMonad1 :: GHC.Base.Monad n
+                   = Control.Monad.IO.Class.$p1MonadIO @ n $dMonadIO1
+                 } in
+                 let {
+                   $dPersistEntity :: Database.Persist.Class.PersistEntity.PersistEntity
+                                        a
+                   = Graphula.Persist.$p1PersistRecord
+                       @ backend
+                       @ a
+                       eta
+                         `cast`
+                       (Sub (Graphula.Persist.D:R:NodeConstraintGraphulaPersistT[0]
+                                 <backend>_N <n>_N <m>_N) <a>_N)
+                 } in
+                 let {
+                   $d(%,%) :: (Database.Persist.Class.PersistEntity.PersistEntity a,
+                               (Database.Persist.Sql.Types.Internal.SqlBackend :: *)
+                               Data.Type.Equality.~
+                               (Database.Persist.Sql.Types.Internal.SqlBackend :: *))
+                   = ($dPersistEntity,
+                      $d~
+                        `cast`
+                      ((Data.Type.Equality.~)
+                         <*>_N cobox <Database.Persist.Sql.Types.Internal.SqlBackend>_N)_R)
+                 } in
+                 let {
+                   m1 :: Control.Monad.Trans.Reader.ReaderT
+                           backend
+                           n
+                           (GHC.Base.Maybe (Database.Persist.Class.PersistEntity.Key a))
+                   = Database.Persist.Class.PersistUnique.insertUnique
+                       @ backend
+                       (GHC.Classes.$p4(%,,,%)
+                          @ (Database.Persist.Sql.Types.Internal.SqlBackendCanRead backend)
+                          @ (Database.Persist.Class.PersistQuery.PersistQueryWrite backend)
+                          @ (Database.Persist.Class.PersistStore.PersistStoreWrite backend)
+                          @ (Database.Persist.Class.PersistUnique.PersistUniqueWrite backend)
+                          $d(%,,,%))
+                       @ n
+                       @ a
+                       $dMonadIO1
+                       $d(%,%)
+                         `cast`
+                       (GHC.Classes.(%,%)
+                          <Database.Persist.Class.PersistEntity.PersistEntity a>_N
+                          ((Data.Type.Equality.~) <*>_N (Sym cobox1) (Sym cobox))_N)_R
+                       eta1
+                 } in
+                 let {
+                   lvl :: n (GHC.Base.Maybe
+                               (Database.Persist.Class.PersistEntity.Entity a))
+                   = GHC.Base.pure
+                       @ n
+                       $dApplicative
+                       @ (GHC.Base.Maybe (Database.Persist.Class.PersistEntity.Entity a))
+                       (GHC.Base.Nothing
+                          @ (Database.Persist.Class.PersistEntity.Entity a))
+                 } in
+                 let {
+                   lvl1 :: backend
+                           -> n (GHC.Base.Maybe
+                                   (Database.Persist.Class.PersistEntity.Entity a))
+                     {- Arity: 1, Strictness: <L,U> -}
+                   = \ (r1 :: backend) ->
+                     GHC.Base.>>=
+                       @ n
+                       $dMonad1
+                       @ (GHC.Base.Maybe (Database.Persist.Class.PersistEntity.Key a))
+                       @ (GHC.Base.Maybe (Database.Persist.Class.PersistEntity.Entity a))
+                       (m1
+                          `cast`
+                        (Control.Monad.Trans.Reader.N:ReaderT[0]
+                             <*>_N
+                             <backend>_R
+                             <n>_R
+                             <GHC.Base.Maybe (Database.Persist.Class.PersistEntity.Key a)>_N)
+                          r1)
+                       (\ (a1 :: GHC.Base.Maybe
+                                   (Database.Persist.Class.PersistEntity.Key a)) ->
+                        case a1 of wild {
+                          GHC.Base.Nothing -> lvl
+                          GHC.Base.Just key'
+                          -> (Database.Persist.Class.PersistStore.getEntity
+                                @ backend
+                                @ a
+                                @ n
+                                $dPersistStoreRead
+                                $d(%,%)
+                                  `cast`
+                                (GHC.Classes.(%,%)
+                                   <Database.Persist.Class.PersistEntity.PersistEntity a>_N
+                                   ((Data.Type.Equality.~) <*>_N (Sym cobox1) (Sym cobox))_N)_R
+                                $dMonadIO1
+                                key')
+                               `cast`
+                             (Control.Monad.Trans.Reader.N:ReaderT[0]
+                                  <*>_N
+                                  <backend>_R
+                                  <n>_R
+                                  <GHC.Base.Maybe
+                                     (Database.Persist.Class.PersistEntity.Entity a)>_N)
+                               r1 })
+                 } in
+                 (GHC.Base.>>=
+                    @ m
+                    $dMonad
+                    @ (Graphula.Persist.RunDB backend n m)
+                    @ (GHC.Base.Maybe (Database.Persist.Class.PersistEntity.Entity a))
+                    (GHC.Base.return
+                       @ m
+                       $dMonad
+                       @ (Graphula.Persist.RunDB backend n m)
+                       eta2)
+                    (\ (a1 :: Graphula.Persist.RunDB backend n m) ->
+                     a1 `cast` (Graphula.Persist.N:RunDB[0] <backend>_R <n>_R <m>_R)
+                       @ (GHC.Base.Maybe (Database.Persist.Class.PersistEntity.Entity a))
+                       lvl1
+                         `cast`
+                       (Sym (Control.Monad.Trans.Reader.N:ReaderT[0]
+                                 <*>_N
+                                 <backend>_R
+                                 <n>_R
+                                 <GHC.Base.Maybe
+                                    (Database.Persist.Class.PersistEntity.Entity a)>_N))))
+                   `cast`
+                 (<m>_R (GHC.Base.Maybe
+                           (Sym (Graphula.Persist.D:R:NodeGraphulaPersistT[0]
+                                     <backend>_N <n>_N <m>_N) <a>_N))_N) } }) -}
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  $fMonadGraphulaPersistT ::
+    GHC.Base.Monad m =>
+    GHC.Base.Monad (Graphula.Persist.GraphulaPersistT backend n m)
+  DFunId
+  {- Arity: 1, HasNoCafRefs,
+     Strictness: <L,U(U(U(C(C(U)),A),C(U),C(C1(U)),A,A,A),C(C1(U)),A,A,C(U))>m,
+     Inline: CONLIKE,
+     Unfolding: DFun: @ backend
+                      @ n :: * -> *
+                      @ m :: * -> *
+                      (v :: GHC.Base.Monad m).
+                  @ (Graphula.Persist.GraphulaPersistT backend n m)
+                  (Graphula.Persist.$fMonadGraphulaPersistT_$cp1Monad
+                     @ backend
+                     @ n
+                     @ m
+                     v)
+                  (\ @ a @ b ->
+                   Control.Monad.Trans.Reader.$fMonadReaderT_$c>>=
+                     @ m
+                     @ (Graphula.Persist.RunDB backend n m)
+                     v
+                     @ a
+                     @ b)
+                    `cast`
+                  (forall (a :: <*>_N) (b :: <*>_N).
+                   Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                            <backend>_R <n>_R <m>_R) <a>_N
+                   ->_R (<a>_R
+                         ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                       <backend>_R <n>_R <m>_R) <b>_N)
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <b>_N)
+                  (\ @ a @ b ->
+                   Control.Monad.Trans.Reader.$fMonadReaderT_$c>>
+                     @ m
+                     @ (Graphula.Persist.RunDB backend n m)
+                     v
+                     @ a
+                     @ b)
+                    `cast`
+                  (forall (a :: <*>_N) (b :: <*>_N).
+                   Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                            <backend>_R <n>_R <m>_R) <a>_N
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <b>_N
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <b>_N)
+                  (\ @ a ->
+                   Control.Monad.Trans.Reader.$fMonadReaderT_$creturn
+                     @ m
+                     @ (Graphula.Persist.RunDB backend n m)
+                     v
+                     @ a)
+                    `cast`
+                  (forall (a :: <*>_N).
+                   <a>_R
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <a>_N)
+                  (\ @ a ->
+                   Control.Monad.Trans.Reader.$fMonadReaderT_$cfail
+                     @ m
+                     @ (Graphula.Persist.RunDB backend n m)
+                     v
+                     @ a)
+                    `cast`
+                  (forall (a :: <*>_N).
+                   <[GHC.Types.Char]>_R
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <a>_N) -}
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  $fMonadGraphulaPersistT_$cp1Monad ::
+    GHC.Base.Monad m =>
+    GHC.Base.Applicative
+      (Graphula.Persist.GraphulaPersistT backend n m)
+  {- Arity: 1, HasNoCafRefs,
+     Strictness: <L,1*U(1*U(U(C(C(U)),A),C(U),C(C1(U)),A,A,A),A,A,A,A)>m,
+     Unfolding: InlineRule (1, True, False)
+                (\ @ backend
+                   @ n :: * -> *
+                   @ m :: * -> *
+                   ($dMonad :: GHC.Base.Monad m) ->
+                 Graphula.Persist.$fApplicativeGraphulaPersistT
+                   @ backend
+                   @ n
+                   @ m
+                   (GHC.Base.$p1Monad @ m $dMonad)) -}
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  $fMonadIOGraphulaPersistT ::
+    Control.Monad.IO.Class.MonadIO m =>
+    Control.Monad.IO.Class.MonadIO
+      (Graphula.Persist.GraphulaPersistT backend n m)
+  DFunId
+  {- Arity: 1, HasNoCafRefs,
+     Strictness: <L,U(1*U(U(U(C(C(U)),A),C(U),C(C1(U)),A,A,A),C(C1(U)),A,A,C(U)),C(U))>m,
+     Inline: CONLIKE,
+     Unfolding: DFun: @ backend
+                      @ n :: * -> *
+                      @ m :: * -> *
+                      (v :: Control.Monad.IO.Class.MonadIO m).
+                  @ (Graphula.Persist.GraphulaPersistT backend n m)
+                  (Graphula.Persist.$fMonadIOGraphulaPersistT_$cp1MonadIO
+                     @ backend
+                     @ n
+                     @ m
+                     v)
+                  (\ @ a ->
+                   Control.Monad.Trans.Reader.$fMonadIOReaderT_$cliftIO
+                     @ m
+                     @ (Graphula.Persist.RunDB backend n m)
+                     v
+                     @ a)
+                    `cast`
+                  (forall (a :: <*>_N).
+                   <GHC.Types.IO a>_R
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <a>_N) -}
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  $fMonadIOGraphulaPersistT_$cp1MonadIO ::
+    Control.Monad.IO.Class.MonadIO m =>
+    GHC.Base.Monad (Graphula.Persist.GraphulaPersistT backend n m)
+  {- Arity: 1, HasNoCafRefs,
+     Strictness: <L,1*U(1*U(U(U(C(C(U)),A),C(U),C(C1(U)),A,A,A),C(C1(U)),A,A,C(U)),A)>m,
+     Unfolding: InlineRule (1, True, False)
+                (\ @ backend
+                   @ n :: * -> *
+                   @ m :: * -> *
+                   ($dMonadIO :: Control.Monad.IO.Class.MonadIO m) ->
+                 Graphula.Persist.$fMonadGraphulaPersistT
+                   @ backend
+                   @ n
+                   @ m
+                   (Control.Monad.IO.Class.$p1MonadIO @ m $dMonadIO)) -}
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  $fMonadReaderGraphulaPersistT ::
+    GHC.Base.Monad m =>
+    Control.Monad.Reader.Class.MonadReader
+      (Graphula.Persist.RunDB backend n m)
+      (Graphula.Persist.GraphulaPersistT backend n m)
+  DFunId
+  {- Arity: 1, HasNoCafRefs,
+     Strictness: <L,U(U(U(C(C(U)),A),C(U),C(C1(U)),A,A,A),C(C1(U)),A,U,C(U))>m,
+     Inline: CONLIKE,
+     Unfolding: DFun: @ backend
+                      @ n :: * -> *
+                      @ m :: * -> *
+                      (v :: GHC.Base.Monad m).
+                  @ (Graphula.Persist.RunDB backend n m)
+                  @ (Graphula.Persist.GraphulaPersistT backend n m)
+                  (Graphula.Persist.$fMonadGraphulaPersistT @ backend @ n @ m v)
+                  (GHC.Base.return @ m v @ (Graphula.Persist.RunDB backend n m))
+                    `cast`
+                  (Trans
+                       (Sym (Control.Monad.Trans.Reader.N:ReaderT[0]
+                                 <*>_N
+                                 <Graphula.Persist.RunDB backend n m>_R
+                                 <m>_R
+                                 <Graphula.Persist.RunDB backend n m>_N))
+                       (Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <Graphula.Persist.RunDB backend n m>_N))
+                  (Control.Monad.Trans.Reader.withReaderT
+                     @ *
+                     @ (Graphula.Persist.RunDB backend n m)
+                     @ (Graphula.Persist.RunDB backend n m)
+                     @ m)
+                    `cast`
+                  (forall (a :: <*>_N).
+                   <Graphula.Persist.RunDB backend n m
+                    -> Graphula.Persist.RunDB backend n m>_R
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <a>_N
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <a>_N)
+                  (\ @ a ->
+                   Control.Monad.Trans.Reader.reader
+                     @ m
+                     @ (Graphula.Persist.RunDB backend n m)
+                     @ a
+                     v)
+                    `cast`
+                  (forall (a :: <*>_N).
+                   <Graphula.Persist.RunDB backend n m -> a>_R
+                   ->_R Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                 <backend>_R <n>_R <m>_R) <a>_N) -}
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  $fMonadTransGraphulaPersistT ::
+    Control.Monad.Trans.Class.MonadTrans
+      (Graphula.Persist.GraphulaPersistT backend n)
+  DFunId
+  {- Arity: 3, HasNoCafRefs, Strictness: <L,A><S,1*U><L,A>,
+     Inline: (sat-args=0),
+     Unfolding: InlineRule (0, False, True)
+                Graphula.Persist.$fMonadTransGraphulaPersistT1
+                  `cast`
+                (forall (backend :: <*>_N) (n :: <* -> *>_N).
+                 Trans
+                     (forall (m :: <* -> *>_N) (a :: <*>_N).
+                      <GHC.Base.Monad m>_R
+                      ->_R <m a>_R
+                      ->_R Trans
+                               (Sym (Control.Monad.Trans.Reader.N:ReaderT[0]
+                                         <*>_N <Graphula.Persist.RunDB backend n m>_R <m>_R <a>_N))
+                               (Sym (Graphula.Persist.N:GraphulaPersistT[0]
+                                         <backend>_R <n>_R <m>_R) <a>_N))
+                     (Sym (Control.Monad.Trans.Class.N:MonadTrans[0]
+                               <Graphula.Persist.GraphulaPersistT backend n>_N))) -}
+d41c745156d5190876753066e6da8d44
+  $fMonadTransGraphulaPersistT1 ::
+    GHC.Base.Monad m =>
+    m a -> Graphula.Persist.RunDB backend n m -> m a
+  {- Arity: 3, HasNoCafRefs, Strictness: <L,A><S,1*U><L,A>,
+     Unfolding: InlineRule (3, True, True)
+                (\ @ backend
+                   @ n :: * -> *
+                   @ m :: * -> *
+                   @ a
+                   ($dMonad :: GHC.Base.Monad m)
+                   (x :: m a)
+                   (ds :: Graphula.Persist.RunDB backend n m) ->
+                 x) -}
+c25fa835ab05cfde8bb7e7ef3c2f7707
+  $fPersistRecordbackenda ::
+    (Database.Persist.Class.PersistEntity.PersistEntity a,
+     (Database.Persist.Class.PersistEntity.PersistEntityBackend a :: *)
+     Data.Type.Equality.~
+     (Database.Persist.Sql.Types.Internal.SqlBackend :: *),
+     Database.Persist.Class.PersistStore.PersistStoreWrite backend,
+     Database.Persist.Class.PersistUnique.PersistUniqueWrite backend) =>
+    Graphula.Persist.PersistRecord backend a
+  DFunId
+  {- Arity: 4, HasNoCafRefs,
+     Strictness: <L,1*U><L,U(U)><L,1*U><L,1*U>m, Inline: CONLIKE,
+     Unfolding: DFun: @ a
+                      @ backend
+                      (v :: Database.Persist.Class.PersistEntity.PersistEntity a)
+                      (v1 :: (Database.Persist.Class.PersistEntity.PersistEntityBackend
+                                a :: *)
+                             Data.Type.Equality.~
+                             (Database.Persist.Sql.Types.Internal.SqlBackend :: *))
+                      (v2 :: Database.Persist.Class.PersistStore.PersistStoreWrite
+                               backend)
+                      (v3 :: Database.Persist.Class.PersistUnique.PersistUniqueWrite
+                               backend).
+                  @ backend
+                  @ a
+                  (case GHC.Types.HEq_sc
+                          @ *
+                          @ *
+                          @ (Database.Persist.Class.PersistEntity.PersistEntityBackend a)
+                          @ Database.Persist.Sql.Types.Internal.SqlBackend
+                          v1
+                            `cast`
+                          (Data.Type.Equality.N:~[0]
+                               <*>_N <Database.Persist.Class.PersistEntity.PersistEntityBackend
+                                        a>_N <Database.Persist.Sql.Types.Internal.SqlBackend>_N) of cobox { DEFAULT ->
+                   v })
+                  (case GHC.Types.HEq_sc
+                          @ *
+                          @ *
+                          @ (Database.Persist.Class.PersistEntity.PersistEntityBackend a)
+                          @ Database.Persist.Sql.Types.Internal.SqlBackend
+                          v1
+                            `cast`
+                          (Data.Type.Equality.N:~[0]
+                               <*>_N <Database.Persist.Class.PersistEntity.PersistEntityBackend
+                                        a>_N <Database.Persist.Sql.Types.Internal.SqlBackend>_N) of cobox { DEFAULT ->
+                   v1 })
+                  (case GHC.Types.HEq_sc
+                          @ *
+                          @ *
+                          @ (Database.Persist.Class.PersistEntity.PersistEntityBackend a)
+                          @ Database.Persist.Sql.Types.Internal.SqlBackend
+                          v1
+                            `cast`
+                          (Data.Type.Equality.N:~[0]
+                               <*>_N <Database.Persist.Class.PersistEntity.PersistEntityBackend
+                                        a>_N <Database.Persist.Sql.Types.Internal.SqlBackend>_N) of cobox { DEFAULT ->
+                   v2 })
+                  (case GHC.Types.HEq_sc
+                          @ *
+                          @ *
+                          @ (Database.Persist.Class.PersistEntity.PersistEntityBackend a)
+                          @ Database.Persist.Sql.Types.Internal.SqlBackend
+                          v1
+                            `cast`
+                          (Data.Type.Equality.N:~[0]
+                               <*>_N <Database.Persist.Class.PersistEntity.PersistEntityBackend
+                                        a>_N <Database.Persist.Sql.Types.Internal.SqlBackend>_N) of cobox { DEFAULT ->
+                   v3 }) -}
+d91a48193d1271cd0f4058742828c5a5
+  $tc'GraphulaPersistT :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   119075096533414783##
+                   6236326609321763446##
+                   Graphula.Persist.$trModule
+                   Graphula.Persist.$tc'GraphulaPersistT2
+                   4#
+                   Graphula.Persist.$tc'GraphulaPersistT1) -}
+b6fddc41fe0e0a4f32a73e229fc9a281
+  $tc'GraphulaPersistT1 :: GHC.Types.KindRep
+  {- HasNoCafRefs, Strictness: m4, Inline: [~] -}
+d1628ca8182c19d3a020890cf98c0527
+  $tc'GraphulaPersistT2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS
+                   Graphula.Persist.$tc'GraphulaPersistT3) -}
+ee6004440d9a4161a16b0e59c385ea41
+  $tc'GraphulaPersistT3 :: GHC.Prim.Addr#
+  {- HasNoCafRefs, Unfolding: ("'GraphulaPersistT"#) -}
+8742491eb457bff302147a762ff35426
+  $tcEntityKeys :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   15887395515773836434##
+                   11119666743410839963##
+                   Graphula.Persist.$trModule
+                   Graphula.Persist.$tcEntityKeys2
+                   0#
+                   Graphula.Persist.$tcEntityKeys1) -}
+3f89dbc1c55c378c0610f9abd98c2c2d
+  $tcEntityKeys1 :: GHC.Types.KindRep
+  {- HasNoCafRefs, Strictness: m4, Inline: [~] -}
+c2dc79718651b639ee71557d6f53699e
+  $tcEntityKeys2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS Graphula.Persist.$tcEntityKeys3) -}
+07f3ffe095936daf5a719248e13a44e6
+  $tcEntityKeys3 :: GHC.Prim.Addr#
+  {- HasNoCafRefs, Unfolding: ("EntityKeys"#) -}
+6dcfd53a6c7082bc26b76967597de176
+  $tcGraphulaPersistT :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   16421184086417826157##
+                   15534284996363720911##
+                   Graphula.Persist.$trModule
+                   Graphula.Persist.$tcGraphulaPersistT2
+                   0#
+                   Graphula.Persist.$tcGraphulaPersistT1) -}
+e339c726d75b6407babacb017850203e
+  $tcGraphulaPersistT1 :: GHC.Types.KindRep
+  {- HasNoCafRefs, Strictness: m4, Inline: [~] -}
+d9272d5710c51ec24777eaa845520b9e
+  $tcGraphulaPersistT2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS
+                   Graphula.Persist.$tcGraphulaPersistT3) -}
+163c34d55c3574cfc6febd0a78f29e1c
+  $tcGraphulaPersistT3 :: GHC.Prim.Addr#
+  {- HasNoCafRefs, Unfolding: ("GraphulaPersistT"#) -}
+a83ce92ab2debaf161503af75586807f
+  $tcPersistRecord :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   11372053735396312899##
+                   5424886503720063481##
+                   Graphula.Persist.$trModule
+                   Graphula.Persist.$tcPersistRecord2
+                   0#
+                   Graphula.Persist.$tcPersistRecord1) -}
+9096d599425174a0416a8da91326d078
+  $tcPersistRecord1 :: GHC.Types.KindRep
+  {- HasNoCafRefs, Strictness: m4, Inline: [~] -}
+6a9f42ce9696e0937c46b8ce56be8446
+  $tcPersistRecord2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS
+                   Graphula.Persist.$tcPersistRecord3) -}
+6675ad0db32689f5a587309ac29306a4
+  $tcPersistRecord3 :: GHC.Prim.Addr#
+  {- HasNoCafRefs, Unfolding: ("PersistRecord"#) -}
+99c0947cee061378d1dc7844e75a698b
+  $tcRunDB :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   16590565691399916824##
+                   15238030324073676598##
+                   Graphula.Persist.$trModule
+                   Graphula.Persist.$tcRunDB2
+                   0#
+                   Graphula.Persist.$tcRunDB1) -}
+fe1b7f6e02e9b5a361f210ea4400c5ae
+  $tcRunDB1 :: GHC.Types.KindRep
+  {- HasNoCafRefs, Strictness: m4, Inline: [~] -}
+3d93cac67414e769df1526744781775b
+  $tcRunDB2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS Graphula.Persist.$tcRunDB3) -}
+805a43d756554883409d10632d6c4453
+  $tcRunDB3 :: GHC.Prim.Addr#
+  {- HasNoCafRefs, Unfolding: ("RunDB"#) -}
+c9b24643f8eceff2e3054f3b7719b0a3
+  $trModule :: GHC.Types.Module
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.Module
+                   Graphula.Persist.$trModule3
+                   Graphula.Persist.$trModule1) -}
+670e73dde369f5836c4120dc62de9f15
+  $trModule1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS Graphula.Persist.$trModule2) -}
+4b2e5993c7801ee2e85c0946b60e371d
+  $trModule2 :: GHC.Prim.Addr#
+  {- HasNoCafRefs, Unfolding: ("Graphula.Persist"#) -}
+098566f1b06f0ff6819d3c72c68dcfdd
+  $trModule3 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS Graphula.Persist.$trModule4) -}
+c61792b75a21c218e55567fdf7de88c3
+  $trModule4 :: GHC.Prim.Addr#
+  {- HasNoCafRefs,
+     Unfolding: ("graphula-persistent-0.1.0-4e7yTwa5KSn8T6sZnXQlEO"#) -}
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  $w$cremove ::
+    (Control.Monad.IO.Class.MonadIO m,
+     Control.Monad.IO.Class.MonadIO n,
+     Database.Persist.Sql.Types.Internal.SqlBackendCanWrite backend,
+     (Database.Persist.Class.PersistStore.BaseBackend backend :: *)
+     Data.Type.Equality.~
+     (Database.Persist.Sql.Types.Internal.SqlBackend :: *)) =>
+    forall a.
+    Graphula.NodeConstraint
+      (Graphula.Persist.GraphulaPersistT backend n m) a =>
+    Graphula.Node (Graphula.Persist.GraphulaPersistT backend n m) a
+    -> Graphula.Persist.RunDB backend n m -> m ()
+  {- Arity: 7, HasNoCafRefs,
+     Strictness: <S(S(LC(C(S))LLL)L),1*U(1*U(A,1*C1(C1(U)),A,1*C1(U),A),A)><L,U><L,1*U(A,A,1*U(A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,1*C1(C1(C1(U))),A,A),A)><S(S),U(U)><S(LS(S)LL),U(1*U,1*U(1*U),A,A)><L,1*U(1*U,A)><L,U>,
+     Inline: [0],
+     Unfolding: (\ @ m :: * -> *
+                   @ n :: * -> *
+                   @ backend
+                   (w :: Control.Monad.IO.Class.MonadIO m)
+                   (w1 :: Control.Monad.IO.Class.MonadIO n)
+                   (w2 :: Database.Persist.Sql.Types.Internal.SqlBackendCanWrite
+                            backend)
+                   (w3 :: (Database.Persist.Class.PersistStore.BaseBackend
+                             backend :: *)
+                          Data.Type.Equality.~
+                          (Database.Persist.Sql.Types.Internal.SqlBackend :: *))
+                   @ a
+                   (w4 :: Graphula.NodeConstraint
+                            (Graphula.Persist.GraphulaPersistT backend n m) a)
+                   (w5 :: Graphula.Node
+                            (Graphula.Persist.GraphulaPersistT backend n m) a)
+                   (w6 :: Graphula.Persist.RunDB backend n m) ->
+                 case GHC.Types.HEq_sc
+                        @ *
+                        @ *
+                        @ (Database.Persist.Class.PersistStore.BaseBackend backend)
+                        @ Database.Persist.Sql.Types.Internal.SqlBackend
+                        w3
+                          `cast`
+                        (Data.Type.Equality.N:~[0]
+                             <*>_N <Database.Persist.Class.PersistStore.BaseBackend
+                                      backend>_N <Database.Persist.Sql.Types.Internal.SqlBackend>_N) of cobox { DEFAULT ->
+                 case GHC.Types.HEq_sc
+                        @ *
+                        @ *
+                        @ (Database.Persist.Class.PersistEntity.PersistEntityBackend a)
+                        @ Database.Persist.Sql.Types.Internal.SqlBackend
+                        (Graphula.Persist.$p2PersistRecord
+                           @ backend
+                           @ a
+                           w4
+                             `cast`
+                           (Sub (Graphula.Persist.D:R:NodeConstraintGraphulaPersistT[0]
+                                     <backend>_N <n>_N <m>_N) <a>_N))
+                          `cast`
+                        (Data.Type.Equality.N:~[0]
+                             <*>_N <Database.Persist.Class.PersistEntity.PersistEntityBackend
+                                      a>_N <Database.Persist.Sql.Types.Internal.SqlBackend>_N) of cobox1 { DEFAULT ->
+                 let {
+                   $dMonad :: GHC.Base.Monad m
+                   = Control.Monad.IO.Class.$p1MonadIO @ m w
+                 } in
+                 let {
+                   lvl :: Control.Monad.Trans.Reader.ReaderT backend n ()
+                   = Database.Persist.Class.PersistStore.delete
+                       @ backend
+                       (GHC.Classes.$p3(%,,,%)
+                          @ (Database.Persist.Sql.Types.Internal.SqlBackendCanRead backend)
+                          @ (Database.Persist.Class.PersistQuery.PersistQueryWrite backend)
+                          @ (Database.Persist.Class.PersistStore.PersistStoreWrite backend)
+                          @ (Database.Persist.Class.PersistUnique.PersistUniqueWrite backend)
+                          w2)
+                       @ n
+                       @ a
+                       w1
+                       (Graphula.Persist.$p1PersistRecord
+                          @ backend
+                          @ a
+                          w4
+                            `cast`
+                          (Sub (Graphula.Persist.D:R:NodeConstraintGraphulaPersistT[0]
+                                    <backend>_N <n>_N <m>_N) <a>_N),
+                        w3
+                          `cast`
+                        ((Data.Type.Equality.~)
+                           <*>_N cobox <Database.Persist.Sql.Types.Internal.SqlBackend>_N)_R)
+                         `cast`
+                       (GHC.Classes.(%,%)
+                          <Database.Persist.Class.PersistEntity.PersistEntity a>_N
+                          ((Data.Type.Equality.~) <*>_N (Sym cobox1) (Sym cobox))_N)_R
+                       (case w5
+                               `cast`
+                             (Sub (Graphula.Persist.D:R:NodeGraphulaPersistT[0]
+                                       <backend>_N
+                                       <n>_N
+                                       <m>_N) <a>_N) of wild { Database.Persist.Class.PersistEntity.Entity ds1 ds2 ->
+                        ds1 })
+                 } in
+                 GHC.Base.>>=
+                   @ m
+                   $dMonad
+                   @ (Graphula.Persist.RunDB backend n m)
+                   @ ()
+                   (GHC.Base.return
+                      @ m
+                      $dMonad
+                      @ (Graphula.Persist.RunDB backend n m)
+                      w6)
+                   (\ (a1 :: Graphula.Persist.RunDB backend n m) ->
+                    a1 `cast` (Graphula.Persist.N:RunDB[0] <backend>_R <n>_R <m>_R)
+                      @ ()
+                      lvl) } }) -}
+792619837ba4da3e38c02ea4dd4196ce
+  axiom Graphula.Persist.D:R:Keys(,)::
+    [a, b]
+      Graphula.Persist.Keys
+        (Database.Persist.Class.PersistEntity.Entity a,
+         Database.Persist.Class.PersistEntity.Entity b)
+        = (Database.Persist.Class.PersistEntity.Key a,
+           Database.Persist.Class.PersistEntity.Key b)
+792619837ba4da3e38c02ea4dd4196ce
+  axiom Graphula.Persist.D:R:Keys(,,)::
+    [a, b, c]
+      Graphula.Persist.Keys
+        (Database.Persist.Class.PersistEntity.Entity a,
+         Database.Persist.Class.PersistEntity.Entity b,
+         Database.Persist.Class.PersistEntity.Entity c)
+        = (Database.Persist.Class.PersistEntity.Key a,
+           Database.Persist.Class.PersistEntity.Key b,
+           Database.Persist.Class.PersistEntity.Key c)
+792619837ba4da3e38c02ea4dd4196ce
+  axiom Graphula.Persist.D:R:Keys(,,,)::
+    [a, b, c, d]
+      Graphula.Persist.Keys
+        (Database.Persist.Class.PersistEntity.Entity a,
+         Database.Persist.Class.PersistEntity.Entity b,
+         Database.Persist.Class.PersistEntity.Entity c,
+         Database.Persist.Class.PersistEntity.Entity d)
+        = (Database.Persist.Class.PersistEntity.Key a,
+           Database.Persist.Class.PersistEntity.Key b,
+           Database.Persist.Class.PersistEntity.Key c,
+           Database.Persist.Class.PersistEntity.Key d)
+792619837ba4da3e38c02ea4dd4196ce
+  axiom Graphula.Persist.D:R:KeysEntity::
+    [a]
+      Graphula.Persist.Keys
+        (Database.Persist.Class.PersistEntity.Entity a)
+        = Database.Persist.Class.PersistEntity.Key a
+792619837ba4da3e38c02ea4dd4196ce
+  axiom Graphula.Persist.D:R:KeysOnly::
+    [a]
+      Graphula.Persist.Keys
+        (Graphula.Only (Database.Persist.Class.PersistEntity.Entity a))
+        = Graphula.Only (Database.Persist.Class.PersistEntity.Key a)
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  axiom Graphula.Persist.D:R:NodeConstraintGraphulaPersistT::
+    [backend, (n :: * -> *), (m :: * -> *)]
+      Graphula.NodeConstraint
+        (Graphula.Persist.GraphulaPersistT backend n m)
+        = Graphula.Persist.PersistRecord backend
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  axiom Graphula.Persist.D:R:NodeGraphulaPersistT::
+    [backend, (n :: * -> *), (m :: * -> *)]
+      Graphula.Node (Graphula.Persist.GraphulaPersistT backend n m)
+        = Database.Persist.Class.PersistEntity.Entity
+792619837ba4da3e38c02ea4dd4196ce
+  class EntityKeys a where
+    type family Keys a :: * open
+    keys :: a -> Graphula.Persist.Keys a
+    {-# MINIMAL keys #-}
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  type role GraphulaPersistT representational representational representational nominal
+  newtype GraphulaPersistT backend (n :: * -> *) (m :: * -> *) a
+    = GraphulaPersistT {runGraphulaPersistT' :: Control.Monad.Trans.Reader.ReaderT
+                                                  (Graphula.Persist.RunDB backend n m) m a}
+c25fa835ab05cfde8bb7e7ef3c2f7707
+  class (Database.Persist.Class.PersistEntity.PersistEntity a,
+         (Database.Persist.Class.PersistEntity.PersistEntityBackend a :: *)
+         Data.Type.Equality.~
+         (Database.Persist.Sql.Types.Internal.SqlBackend :: *),
+         Database.Persist.Class.PersistStore.PersistStoreWrite backend,
+         Database.Persist.Class.PersistUnique.PersistUniqueWrite backend) =>
+        PersistRecord backend a
+06b64031ca4d59ce83fa8e4fd1ecd6a9
+  newtype RunDB backend (n :: * -> *) (m :: * -> *)
+    = RunDB (forall b.
+             Control.Monad.Trans.Reader.ReaderT backend n b -> m b)
+bef061a09e9de698959f0d5d5fdce8f4
+  onlyKey ::
+    Database.Persist.Class.PersistEntity.Entity a
+    -> Graphula.Only (Database.Persist.Class.PersistEntity.Key a)
+  {- Arity: 1, HasNoCafRefs, Strictness: <S(SL),1*U(1*U,A)>,
+     Unfolding: InlineRule (0, True, True)
+                Database.Persist.Class.PersistEntity.entityKey
+                  `cast`
+                (forall (a :: <*>_N).
+                 <Database.Persist.Class.PersistEntity.Entity a>_R
+                 ->_R Nth:3
+                          (Trans
+                               (Sym (Graphula.N:Only[0]
+                                         <Database.Persist.Class.PersistEntity.Entity a>_R)
+                                ->_R <Database.Persist.Class.PersistEntity.Key a>_R)
+                               (Trans
+                                    (<Graphula.Only
+                                        (Database.Persist.Class.PersistEntity.Entity a)>_R
+                                     ->_R Trans
+                                              (Sym (Graphula.N:Only[0]
+                                                        <Database.Persist.Class.PersistEntity.Key
+                                                           a>_R))
+                                              (Sub (Sym (Graphula.Persist.D:R:KeysOnly[0] <a>_N))))
+                                    (<Graphula.Only
+                                        (Database.Persist.Class.PersistEntity.Entity a)>_R
+                                     ->_R Sub (Graphula.Persist.D:R:KeysOnly[0] <a>_N))))) -}
+7a55bac4950c196416298f8ef98568d6
+  runGraphulaPersistT ::
+    (Database.Persist.Sql.Types.Internal.SqlBackendCanWrite backend,
+     Control.Monad.IO.Class.MonadIO m) =>
+    (forall b. Control.Monad.Trans.Reader.ReaderT backend n b -> m b)
+    -> Graphula.Persist.GraphulaPersistT backend n m a -> m a
+  {- Arity: 4, HasNoCafRefs,
+     Strictness: <L,A><L,A><L,U><C(S),1*C1(U)>,
+     Unfolding: InlineRule (4, True, True)
+                (\ @ backend
+                   @ m :: * -> *
+                   @ n :: * -> *
+                   @ a
+                   ($d(%,,,%) :: Database.Persist.Sql.Types.Internal.SqlBackendCanWrite
+                                   backend)
+                   ($dMonadIO :: Control.Monad.IO.Class.MonadIO m)
+                   (runDB :: forall b.
+                             Control.Monad.Trans.Reader.ReaderT backend n b -> m b)
+                   (action :: Graphula.Persist.GraphulaPersistT backend n m a) ->
+                 action
+                   `cast`
+                 (Trans
+                      (Graphula.Persist.N:GraphulaPersistT[0]
+                           <backend>_R <n>_R <m>_R <a>_N)
+                      (Control.Monad.Trans.Reader.N:ReaderT[0]
+                           <*>_N <Graphula.Persist.RunDB backend n m>_R <m>_R <a>_N))
+                   runDB
+                     `cast`
+                   (Sym (Graphula.Persist.N:RunDB[0] <backend>_R <n>_R <m>_R))) -}
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  runGraphulaPersistT' ::
+    Graphula.Persist.GraphulaPersistT backend n m a
+    -> Control.Monad.Trans.Reader.ReaderT
+         (Graphula.Persist.RunDB backend n m) m a
+  RecSel Left Graphula.Persist.GraphulaPersistT
+  {- Arity: 1, HasNoCafRefs, Strictness: <S,1*U>,
+     Unfolding: InlineRule (0, True, True)
+                Graphula.Persist.runGraphulaPersistT'1
+                  `cast`
+                (forall (backend :: <*>_N) (n :: <* -> *>_N) (m :: <*
+                                                                    -> *>_N) (a :: <*>_N).
+                 <Graphula.Persist.GraphulaPersistT backend n m a>_R
+                 ->_R Graphula.Persist.N:GraphulaPersistT[0]
+                          <backend>_R <n>_R <m>_R <a>_N) -}
+26ee74c6ae2af2e8f4cfa5db4d1d6b98
+  runGraphulaPersistT'1 ::
+    Graphula.Persist.GraphulaPersistT backend n m a
+    -> Graphula.Persist.GraphulaPersistT backend n m a
+  {- Arity: 1, HasNoCafRefs, Strictness: <S,1*U>,
+     Unfolding: InlineRule (1, True, True)
+                (\ @ backend
+                   @ n :: * -> *
+                   @ m :: * -> *
+                   @ a
+                   (ds :: Graphula.Persist.GraphulaPersistT backend n m a) ->
+                 ds) -}
+instance GHC.Base.Applicative [Graphula.Persist.GraphulaPersistT]
+  = Graphula.Persist.$fApplicativeGraphulaPersistT
+instance Graphula.Persist.EntityKeys [(,)]
+  = Graphula.Persist.$fEntityKeys(,)
+instance Graphula.Persist.EntityKeys [(,,)]
+  = Graphula.Persist.$fEntityKeys(,,)
+instance Graphula.Persist.EntityKeys [(,,,)]
+  = Graphula.Persist.$fEntityKeys(,,,)
+instance Graphula.Persist.EntityKeys [Database.Persist.Class.PersistEntity.Entity]
+  = Graphula.Persist.$fEntityKeysEntity
+instance Graphula.Persist.EntityKeys [Graphula.Only]
+  = Graphula.Persist.$fEntityKeysOnly
+instance GHC.Base.Functor [Graphula.Persist.GraphulaPersistT]
+  = Graphula.Persist.$fFunctorGraphulaPersistT
+instance Graphula.MonadGraphulaFrontend [Graphula.Persist.GraphulaPersistT]
+  = Graphula.Persist.$fMonadGraphulaFrontendGraphulaPersistT
+instance GHC.Base.Monad [Graphula.Persist.GraphulaPersistT]
+  = Graphula.Persist.$fMonadGraphulaPersistT
+instance Control.Monad.IO.Class.MonadIO [Graphula.Persist.GraphulaPersistT]
+  = Graphula.Persist.$fMonadIOGraphulaPersistT
+instance Control.Monad.Reader.Class.MonadReader [Graphula.Persist.RunDB,
+                                                 Graphula.Persist.GraphulaPersistT]
+  = Graphula.Persist.$fMonadReaderGraphulaPersistT
+instance Control.Monad.Trans.Class.MonadTrans [Graphula.Persist.GraphulaPersistT]
+  = Graphula.Persist.$fMonadTransGraphulaPersistT
+instance Graphula.Persist.PersistRecord [., .]
+  = Graphula.Persist.$fPersistRecordbackenda
+family instance Graphula.Persist.Keys [Database.Persist.Class.PersistEntity.Entity]
+  = Graphula.Persist.D:R:KeysEntity
+family instance Graphula.Persist.Keys [Graphula.Only]
+  = Graphula.Persist.D:R:KeysOnly
+family instance Graphula.Persist.Keys [(,)]
+  = Graphula.Persist.D:R:Keys(,)
+family instance Graphula.Persist.Keys [(,,)]
+  = Graphula.Persist.D:R:Keys(,,)
+family instance Graphula.Persist.Keys [(,,,)]
+  = Graphula.Persist.D:R:Keys(,,,)
+family instance Graphula.Node [Graphula.Persist.GraphulaPersistT]
+  = Graphula.Persist.D:R:NodeGraphulaPersistT
+family instance Graphula.NodeConstraint [Graphula.Persist.GraphulaPersistT]
+  = Graphula.Persist.D:R:NodeConstraintGraphulaPersistT
+vectorised variables:
+vectorised tycons:
+vectorised reused tycons:
+parallel variables:
+parallel tycons:
+trusted: none
+require own pkg trusted: False
+

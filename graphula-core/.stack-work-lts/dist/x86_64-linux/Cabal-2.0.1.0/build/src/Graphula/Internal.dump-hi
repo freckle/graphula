@@ -1,0 +1,823 @@
+
+==================== FINAL INTERFACE ====================
+2018-07-19 18:57:40.967592 UTC
+
+interface graphula-core-0.3.0-KB0qlZWGUfxDh2xuSDfPnR:Graphula.Internal 8022
+  interface hash: cc585bffb178fa0b344feb1590896156
+  ABI hash: 55980c52e341c43f73c38142198fe9eb
+  export-list hash: 996c9454f3de979af758bf4c20c7767b
+  orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
+  flag hash: 7525aeeae774039bbddbb1a50ea8fe73
+  sig of: Nothing
+  used TH splices: False
+  where
+exports:
+  Graphula.Internal.DependenciesTypeInstance
+  Graphula.Internal.FindMatches
+  Graphula.Internal.GHasDependencies{Graphula.Internal.genericDependsOn}
+  Graphula.Internal.GHasDependenciesRecursive{Graphula.Internal.genericDependsOnRecursive}
+  Graphula.Internal.Match{Graphula.Internal.Match Graphula.Internal.NoMatch}
+module dependencies:
+package dependencies: base-4.10.1.0 generics-eot-0.2.1.2
+                      ghc-prim-0.5.1.1 integer-gmp-1.0.1.0
+orphans: base-4.10.1.0:GHC.Float base-4.10.1.0:GHC.Base
+family instance modules: base-4.10.1.0:Control.Applicative
+                         base-4.10.1.0:Data.Either base-4.10.1.0:Data.Functor.Const
+                         base-4.10.1.0:Data.Functor.Identity base-4.10.1.0:Data.Monoid
+                         base-4.10.1.0:Data.Type.Equality base-4.10.1.0:Data.Version
+                         base-4.10.1.0:GHC.Exts base-4.10.1.0:GHC.Generics
+                         base-4.10.1.0:GHC.IO.Exception base-4.10.1.0:GHC.TypeLits
+                         base-4.10.1.0:GHC.TypeNats generics-eot-0.2.1.2:Generics.Eot
+                         generics-eot-0.2.1.2:Generics.Eot.Eot
+import  -/  base-4.10.1.0:Data.Either d7dae5d9bf298dee616e465c14b5d60e
+import  -/  base-4.10.1.0:Data.Proxy da449059b879cc23dde5f0d9cfa646e9
+import  -/  base-4.10.1.0:Data.Type.Equality ca4e91e1727dfab58cd5d13c463acc81
+import  -/  base-4.10.1.0:GHC.Err 514b3a24b22e9d7d731c2d0d02d10842
+import  -/  base-4.10.1.0:GHC.TypeLits a30ca383bbe44df787aab4993b49dce1
+import  -/  base-4.10.1.0:Prelude 31945b7d0084063347fc52506d3a4020
+import  -/  generics-eot-0.2.1.2:Generics.Eot 61b641093c09923cc71ed43b34e6df64
+import  -/  generics-eot-0.2.1.2:Generics.Eot.Eot f7aa58c07e766748ad6001698585c8a5
+ded8661214197242f46a39fc58ef27ee
+  $fGHasDependenciesProxyProxyEitherEither ::
+    (TypeError ...) =>
+    Graphula.Internal.GHasDependencies
+      (Data.Proxy.Proxy nodeTy)
+      (Data.Proxy.Proxy depsTy)
+      (Data.Either.Either left1 (Data.Either.Either right1 rest1))
+      (Data.Either.Either left2 (Data.Either.Either right2 rest2))
+  DFunId
+  {- Arity: 5, Strictness: <B,A><B,A><B,A><B,A><B,A>x,
+     Inline: (sat-args=0),
+     Unfolding: InlineRule (1, False, True)
+                Graphula.Internal.$fGHasDependenciesProxyProxyEitherEither_$cgenericDependsOn
+                  `cast`
+                (forall (nodeTy :: <*>_N) (depsTy :: <*>_N) (left1 :: <*>_N) (right1 :: <*>_N) (rest1 :: <*>_N) (left2 :: <*>_N) (right2 :: <*>_N) (rest2 :: <*>_N).
+                 <(TypeError ...)>_R
+                 ->_R Sym (Graphula.Internal.N:GHasDependencies[0]
+                               <Data.Proxy.Proxy nodeTy>_N
+                               <Data.Proxy.Proxy depsTy>_N
+                               <Data.Either.Either left1 (Data.Either.Either right1 rest1)>_N
+                               <Data.Either.Either left2 (Data.Either.Either right2 rest2)>_N)) -}
+ded8661214197242f46a39fc58ef27ee
+  $fGHasDependenciesProxyProxyEitherEither0 ::
+    (TypeError ...) =>
+    Graphula.Internal.GHasDependencies
+      (Data.Proxy.Proxy nodeTy)
+      (Data.Proxy.Proxy depsTy)
+      (Data.Either.Either node Generics.Eot.Eot.Void)
+      (Data.Either.Either left (Data.Either.Either right rest))
+  DFunId
+  {- Arity: 5, Strictness: <B,A><B,A><B,A><B,A><B,A>x,
+     Inline: (sat-args=0),
+     Unfolding: InlineRule (1, False, True)
+                Graphula.Internal.$fGHasDependenciesProxyProxyEitherEither0_$cgenericDependsOn
+                  `cast`
+                (forall (nodeTy :: <*>_N) (depsTy :: <*>_N) (node :: <*>_N) (left :: <*>_N) (right :: <*>_N) (rest :: <*>_N).
+                 <(TypeError ...)>_R
+                 ->_R Sym (Graphula.Internal.N:GHasDependencies[0]
+                               <Data.Proxy.Proxy nodeTy>_N
+                               <Data.Proxy.Proxy depsTy>_N
+                               <Data.Either.Either node Generics.Eot.Eot.Void>_N
+                               <Data.Either.Either left (Data.Either.Either right rest)>_N)) -}
+f9de0db2d61d0566ffc78e1053dfd7aa
+  $fGHasDependenciesProxyProxyEitherEither0_$cgenericDependsOn ::
+    (TypeError ...) =>
+    Data.Proxy.Proxy nodeTy
+    -> Data.Proxy.Proxy depsTy
+    -> Data.Either.Either node Generics.Eot.Eot.Void
+    -> Data.Either.Either left (Data.Either.Either right rest)
+    -> Data.Either.Either node Generics.Eot.Eot.Void
+  {- Arity: 5, Strictness: <B,A><B,A><B,A><B,A><B,A>x,
+     Unfolding: InlineRule (5, True, True)
+                (\ @ nodeTy
+                   @ depsTy
+                   @ node
+                   @ left
+                   @ right
+                   @ rest
+                   (irred :: (TypeError ...))
+                   (eta :: Data.Proxy.Proxy nodeTy)
+                   (eta1 :: Data.Proxy.Proxy depsTy)
+                   (eta2 :: Data.Either.Either node Generics.Eot.Eot.Void)
+                   (eta3 :: Data.Either.Either
+                              left (Data.Either.Either right rest)) ->
+                 Graphula.Internal.$fGHasDependenciesProxyProxyEitherEither5
+                   @ node) -}
+ded8661214197242f46a39fc58ef27ee
+  $fGHasDependenciesProxyProxyEitherEither1 ::
+    (TypeError ...) =>
+    Graphula.Internal.GHasDependencies
+      (Data.Proxy.Proxy nodeTy)
+      (Data.Proxy.Proxy depsTy)
+      (Data.Either.Either left (Data.Either.Either right rest))
+      (Data.Either.Either deps Generics.Eot.Eot.Void)
+  DFunId
+  {- Arity: 5, Strictness: <B,A><B,A><B,A><B,A><B,A>x,
+     Inline: (sat-args=0),
+     Unfolding: InlineRule (1, False, True)
+                Graphula.Internal.$fGHasDependenciesProxyProxyEitherEither1_$cgenericDependsOn
+                  `cast`
+                (forall (nodeTy :: <*>_N) (depsTy :: <*>_N) (left :: <*>_N) (right :: <*>_N) (rest :: <*>_N) (deps :: <*>_N).
+                 <(TypeError ...)>_R
+                 ->_R Sym (Graphula.Internal.N:GHasDependencies[0]
+                               <Data.Proxy.Proxy nodeTy>_N
+                               <Data.Proxy.Proxy depsTy>_N
+                               <Data.Either.Either left (Data.Either.Either right rest)>_N
+                               <Data.Either.Either deps Generics.Eot.Eot.Void>_N)) -}
+3dd7779d1f10dd5286428c3fdc934950
+  $fGHasDependenciesProxyProxyEitherEither1_$cgenericDependsOn ::
+    (TypeError ...) =>
+    Data.Proxy.Proxy nodeTy
+    -> Data.Proxy.Proxy depsTy
+    -> Data.Either.Either left (Data.Either.Either right rest)
+    -> Data.Either.Either deps Generics.Eot.Eot.Void
+    -> Data.Either.Either left (Data.Either.Either right rest)
+  {- Arity: 5, Strictness: <B,A><B,A><B,A><B,A><B,A>x,
+     Unfolding: InlineRule (5, True, True)
+                (\ @ nodeTy
+                   @ depsTy
+                   @ left
+                   @ right
+                   @ rest
+                   @ deps
+                   (irred :: (TypeError ...))
+                   (eta :: Data.Proxy.Proxy nodeTy)
+                   (eta1 :: Data.Proxy.Proxy depsTy)
+                   (eta2 :: Data.Either.Either left (Data.Either.Either right rest))
+                   (eta3 :: Data.Either.Either deps Generics.Eot.Eot.Void) ->
+                 Graphula.Internal.$fGHasDependenciesProxyProxyEitherEither6
+                   @ left
+                   @ right
+                   @ rest) -}
+ded8661214197242f46a39fc58ef27ee
+  $fGHasDependenciesProxyProxyEitherEither2 ::
+    ((Graphula.Internal.FindMatches
+        nodeTy depsTy node deps :: [Graphula.Internal.Match *])
+     Data.Type.Equality.~
+     (fields :: [Graphula.Internal.Match *]),
+     Graphula.Internal.GHasDependenciesRecursive
+       (Data.Proxy.Proxy fields) node deps) =>
+    Graphula.Internal.GHasDependencies
+      (Data.Proxy.Proxy nodeTy)
+      (Data.Proxy.Proxy depsTy)
+      (Data.Either.Either node Generics.Eot.Eot.Void)
+      (Data.Either.Either deps Generics.Eot.Eot.Void)
+  DFunId
+  {- Arity: 6,
+     Strictness: <S(S),1*U(1*U)><L,1*C1(C1(C1(U)))><L,A><L,A><S,1*U><S,1*U>m1,
+     Inline: (sat-args=0),
+     Unfolding: InlineRule (2, False, True)
+                Graphula.Internal.$fGHasDependenciesProxyProxyEitherEither2_$cgenericDependsOn
+                  `cast`
+                (forall (nodeTy :: <*>_N) (depsTy :: <*>_N) (node :: <*>_N) (deps :: <*>_N) (fields :: <[Graphula.Internal.Match
+                                                                                                           *]>_N).
+                 <(Graphula.Internal.FindMatches
+                     nodeTy depsTy node deps :: [Graphula.Internal.Match *])
+                  Data.Type.Equality.~
+                  (fields :: [Graphula.Internal.Match *])>_R
+                 ->_R <Graphula.Internal.GHasDependenciesRecursive
+                         (Data.Proxy.Proxy fields) node deps>_R
+                 ->_R Sym (Graphula.Internal.N:GHasDependencies[0]
+                               <Data.Proxy.Proxy nodeTy>_N
+                               <Data.Proxy.Proxy depsTy>_N
+                               <Data.Either.Either node Generics.Eot.Eot.Void>_N
+                               <Data.Either.Either deps Generics.Eot.Eot.Void>_N)) -}
+d32138c4882b1857c712f19a0be9f682
+  $fGHasDependenciesProxyProxyEitherEither2_$cgenericDependsOn ::
+    ((Graphula.Internal.FindMatches
+        nodeTy depsTy node deps :: [Graphula.Internal.Match *])
+     Data.Type.Equality.~
+     (fields :: [Graphula.Internal.Match *]),
+     Graphula.Internal.GHasDependenciesRecursive
+       (Data.Proxy.Proxy fields) node deps) =>
+    Data.Proxy.Proxy nodeTy
+    -> Data.Proxy.Proxy depsTy
+    -> Data.Either.Either node Generics.Eot.Eot.Void
+    -> Data.Either.Either deps Generics.Eot.Eot.Void
+    -> Data.Either.Either node Generics.Eot.Eot.Void
+  {- Arity: 6,
+     Strictness: <S(S),1*U(1*U)><L,1*C1(C1(C1(U)))><L,A><L,A><S,1*U><S,1*U>m1,
+     Inline: [0],
+     Unfolding: InlineRule (6, True, False)
+                (\ @ nodeTy
+                   @ depsTy
+                   @ node
+                   @ deps
+                   @ fields :: [Graphula.Internal.Match *]
+                   (w :: (Graphula.Internal.FindMatches
+                            nodeTy depsTy node deps :: [Graphula.Internal.Match *])
+                         Data.Type.Equality.~
+                         (fields :: [Graphula.Internal.Match *]))
+                   (w1 :: Graphula.Internal.GHasDependenciesRecursive
+                            (Data.Proxy.Proxy fields) node deps)
+                   (w2 :: Data.Proxy.Proxy nodeTy)
+                   (w3 :: Data.Proxy.Proxy depsTy)
+                   (w4 :: Data.Either.Either node Generics.Eot.Eot.Void)
+                   (w5 :: Data.Either.Either deps Generics.Eot.Eot.Void) ->
+                 case GHC.Types.HEq_sc
+                        @ [Graphula.Internal.Match *]
+                        @ [Graphula.Internal.Match *]
+                        @ (Graphula.Internal.FindMatches nodeTy depsTy node deps)
+                        @ fields
+                        w `cast`
+                        (Data.Type.Equality.N:~[0]
+                             <[Graphula.Internal.Match *]>_N <Graphula.Internal.FindMatches
+                                                                nodeTy
+                                                                depsTy
+                                                                node
+                                                                deps>_N <fields>_N) of cobox { DEFAULT ->
+                 case w4 of wild {
+                   Data.Either.Left node1
+                   -> case w5 of wild1 {
+                        Data.Either.Left deps1
+                        -> Data.Either.Left
+                             @ node
+                             @ Generics.Eot.Eot.Void
+                             (w1
+                                `cast`
+                              (Graphula.Internal.N:GHasDependenciesRecursive[0]
+                                   <Data.Proxy.Proxy fields>_N <node>_N <deps>_N)
+                                (Data.Proxy.Proxy @ [Graphula.Internal.Match *] @ fields)
+                                node1
+                                deps1)
+                        Data.Either.Right ipv
+                        -> case Graphula.Internal.$fGHasDependenciesProxyProxyEitherEither7
+                           ret_ty (Data.Either.Either node Generics.Eot.Eot.Void)
+                           of {} }
+                   Data.Either.Right ipv
+                   -> case Graphula.Internal.$fGHasDependenciesProxyProxyEitherEither7
+                      ret_ty (Data.Either.Either node Generics.Eot.Eot.Void)
+                      of {} } }) -}
+79f96cc7c0202ce809f4dcd58c53a75c
+  $fGHasDependenciesProxyProxyEitherEither4 ::
+    Data.Either.Either left1 (Data.Either.Either right1 rest1)
+  {- Strictness: x -}
+6ac0b24b974249a548e0b1c7f5791860
+  $fGHasDependenciesProxyProxyEitherEither5 ::
+    Data.Either.Either node Generics.Eot.Eot.Void
+  {- Strictness: x -}
+b91d173a3d97f3421df5d2a48f2580c5
+  $fGHasDependenciesProxyProxyEitherEither6 ::
+    Data.Either.Either left (Data.Either.Either right rest)
+  {- Strictness: x -}
+ca873c8cef57dd296776afa206fdbf20
+  $fGHasDependenciesProxyProxyEitherEither7 ::
+    Data.Either.Either node Generics.Eot.Eot.Void
+  {- Strictness: x -}
+8373b6968b3b78f4e0132d153f850129
+  $fGHasDependenciesProxyProxyEitherEither_$cgenericDependsOn ::
+    (TypeError ...) =>
+    Data.Proxy.Proxy nodeTy
+    -> Data.Proxy.Proxy depsTy
+    -> Data.Either.Either left1 (Data.Either.Either right1 rest1)
+    -> Data.Either.Either left2 (Data.Either.Either right2 rest2)
+    -> Data.Either.Either left1 (Data.Either.Either right1 rest1)
+  {- Arity: 5, Strictness: <B,A><B,A><B,A><B,A><B,A>x,
+     Unfolding: InlineRule (5, True, True)
+                (\ @ nodeTy
+                   @ depsTy
+                   @ left1
+                   @ right1
+                   @ rest1
+                   @ left2
+                   @ right2
+                   @ rest2
+                   (irred :: (TypeError ...))
+                   (eta :: Data.Proxy.Proxy nodeTy)
+                   (eta1 :: Data.Proxy.Proxy depsTy)
+                   (eta2 :: Data.Either.Either
+                              left1 (Data.Either.Either right1 rest1))
+                   (eta3 :: Data.Either.Either
+                              left2 (Data.Either.Either right2 rest2)) ->
+                 Graphula.Internal.$fGHasDependenciesProxyProxyEitherEither4
+                   @ left1
+                   @ right1
+                   @ rest1) -}
+ded8661214197242f46a39fc58ef27ee
+  $fGHasDependenciesProxyProxyVoidEither ::
+    (TypeError ...) =>
+    Graphula.Internal.GHasDependencies
+      (Data.Proxy.Proxy nodeTy)
+      (Data.Proxy.Proxy depsTy)
+      Generics.Eot.Eot.Void
+      (Data.Either.Either deps rest)
+  DFunId
+  {- Arity: 5, Strictness: <B,A><B,A><B,A><B,A><B,A>x,
+     Inline: (sat-args=0),
+     Unfolding: InlineRule (1, False, True)
+                Graphula.Internal.$fGHasDependenciesProxyProxyVoidEither_$cgenericDependsOn
+                  `cast`
+                (forall (nodeTy :: <*>_N) (depsTy :: <*>_N) (deps :: <*>_N) (rest :: <*>_N).
+                 <(TypeError ...)>_R
+                 ->_R Sym (Graphula.Internal.N:GHasDependencies[0]
+                               <Data.Proxy.Proxy nodeTy>_N
+                               <Data.Proxy.Proxy depsTy>_N
+                               <Generics.Eot.Eot.Void>_N
+                               <Data.Either.Either deps rest>_N)) -}
+ded8661214197242f46a39fc58ef27ee
+  $fGHasDependenciesProxyProxyVoidEither0 ::
+    Graphula.Internal.GHasDependencies
+      (Data.Proxy.Proxy nodeTy)
+      (Data.Proxy.Proxy depsTy)
+      Generics.Eot.Eot.Void
+      (Data.Either.Either () Generics.Eot.Eot.Void)
+  DFunId
+  {- Arity: 4, HasNoCafRefs, Strictness: <L,A><L,A><S,1*U><L,A>,
+     Inline: (sat-args=0),
+     Unfolding: InlineRule (0, False, True)
+                Graphula.Internal.$fGHasDependenciesProxyProxyVoidEither0_$cgenericDependsOn
+                  `cast`
+                (forall (nodeTy :: <*>_N) (depsTy :: <*>_N).
+                 Sym (Graphula.Internal.N:GHasDependencies[0]
+                          <Data.Proxy.Proxy nodeTy>_N
+                          <Data.Proxy.Proxy depsTy>_N
+                          <Generics.Eot.Eot.Void>_N
+                          <Data.Either.Either () Generics.Eot.Eot.Void>_N)) -}
+90b226767a469be0163521f2bfcef3dd
+  $fGHasDependenciesProxyProxyVoidEither0_$cgenericDependsOn ::
+    Data.Proxy.Proxy nodeTy
+    -> Data.Proxy.Proxy depsTy
+    -> Generics.Eot.Eot.Void
+    -> Data.Either.Either () Generics.Eot.Eot.Void
+    -> Generics.Eot.Eot.Void
+  {- Arity: 4, HasNoCafRefs, Strictness: <L,A><L,A><S,1*U><L,A>,
+     Unfolding: InlineRule (4, True, True)
+                (\ @ nodeTy
+                   @ depsTy
+                   (ds :: Data.Proxy.Proxy nodeTy)
+                   (ds1 :: Data.Proxy.Proxy depsTy)
+                   (node :: Generics.Eot.Eot.Void)
+                   (ds2 :: Data.Either.Either () Generics.Eot.Eot.Void) ->
+                 node) -}
+b646098d9265a4c2b9def2c00ece6c75
+  $fGHasDependenciesProxyProxyVoidEither1 :: Generics.Eot.Eot.Void
+  {- Strictness: x -}
+742ef405a400d945db08721fc75368b9
+  $fGHasDependenciesProxyProxyVoidEither_$cgenericDependsOn ::
+    (TypeError ...) =>
+    Data.Proxy.Proxy nodeTy
+    -> Data.Proxy.Proxy depsTy
+    -> Generics.Eot.Eot.Void
+    -> Data.Either.Either deps rest
+    -> Generics.Eot.Eot.Void
+  {- Arity: 5, Strictness: <B,A><B,A><B,A><B,A><B,A>x,
+     Unfolding: InlineRule (5, True, True)
+                (\ @ nodeTy
+                   @ depsTy
+                   @ deps
+                   @ rest
+                   (irred :: (TypeError ...))
+                   (eta :: Data.Proxy.Proxy nodeTy)
+                   (eta1 :: Data.Proxy.Proxy depsTy)
+                   (eta2 :: Generics.Eot.Eot.Void)
+                   (eta3 :: Data.Either.Either deps rest) ->
+                 Graphula.Internal.$fGHasDependenciesProxyProxyVoidEither1) -}
+ded8661214197242f46a39fc58ef27ee
+  $fGHasDependenciesProxyProxynodeVoid ::
+    (TypeError ...) =>
+    Graphula.Internal.GHasDependencies
+      (Data.Proxy.Proxy nodeTy)
+      (Data.Proxy.Proxy depsTy)
+      node
+      Generics.Eot.Eot.Void
+  DFunId
+  {- Arity: 5, Strictness: <B,A><B,A><B,A><B,A><B,A>x,
+     Inline: (sat-args=0),
+     Unfolding: InlineRule (1, False, True)
+                Graphula.Internal.$fGHasDependenciesProxyProxynodeVoid_$cgenericDependsOn
+                  `cast`
+                (forall (nodeTy :: <*>_N) (depsTy :: <*>_N) (node :: <*>_N).
+                 <(TypeError ...)>_R
+                 ->_R Sym (Graphula.Internal.N:GHasDependencies[0]
+                               <Data.Proxy.Proxy nodeTy>_N
+                               <Data.Proxy.Proxy depsTy>_N
+                               <node>_N
+                               <Generics.Eot.Eot.Void>_N)) -}
+cc9e853afd41e18fc7616ebc266266a5
+  $fGHasDependenciesProxyProxynodeVoid1 :: node
+  {- Strictness: x -}
+f93caadaf2a826f493b3d5058725617d
+  $fGHasDependenciesProxyProxynodeVoid_$cgenericDependsOn ::
+    (TypeError ...) =>
+    Data.Proxy.Proxy nodeTy
+    -> Data.Proxy.Proxy depsTy -> node -> Generics.Eot.Eot.Void -> node
+  {- Arity: 5, Strictness: <B,A><B,A><B,A><B,A><B,A>x,
+     Unfolding: InlineRule (5, True, True)
+                (\ @ nodeTy
+                   @ depsTy
+                   @ node
+                   (irred :: (TypeError ...))
+                   (eta :: Data.Proxy.Proxy nodeTy)
+                   (eta1 :: Data.Proxy.Proxy depsTy)
+                   (eta2 :: node)
+                   (eta3 :: Generics.Eot.Eot.Void) ->
+                 Graphula.Internal.$fGHasDependenciesProxyProxynodeVoid1 @ node) -}
+374637f65bd3d200cfdf159b107bd42b
+  $fGHasDependenciesRecursiveProxy()() ::
+    Graphula.Internal.GHasDependenciesRecursive
+      (Data.Proxy.Proxy '[]) () ()
+  DFunId
+  {- Arity: 3, HasNoCafRefs, Strictness: <L,A><L,A><L,A>,
+     Inline: (sat-args=0),
+     Unfolding: InlineRule (0, False, True)
+                Graphula.Internal.$fGHasDependenciesRecursiveProxy()()_$cgenericDependsOnRecursive
+                  `cast`
+                (Sym (Graphula.Internal.N:GHasDependenciesRecursive[0]
+                          <Data.Proxy.Proxy '[]>_N <()>_N <()>_N)) -}
+766c65b8a4fca44570e06d09f2299a01
+  $fGHasDependenciesRecursiveProxy()()_$cgenericDependsOnRecursive ::
+    Data.Proxy.Proxy '[] -> () -> () -> ()
+  {- Arity: 3, HasNoCafRefs, Strictness: <L,A><L,A><L,A>,
+     Unfolding: InlineRule (3, True, True)
+                (\ (ds :: Data.Proxy.Proxy '[]) (ds1 :: ()) (ds2 :: ()) ->
+                 GHC.Tuple.()) -}
+374637f65bd3d200cfdf159b107bd42b
+  $fGHasDependenciesRecursiveProxy(,)(,) ::
+    ((a :: *) Data.Type.Equality.~ (dep :: *),
+     Graphula.Internal.GHasDependenciesRecursive
+       (Data.Proxy.Proxy fields) as deps) =>
+    Graphula.Internal.GHasDependenciesRecursive
+      (Data.Proxy.Proxy ('Graphula.Internal.Match a : fields))
+      (a, as)
+      (dep, deps)
+  DFunId
+  {- Arity: 5, HasNoCafRefs,
+     Strictness: <S(S),1*U(1*U)><L,1*C1(C1(C1(U)))><L,A><S,1*U(A,U)><S,1*U(U,U)>m,
+     Inline: (sat-args=0),
+     Unfolding: InlineRule (2, False, True)
+                Graphula.Internal.$fGHasDependenciesRecursiveProxy(,)(,)_$cgenericDependsOnRecursive
+                  `cast`
+                (forall (a :: <*>_N) (dep :: <*>_N) (fields :: <[Graphula.Internal.Match
+                                                                   *]>_N) (as :: <*>_N) (deps :: <*>_N).
+                 <(a :: *) Data.Type.Equality.~ (dep :: *)>_R
+                 ->_R <Graphula.Internal.GHasDependenciesRecursive
+                         (Data.Proxy.Proxy fields) as deps>_R
+                 ->_R Sym (Graphula.Internal.N:GHasDependenciesRecursive[0]
+                               <Data.Proxy.Proxy ('Graphula.Internal.Match a : fields)>_N
+                               <(a, as)>_N
+                               <(dep, deps)>_N)) -}
+374637f65bd3d200cfdf159b107bd42b
+  $fGHasDependenciesRecursiveProxy(,)(,)_$cgenericDependsOnRecursive ::
+    ((a :: *) Data.Type.Equality.~ (dep :: *),
+     Graphula.Internal.GHasDependenciesRecursive
+       (Data.Proxy.Proxy fields) as deps) =>
+    Data.Proxy.Proxy ('Graphula.Internal.Match a : fields)
+    -> (a, as) -> (dep, deps) -> (a, as)
+  {- Arity: 5, HasNoCafRefs,
+     Strictness: <S(S),1*U(1*U)><L,1*C1(C1(C1(U)))><L,A><S,1*U(A,U)><S,1*U(U,U)>m,
+     Unfolding: InlineRule (5, True, False)
+                (\ @ a
+                   @ dep
+                   @ fields :: [Graphula.Internal.Match *]
+                   @ as
+                   @ deps
+                   ($d~ :: (a :: *) Data.Type.Equality.~ (dep :: *))
+                   ($dGHasDependenciesRecursive :: Graphula.Internal.GHasDependenciesRecursive
+                                                     (Data.Proxy.Proxy fields) as deps)
+                   (eta :: Data.Proxy.Proxy ('Graphula.Internal.Match a : fields))
+                   (eta1 :: (a, as))
+                   (eta2 :: (dep, deps)) ->
+                 case GHC.Types.HEq_sc
+                        @ *
+                        @ *
+                        @ a
+                        @ dep
+                        $d~
+                          `cast`
+                        (Data.Type.Equality.N:~[0]
+                             <*>_N <a>_N <dep>_N) of cobox { DEFAULT ->
+                 case eta1 of wild { (,) ds as1 ->
+                 case eta2 of wild1 { (,) dep1 deps1 ->
+                 (dep1 `cast` (Sub (Sym cobox)),
+                  $dGHasDependenciesRecursive
+                    `cast`
+                  (Graphula.Internal.N:GHasDependenciesRecursive[0]
+                       <Data.Proxy.Proxy fields>_N <as>_N <deps>_N)
+                    (Data.Proxy.Proxy @ [Graphula.Internal.Match *] @ fields)
+                    as1
+                    deps1) } } }) -}
+374637f65bd3d200cfdf159b107bd42b
+  $fGHasDependenciesRecursiveProxy(,)deps ::
+    Graphula.Internal.GHasDependenciesRecursive
+      (Data.Proxy.Proxy fields) as deps =>
+    Graphula.Internal.GHasDependenciesRecursive
+      (Data.Proxy.Proxy ('Graphula.Internal.NoMatch a : fields))
+      (a, as)
+      deps
+  DFunId
+  {- Arity: 4, HasNoCafRefs,
+     Strictness: <L,1*C1(C1(C1(U)))><L,A><S,1*U(U,U)><L,U>m,
+     Inline: (sat-args=0),
+     Unfolding: InlineRule (1, False, True)
+                Graphula.Internal.$fGHasDependenciesRecursiveProxy(,)deps_$cgenericDependsOnRecursive
+                  `cast`
+                (forall (fields :: <[Graphula.Internal.Match
+                                       *]>_N) (as :: <*>_N) (deps :: <*>_N) (a :: <*>_N).
+                 <Graphula.Internal.GHasDependenciesRecursive
+                    (Data.Proxy.Proxy fields) as deps>_R
+                 ->_R Sym (Graphula.Internal.N:GHasDependenciesRecursive[0]
+                               <Data.Proxy.Proxy ('Graphula.Internal.NoMatch a : fields)>_N
+                               <(a, as)>_N
+                               <deps>_N)) -}
+374637f65bd3d200cfdf159b107bd42b
+  $fGHasDependenciesRecursiveProxy(,)deps_$cgenericDependsOnRecursive ::
+    Graphula.Internal.GHasDependenciesRecursive
+      (Data.Proxy.Proxy fields) as deps =>
+    Data.Proxy.Proxy ('Graphula.Internal.NoMatch a : fields)
+    -> (a, as) -> deps -> (a, as)
+  {- Arity: 4, HasNoCafRefs,
+     Strictness: <L,1*C1(C1(C1(U)))><L,A><S,1*U(U,U)><L,U>m,
+     Unfolding: InlineRule (4, True, False)
+                (\ @ fields :: [Graphula.Internal.Match *]
+                   @ as
+                   @ deps
+                   @ a
+                   ($dGHasDependenciesRecursive :: Graphula.Internal.GHasDependenciesRecursive
+                                                     (Data.Proxy.Proxy fields) as deps)
+                   (ds :: Data.Proxy.Proxy ('Graphula.Internal.NoMatch a : fields))
+                   (ds1 :: (a, as))
+                   (deps1 :: deps) ->
+                 case ds1 of wild { (,) a1 as1 ->
+                 (a1,
+                  $dGHasDependenciesRecursive
+                    `cast`
+                  (Graphula.Internal.N:GHasDependenciesRecursive[0]
+                       <Data.Proxy.Proxy fields>_N <as>_N <deps>_N)
+                    (Data.Proxy.Proxy @ [Graphula.Internal.Match *] @ fields)
+                    as1
+                    deps1) }) -}
+17917cc9f2762a58e73bd6d0d8f87643
+  $tc'C:GHasDependencies :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   2460687282979286169##
+                   7528923418613547703##
+                   Graphula.Internal.$trModule
+                   Graphula.Internal.$tc'C:GHasDependencies2
+                   4#
+                   Graphula.Internal.$tc'C:GHasDependencies1) -}
+843cebfd494238e1a1fb7aaa2f688fb8
+  $tc'C:GHasDependencies1 :: GHC.Types.KindRep
+  {- HasNoCafRefs, Strictness: m4, Inline: [~] -}
+52c1ba12c34a7e2e71e7081aefec1976
+  $tc'C:GHasDependencies2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS
+                   Graphula.Internal.$tc'C:GHasDependencies3) -}
+58eb0d8045bba97cd046de34e04c8d9a
+  $tc'C:GHasDependencies3 :: GHC.Prim.Addr#
+  {- HasNoCafRefs, Unfolding: ("'C:GHasDependencies"#) -}
+8988c9206e9e905a86ac64960a77c44c
+  $tc'C:GHasDependenciesRecursive :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   11669787155431076019##
+                   3673354333027879179##
+                   Graphula.Internal.$trModule
+                   Graphula.Internal.$tc'C:GHasDependenciesRecursive2
+                   3#
+                   Graphula.Internal.$tc'C:GHasDependenciesRecursive1) -}
+031274ef035ae3fd8812be6f5e68d79e
+  $tc'C:GHasDependenciesRecursive1 :: GHC.Types.KindRep
+  {- HasNoCafRefs, Strictness: m4, Inline: [~] -}
+9a5d8487950f84af161e24e0f63000db
+  $tc'C:GHasDependenciesRecursive2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS
+                   Graphula.Internal.$tc'C:GHasDependenciesRecursive3) -}
+42ecdda0d84943738fb9bcab01836477
+  $tc'C:GHasDependenciesRecursive3 :: GHC.Prim.Addr#
+  {- HasNoCafRefs, Unfolding: ("'C:GHasDependenciesRecursive"#) -}
+3a2631d9847a09d84df5ae9b8b442c0e
+  $tc'Match :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   15738958666472488332##
+                   17461328001709851963##
+                   Graphula.Internal.$trModule
+                   Graphula.Internal.$tc'Match2
+                   1#
+                   Graphula.Internal.$tc'Match1) -}
+b672c1ac9ba797c3babcddb088999726
+  $tc'Match1 :: GHC.Types.KindRep
+  {- HasNoCafRefs, Strictness: m4, Inline: [~] -}
+ba98594f71a17db454439d7c9b74e1d6
+  $tc'Match2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS Graphula.Internal.$tc'Match3) -}
+14e3909fd50df7b6f9595d996be1028f
+  $tc'Match3 :: GHC.Prim.Addr#
+  {- HasNoCafRefs, Unfolding: ("'Match"#) -}
+5b53c6c7958cf7bdbe1d9f628be76b0b
+  $tc'NoMatch :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   15840109209156049250##
+                   15535494546896091831##
+                   Graphula.Internal.$trModule
+                   Graphula.Internal.$tc'NoMatch1
+                   1#
+                   Graphula.Internal.$tc'Match1) -}
+def955448486fe2d8bd626cb5c33e74f
+  $tc'NoMatch1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS Graphula.Internal.$tc'NoMatch2) -}
+0f0fd1bd07eef62ea7f380ff83a61024
+  $tc'NoMatch2 :: GHC.Prim.Addr#
+  {- HasNoCafRefs, Unfolding: ("'NoMatch"#) -}
+1132f458b1de8e68c8a14d07243b1ef9
+  $tcGHasDependencies :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   9132738650306305596##
+                   16988464625533821143##
+                   Graphula.Internal.$trModule
+                   Graphula.Internal.$tcGHasDependencies2
+                   0#
+                   Graphula.Internal.$tcGHasDependencies1) -}
+eab4cb248d0010926e2a674c7f7d1137
+  $tcGHasDependencies1 :: GHC.Types.KindRep
+  {- HasNoCafRefs, Strictness: m4, Inline: [~] -}
+1b94545754af60edf1b9aa3e40747a37
+  $tcGHasDependencies2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS
+                   Graphula.Internal.$tcGHasDependencies3) -}
+970f132a7b465a454457abc9fb11e5e9
+  $tcGHasDependencies3 :: GHC.Prim.Addr#
+  {- HasNoCafRefs, Unfolding: ("GHasDependencies"#) -}
+dca0772b34732c575798113b2c46a4de
+  $tcGHasDependenciesRecursive :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   6535812006666151121##
+                   9607390656950318711##
+                   Graphula.Internal.$trModule
+                   Graphula.Internal.$tcGHasDependenciesRecursive2
+                   0#
+                   Graphula.Internal.$tcGHasDependenciesRecursive1) -}
+0ca2643e1d77a796e0c4a16b6547a23e
+  $tcGHasDependenciesRecursive1 :: GHC.Types.KindRep
+  {- HasNoCafRefs, Strictness: m4, Inline: [~] -}
+a2b733575cd14ba387196c1041ca595b
+  $tcGHasDependenciesRecursive2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS
+                   Graphula.Internal.$tcGHasDependenciesRecursive3) -}
+ee4e0cdd409f63e0f2861052ed128338
+  $tcGHasDependenciesRecursive3 :: GHC.Prim.Addr#
+  {- HasNoCafRefs, Unfolding: ("GHasDependenciesRecursive"#) -}
+1bb8c0a5536da2ea9e750b98a3a8f88a
+  $tcMatch :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   15486208174136896950##
+                   15681917717663189663##
+                   Graphula.Internal.$trModule
+                   Graphula.Internal.$tcMatch1
+                   0#
+                   GHC.Types.krep$*Arr*) -}
+2605e0eb2b8e16e33650873cceda998f
+  $tcMatch1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS Graphula.Internal.$tcMatch2) -}
+a8a2ba3e1a96a8d9af173b208f7ae7ce
+  $tcMatch2 :: GHC.Prim.Addr#
+  {- HasNoCafRefs, Unfolding: ("Match"#) -}
+2d3511771dbf1c6904f1664b510b9cca
+  $trModule :: GHC.Types.Module
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.Module
+                   Graphula.Internal.$trModule3
+                   Graphula.Internal.$trModule1) -}
+108078cd4305807af3714bb87bd2ec5b
+  $trModule1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS Graphula.Internal.$trModule2) -}
+7832f40ddab69e7f9831fa79c270e3af
+  $trModule2 :: GHC.Prim.Addr#
+  {- HasNoCafRefs, Unfolding: ("Graphula.Internal"#) -}
+8390aa0c3a0632b8dac11f3d714d1905
+  $trModule3 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS Graphula.Internal.$trModule4) -}
+394a110d997bb62e63c3bc32fc1be45b
+  $trModule4 :: GHC.Prim.Addr#
+  {- HasNoCafRefs,
+     Unfolding: ("graphula-core-0.3.0-KB0qlZWGUfxDh2xuSDfPnR"#) -}
+10beaf0377a3ee66084137a341d74ca5
+  axiom Graphula.Internal.D:R:DependenciesTypeInstance::
+    [nodeTy, depsTy]
+      Graphula.Internal.DependenciesTypeInstance nodeTy depsTy
+        = ((('GHC.TypeLits.Text "\8216type Dependencies "
+             'GHC.TypeLits.:<>: 'GHC.TypeLits.ShowType nodeTy)
+            'GHC.TypeLits.:<>: 'GHC.TypeLits.Text " = ")
+           'GHC.TypeLits.:<>: 'GHC.TypeLits.ShowType depsTy)
+          'GHC.TypeLits.:<>: 'GHC.TypeLits.Text "\8217"
+d3796c39475c59e0daaedbf7b074ede8
+  axiom Graphula.Internal.D:R:FindMatches::
+    [nodeTy, depsTy, d, ds]
+      Graphula.Internal.FindMatches nodeTy depsTy () (d, ds)
+        = (TypeError ...)
+    [nodeTy, depsTy]
+      Graphula.Internal.FindMatches nodeTy depsTy () () = '[]
+    [nodeTy, depsTy, a, as]
+      Graphula.Internal.FindMatches nodeTy depsTy (a, as) ()
+        = 'Graphula.Internal.NoMatch a
+            : Graphula.Internal.FindMatches nodeTy depsTy as ()
+    [nodeTy, depsTy, a, as, ds]
+      Graphula.Internal.FindMatches nodeTy depsTy (a, as) (a, ds)
+        = 'Graphula.Internal.Match a
+            : Graphula.Internal.FindMatches nodeTy depsTy as ds
+    [nodeTy, depsTy, a, as, d, ds]
+      Graphula.Internal.FindMatches nodeTy depsTy (a, as) (d, ds)
+        = 'Graphula.Internal.NoMatch a
+            : Graphula.Internal.FindMatches nodeTy depsTy as (d, ds)
+      (incompatible indices: [3])
+10beaf0377a3ee66084137a341d74ca5
+  type family DependenciesTypeInstance nodeTy depsTy
+              :: GHC.TypeLits.ErrorMessage
+    where
+      [nodeTy, depsTy]
+        DependenciesTypeInstance nodeTy depsTy
+          = ((('GHC.TypeLits.Text "\8216type Dependencies "
+               'GHC.TypeLits.:<>: 'GHC.TypeLits.ShowType nodeTy)
+              'GHC.TypeLits.:<>: 'GHC.TypeLits.Text " = ")
+             'GHC.TypeLits.:<>: 'GHC.TypeLits.ShowType depsTy)
+            'GHC.TypeLits.:<>: 'GHC.TypeLits.Text "\8217"
+      axiom Graphula.Internal.D:R:DependenciesTypeInstance
+d3796c39475c59e0daaedbf7b074ede8
+  type family FindMatches nodeTy depsTy as ds
+              :: [Graphula.Internal.Match *]
+    where
+      [nodeTy, depsTy, d, ds]
+        FindMatches nodeTy depsTy () (d, ds) = (TypeError ...)
+      [nodeTy, depsTy] FindMatches nodeTy depsTy () () = '[]
+      [nodeTy, depsTy, a, as]
+        FindMatches nodeTy depsTy (a, as) ()
+          = 'Graphula.Internal.NoMatch a
+              : Graphula.Internal.FindMatches nodeTy depsTy as ()
+      [nodeTy, depsTy, a, as, ds]
+        FindMatches nodeTy depsTy (a, as) (a, ds)
+          = 'Graphula.Internal.Match a
+              : Graphula.Internal.FindMatches nodeTy depsTy as ds
+      [nodeTy, depsTy, a, as, d, ds]
+        FindMatches nodeTy depsTy (a, as) (d, ds)
+          = 'Graphula.Internal.NoMatch a
+              : Graphula.Internal.FindMatches nodeTy depsTy as (d, ds)
+      axiom Graphula.Internal.D:R:FindMatches
+ded8661214197242f46a39fc58ef27ee
+  class GHasDependencies nodeTyProxy depsTyProxy node deps where
+    genericDependsOn :: nodeTyProxy
+                        -> depsTyProxy -> node -> deps -> node
+    {-# MINIMAL genericDependsOn #-}
+374637f65bd3d200cfdf159b107bd42b
+  class GHasDependenciesRecursive fieldsProxy node deps where
+    genericDependsOnRecursive :: fieldsProxy -> node -> deps -> node
+    {-# MINIMAL genericDependsOnRecursive #-}
+4f93932020399462ffefc8c6958a411a
+  data Match t = NoMatch t | Match t
+instance Graphula.Internal.GHasDependencies [Data.Proxy.Proxy,
+                                             Data.Proxy.Proxy, Data.Either.Either,
+                                             Data.Either.Either]
+  = Graphula.Internal.$fGHasDependenciesProxyProxyEitherEither
+instance Graphula.Internal.GHasDependencies [Data.Proxy.Proxy,
+                                             Data.Proxy.Proxy, Data.Either.Either,
+                                             Data.Either.Either]
+  = Graphula.Internal.$fGHasDependenciesProxyProxyEitherEither0
+instance Graphula.Internal.GHasDependencies [Data.Proxy.Proxy,
+                                             Data.Proxy.Proxy, Data.Either.Either,
+                                             Data.Either.Either]
+  = Graphula.Internal.$fGHasDependenciesProxyProxyEitherEither1
+instance Graphula.Internal.GHasDependencies [Data.Proxy.Proxy,
+                                             Data.Proxy.Proxy, Data.Either.Either,
+                                             Data.Either.Either]
+  = Graphula.Internal.$fGHasDependenciesProxyProxyEitherEither2
+instance [overlappable] Graphula.Internal.GHasDependencies [Data.Proxy.Proxy,
+                                                            Data.Proxy.Proxy, Generics.Eot.Eot.Void,
+                                                            Data.Either.Either]
+  = Graphula.Internal.$fGHasDependenciesProxyProxyVoidEither
+instance [overlapping] Graphula.Internal.GHasDependencies [Data.Proxy.Proxy,
+                                                           Data.Proxy.Proxy, Generics.Eot.Eot.Void,
+                                                           Data.Either.Either]
+  = Graphula.Internal.$fGHasDependenciesProxyProxyVoidEither0
+instance Graphula.Internal.GHasDependencies [Data.Proxy.Proxy,
+                                             Data.Proxy.Proxy, ., Generics.Eot.Eot.Void]
+  = Graphula.Internal.$fGHasDependenciesProxyProxynodeVoid
+instance Graphula.Internal.GHasDependenciesRecursive [Data.Proxy.Proxy,
+                                                      (), ()]
+  = Graphula.Internal.$fGHasDependenciesRecursiveProxy()()
+instance Graphula.Internal.GHasDependenciesRecursive [Data.Proxy.Proxy,
+                                                      (,), (,)]
+  = Graphula.Internal.$fGHasDependenciesRecursiveProxy(,)(,)
+instance Graphula.Internal.GHasDependenciesRecursive [Data.Proxy.Proxy,
+                                                      (,), .]
+  = Graphula.Internal.$fGHasDependenciesRecursiveProxy(,)deps
+vectorised variables:
+vectorised tycons:
+vectorised reused tycons:
+parallel variables:
+parallel tycons:
+trusted: none
+require own pkg trusted: False
+

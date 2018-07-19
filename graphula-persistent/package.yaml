@@ -13,6 +13,7 @@ dependencies:
   - persistent
   - QuickCheck
   - transformers
+  - unliftio-core
 
 library:
   source-dirs:
