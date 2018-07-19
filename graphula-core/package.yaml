@@ -19,6 +19,8 @@ dependencies:
   - QuickCheck
   - temporary
   - transformers
+  - unliftio
+  - unliftio-core
 
 library:
   source-dirs:

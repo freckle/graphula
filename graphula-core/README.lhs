@@ -16,6 +16,7 @@ import Data.Typeable
 import Data.Functor.Identity (Identity(..))
 import Control.Monad.Catch
 import Control.Monad.IO.Class
+import Control.Monad.IO.Unlift
 import Graphula
 import GHC.Generics (Generic)
 import Test.QuickCheck
@@ -145,7 +146,7 @@ loggingAndReplaySpec = do
 
 ```haskell
 newtype GraphulaIdentity a = GraphulaIdentity { runGraphulaIdentity :: IO a }
-  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadMask)
+  deriving (Functor, Applicative, Monad, MonadIO, MonadUnliftIO)
 
 instance MonadGraphulaFrontend GraphulaIdentity where
   type NodeConstraint GraphulaIdentity = NoConstraint

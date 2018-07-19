@@ -1,19 +1,19 @@
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 module Main where
 
+import Control.Monad (replicateM, void)
+import Control.Monad.Catch
+import Control.Monad.Trans
 import Criterion.Main
+import Data.Aeson
+import Data.Functor.Identity
+import GHC.Generics
 import Graphula
 import qualified Graphula.Free as Free
 import Test.QuickCheck.Arbitrary
-import Control.Monad.Trans
-import Control.Monad.Catch
-import Data.Functor.Identity
-import Data.Aeson
-import Control.Monad (void, replicateM)
-import GHC.Generics
 
 main :: IO ()
 main = defaultMain
@@ -63,7 +63,7 @@ replicateNodeInitial :: Int -> IO ()
 replicateNodeInitial i = void . Free.runGraphula graphIdentity . replicateM i $ node @A
 
 newtype GraphulaIdentity a = GraphulaIdentity { runGraphulaIdentity :: IO a }
-  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadMask)
+  deriving (Functor, Applicative, Monad, MonadIO, MonadUnliftIO)
 
 instance MonadGraphulaFrontend GraphulaIdentity where
   type NodeConstraint GraphulaIdentity = NoConstraint

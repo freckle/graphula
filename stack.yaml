@@ -1,8 +1,6 @@
-resolver: lts-8.6
+---
+resolver: lts-11.15
 packages:
-- graphula-core
-- graphula-persistent
-- persistent-arbitrary
-extra-deps: []
-flags: {}
-extra-package-dbs: []
+  - graphula-core
+  - graphula-persistent
+  - persistent-arbitrary
