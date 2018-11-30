@@ -88,17 +88,7 @@ import Data.Proxy (Proxy(..))
 import Data.Sequence (Seq, ViewL(..), empty, viewl, (|>))
 import Data.Typeable (TypeRep, Typeable, typeRep)
 import Database.Persist
-  ( Entity
-  , Key
-  , PersistEntity
-  , PersistEntityBackend
-  , checkUnique
-  , delete
-  , entityKey
-  , getEntity
-  , insertKey
-  , insertUnique
-  )
+  (Entity, Key, PersistEntity, PersistEntityBackend, delete, entityKey, getEntity, insertKey, insertUnique)
 import Database.Persist.Sql (SqlBackend)
 import Generics.Eot (Eot, HasEot, fromEot, toEot)
 import GHC.Exts (Constraint)
@@ -188,10 +178,7 @@ instance (MonadIO m, Applicative n, MonadIO n) => MonadGraphulaFrontend (Graphul
         Nothing -> insertUnique n >>= \case
           Nothing -> pure Nothing
           Just key -> getEntity key
-        Just key -> do
-          checkUnique n >>= \case
-            Nothing -> getEntity key <* insertKey key n
-            Just _ -> pure Nothing
+        Just key -> getEntity key <* insertKey key n
   remove key = do
     RunDB runDB <- ask
     lift . runDB $ delete key
