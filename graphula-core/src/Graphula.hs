@@ -137,7 +137,9 @@ class MonadGraphulaBackend m where
   logNode :: Logging m a => a -> m ()
 
 class MonadGraphulaFrontend m where
-  insert :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a, EntityKeyGen a) => Maybe (Key a) -> a -> m (Maybe (Entity a))
+  insert
+    :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a, EntityKeyGen a)
+    => Maybe (Key a) -> a -> m (Maybe (Entity a))
   remove :: Key a -> m ()
 
 
