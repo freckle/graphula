@@ -178,7 +178,9 @@ instance (MonadIO m, Applicative n, MonadIO n) => MonadGraphulaFrontend (Graphul
         Nothing -> insertUnique n >>= \case
           Nothing -> pure Nothing
           Just key -> getEntity key
-        Just key -> getEntity key <* insertKey key n
+        Just key -> do
+          insertKey key n
+          getEntity key
   remove key = do
     RunDB runDB <- ask
     lift . runDB $ delete key
