@@ -51,7 +51,6 @@ module Graphula
   -- * The Graph Monad
   -- ** Type Classes
   , MonadGraphula
-  , MonadGraphulaFrontend(..)
   , MonadGraphulaBackend(..)
   -- ** Backends
   , runGraphulaT
@@ -88,7 +87,6 @@ import Data.Aeson
     )
 import Data.ByteString (readFile)
 import Data.ByteString.Lazy (hPutStr)
-import Data.Foldable (for_)
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef, writeIORef)
 import Data.Kind (Type)
 import Data.Proxy (Proxy(..))
@@ -103,14 +101,15 @@ import System.IO (Handle, IOMode(..), hClose, openFile)
 import System.IO.Temp (openTempFile)
 import Test.HUnit.Lang
     (FailureReason(..), HUnitFailure(..), formatFailureReason)
-import Test.QuickCheck (Arbitrary(..), generate)
+import Test.QuickCheck (Arbitrary(..), generate, Gen)
 import UnliftIO.Exception
     (Exception, SomeException, bracket, catch, mask, throwIO)
+import Database.Persist (Entity, Key, insert, insertKey, getEntity, PersistEntityBackend, PersistEntity)
+import Database.Persist.Sql (SqlBackend)
 
 type MonadGraphula m =
   ( Monad m
   , MonadGraphulaBackend m
-  , MonadGraphulaFrontend m
   , MonadIO m
   )
 
@@ -131,16 +130,12 @@ type family GraphulaContext (m :: Type -> Type) (ts :: [Type]) :: Constraint whe
    GraphulaContext m '[] = MonadGraphula m
    GraphulaContext m (t ': ts) = (GraphulaNode m t, GraphulaContext m ts)
 
-class MonadGraphulaFrontend m where
-  type NodeConstraint m :: * -> Constraint
-  -- ^ A constraint applied to nodes. This is utilized during
-  --   insertion and can be leveraged by frontends with typeclass interfaces
-  --   to insertion.
-  type Node m :: * -> *
-  -- ^ A wrapper type used to return relevant information about a given
-  --   node. `graphula-persistent` returns all nodes in the 'Database.Persist.Entity' type.
-  insert :: NodeConstraint m a => a -> m (Maybe (Node m a))
-  remove :: NodeConstraint m a => Node m a -> m ()
+class MonadIO m => GraphulaRunDB m where
+  runDB :: ReaderT SqlBackend m a -> m a
+
+class EntityKeyGen a where
+  genEntityKey :: Gen (Maybe (Key a))
+  genEntityKey = pure Nothing
 
 class MonadGraphulaBackend m where
   type Logging m :: * -> Constraint
@@ -168,12 +163,6 @@ instance MonadIO m => MonadGraphulaBackend (GraphulaT m) where
   generateNode = liftIO $ generate arbitrary
   logNode _ = pure ()
 
-instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaT m) where
-  type NodeConstraint (GraphulaT m) = NodeConstraint m
-  type Node (GraphulaT m) = Node m
-  insert = lift . insert
-  remove = lift . remove
-
 
 newtype GraphulaIdempotentT m a =
   GraphulaIdempotentT {runGraphulaIdempotentT' :: ReaderT (IORef (m ())) m a}
@@ -190,9 +179,8 @@ instance MonadUnliftIO m => MonadUnliftIO (GraphulaIdempotentT m) where
 instance MonadTrans GraphulaIdempotentT where
   lift = GraphulaIdempotentT . lift
 
-instance (Monad m, MonadIO m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaIdempotentT m) where
-  type NodeConstraint (GraphulaIdempotentT m) = NodeConstraint m
-  type Node (GraphulaIdempotentT m) = Node m
+  {-
+  TODO figure out how to support tracking keys.
   insert n = do
     finalizersRef <- ask
     mEnt <- lift $ insert n
@@ -200,6 +188,7 @@ instance (Monad m, MonadIO m, MonadGraphulaFrontend m) => MonadGraphulaFrontend 
       liftIO $ modifyIORef' finalizersRef (remove ent >>)
     pure mEnt
   remove = lift . remove
+  -}
 
 -- | A wrapper around a graphula frontend that produces finalizers to remove
 -- graph nodes on error or completion. An idempotent graph produces no data
@@ -210,7 +199,7 @@ instance (Monad m, MonadIO m, MonadGraphulaFrontend m) => MonadGraphulaFrontend 
 --   node @PancakeBreakfast
 -- @
 runGraphulaIdempotentT
-  :: (MonadUnliftIO m, MonadGraphulaFrontend m)
+  :: (MonadUnliftIO m)
   => GraphulaIdempotentT m a -> m a
 runGraphulaIdempotentT action =
   mask $ \unmasked -> do
@@ -241,12 +230,6 @@ instance MonadIO m => MonadGraphulaBackend (GraphulaLoggedT m) where
   logNode n = do
     graphLog <- ask
     liftIO $ modifyIORef' graphLog (|> toJSON n)
-
-instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaLoggedT m) where
-  type NodeConstraint (GraphulaLoggedT m) = NodeConstraint m
-  type Node (GraphulaLoggedT m) = Node m
-  insert = lift . insert
-  remove = lift . remove
 
 -- | An extension of 'runGraphulaT' that logs all json 'Value's to a temporary
 -- file on 'Exception' and re-throws the 'Exception'.
@@ -291,12 +274,6 @@ instance MonadIO m => MonadGraphulaBackend (GraphulaReplayT m) where
           Error err -> throwIO $ userError err
           Success a -> pure a
   logNode _ = pure ()
-
-instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaReplayT m) where
-  type NodeConstraint (GraphulaReplayT m) = NodeConstraint m
-  type Node (GraphulaReplayT m) = Node m
-  insert = lift . insert
-  remove = lift . remove
 
 -- | Run a graph utilizing a JSON file for node generation via 'FromJSON'.
 runGraphulaReplayT
@@ -405,8 +382,11 @@ type GraphulaNode m a =
   ( Generate m a
   , HasDependencies a
   , Logging m a
-  , NodeConstraint m a
+  , GraphulaRunDB m
+  , PersistEntityBackend a ~ SqlBackend
+  , PersistEntity a
   , Typeable a
+  , EntityKeyGen a
   )
 
 {-|
@@ -417,7 +397,7 @@ type GraphulaNode m a =
   > nodeEdit @Dog (ownerId, veterinarianId) $ \dog ->
   >   dog {name = "fido"}
 -}
-nodeEditWith :: forall a m. GraphulaContext m '[a] => Dependencies a -> (a -> a) -> m (Node m a)
+nodeEditWith :: forall a m. GraphulaContext m '[a] => Dependencies a -> (a -> a) -> m (Entity a)
 nodeEditWith dependencies edits =
   10 `attemptsToInsertWith` do
     x <- (`dependsOn` dependencies) . edits <$> generateNode
@@ -430,7 +410,7 @@ nodeEditWith dependencies edits =
 
   > nodeEdit @Dog (ownerId, veterinarianId)
 -}
-nodeWith :: forall a m. GraphulaContext m '[a] => Dependencies a -> m (Node m a)
+nodeWith :: forall a m. GraphulaContext m '[a] => Dependencies a -> m (Entity a)
 nodeWith = flip nodeEditWith id
 
 {-|
@@ -438,26 +418,30 @@ nodeWith = flip nodeEditWith id
 
   > nodeEdit @Dog $ \dog -> dog {name = "fido"}
 -}
-nodeEdit :: forall a m. (GraphulaContext m '[a], Dependencies a ~ ()) => (a -> a) -> m (Node m a)
+nodeEdit :: forall a m. (GraphulaContext m '[a], Dependencies a ~ ()) => (a -> a) -> m (Entity a)
 nodeEdit = nodeEditWith ()
 
 -- | Generate a value that does not have any dependencies
 --
 -- > node @Dog
-node :: forall a m. (GraphulaContext m '[a], Dependencies a ~ ()) => m (Node m a)
+node :: forall a m. (GraphulaContext m '[a], Dependencies a ~ ()) => m (Entity a)
 node = nodeWith ()
 
 attemptsToInsertWith
   :: forall a m . (Typeable a, GraphulaContext m '[a])
   => Int
   -> m a
-  -> m (Node m a)
+  -> m (Entity a)
 attemptsToInsertWith attempts source
   | 0 >= attempts =
       throwIO . GenerationFailureMaxAttempts $ typeRep (Proxy :: Proxy a)
   | otherwise = do
     value <- source
-    insert value >>= \case
+    mKey <- liftIO $ generate genEntityKey
+    mNode <- runDB $ getEntity =<< case mKey of
+      Nothing -> insert value
+      Just key -> pure key <* insertKey key value
+    case mNode of
       Just a -> pure a
       Nothing -> pred attempts `attemptsToInsertWith` source
 

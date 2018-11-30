@@ -6,6 +6,8 @@ extra-source-files:
   - ../stack.yaml
 
 dependencies:
+  - HUnit
+  - QuickCheck
   - aeson
   - base
   - bytestring
@@ -14,9 +16,8 @@ dependencies:
   - exceptions
   - free
   - generics-eot
-  - HUnit
   - mtl
-  - QuickCheck
+  - persistent
   - temporary
   - transformers
   - unliftio
@@ -26,16 +27,6 @@ library:
   source-dirs:
     - src
   ghc-options: -Wall
-
-tests:
-  readme:
-    main: README.lhs
-    ghc-options: -Wall -pgmL markdown-unlit
-    dependencies:
-      - base
-      - graphula-core
-      - hspec
-      - markdown-unlit
 
 benchmarks:
   bench:
