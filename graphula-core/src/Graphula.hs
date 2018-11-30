@@ -54,6 +54,7 @@ module Graphula
   , MonadGraphula
   , MonadGraphulaBackend(..)
   , MonadGraphulaFrontend(..)
+  , EntityKeyGen(..)
   -- ** Backends
   , runGraphulaT
   , GraphulaT
