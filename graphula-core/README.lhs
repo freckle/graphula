@@ -108,6 +108,12 @@ instance HasDependencies C where
   type Dependencies C = (A, B)
 ```
 
+```haskell
+instance GenerateKey A
+instance GenerateKey B
+instance GenerateKey C
+```
+
 ## Replay And Serialization
 
 Graphula allows logging of graphs via `runGraphulaLogged`. We use `JSON` as a human readable serialization format. Graphula dumps graphs to a temp file on test failure. You can inspect or `runGraphulaReplay` a failed graph for red/green refactor.
@@ -151,7 +157,7 @@ newtype GraphulaIdentity a = GraphulaIdentity { runGraphulaIdentity :: IO a }
 instance MonadGraphulaFrontend GraphulaIdentity where
   type NodeConstraint GraphulaIdentity = NoConstraint
   type Node GraphulaIdentity = Identity
-  insert = pure . Just . Identity
+  insert _ = pure . Just . Identity
   remove = const (pure ())
 ```
 
@@ -164,7 +170,7 @@ newtype GraphulaFail a = GraphulaFail { runGraphulaFail :: IO a }
 instance MonadGraphulaFrontend GraphulaFail where
   type NodeConstraint GraphulaFail = NoConstraint
   type Node GraphulaFail = Identity
-  insert _ = pure $ Nothing
+  insert _ _ = pure $ Nothing
   remove = const (pure ())
 
 insertionFailureSpec :: IO ()

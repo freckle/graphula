@@ -36,16 +36,35 @@ instance MonadUnliftIO m => MonadUnliftIO (GraphulaPersistT backend n m) where
 instance MonadTrans (GraphulaPersistT backend n) where
   lift = GraphulaPersistT . lift
 
+class (Key a ~ ExternalKey a, PersistRecord backend a) => PersistNodeConstraint backend a
+instance (Key a ~ ExternalKey a, PersistRecord backend a) => PersistNodeConstraint backend a
+
 instance (MonadIO m, Applicative n, MonadIO n, SqlBackendCanWrite backend, BaseBackend backend ~ SqlBackend) => MonadGraphulaFrontend (GraphulaPersistT backend n m) where
-  type NodeConstraint (GraphulaPersistT backend n m) = PersistRecord backend
+  type NodeConstraint (GraphulaPersistT backend n m) = PersistNodeConstraint backend
   type Node (GraphulaPersistT backend n m) = Entity
-  insert n = do
+  insert mKey0 n = do
     RunDB runDB <- ask
-    lift . runDB $ do
-      mKey <- insertUnique n
-      case mKey of
-        Nothing -> pure Nothing
-        Just key' -> getEntity key'
+    lift . runDB $
+      case mKey0 of
+        -- No external key, do the easy thing
+        Nothing -> do
+          mKey1 <- insertUnique n
+          case mKey1 of
+            Nothing -> pure Nothing
+            Just key1 -> getEntity key1
+        Just key0 -> do
+          mOther <- get key0
+          case mOther of
+            -- Key exists, try again
+            Just {} -> pure Nothing
+            Nothing -> do
+              -- Check other uniques
+              mConflicts <- checkUnique n
+              case mConflicts of
+                Nothing -> do
+                  insertKey key0 n
+                  pure $ Just $ Entity key0 n
+                Just {} -> pure Nothing
   remove ent = do
     RunDB runDB <- ask
     lift . runDB . delete $ entityKey ent

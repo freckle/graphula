@@ -1,5 +1,6 @@
 ```haskell
 {-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -48,6 +49,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"]
 
     DT
       c CTId
+      Id String
       flag Bool
       UniqueFlag flag
       deriving Show Eq Generic
@@ -101,6 +103,8 @@ instance Arbitrary AT where
   arbitrary = AT <$> arbitrary <*> arbitrary
 
 instance HasDependencies AT
+instance GenerateKey AT where
+  type ExternalKey AT = Key AT
 
 instance ToJSON AT
 instance FromJSON AT
@@ -111,6 +115,8 @@ instance Arbitrary BT where
 
 instance HasDependencies BT where
   type Dependencies BT = Only (Key AT)
+instance GenerateKey BT where
+  type ExternalKey BT = Key BT
 
 instance ToJSON BT
 instance FromJSON BT
@@ -121,12 +127,17 @@ instance Arbitrary CT where
 
 instance HasDependencies CT where
   type Dependencies CT = (Key AT, Key BT)
+instance GenerateKey CT where
+  type ExternalKey CT = Key CT
 
 instance ToJSON CT
 instance FromJSON CT
 
 instance Arbitrary DT where
   arbitrary = DT <$> arbitrary <*> arbitrary
+instance GenerateKey DT where
+  type ExternalKey DT = Key DT
+  shouldGenerateKey = True
 
 instance HasDependencies DT where
   type Dependencies DT = Only (Key CT)

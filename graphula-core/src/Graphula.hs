@@ -15,6 +15,7 @@
       d { name = "fido" }
   @
 -}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ConstrainedClassMethods #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
@@ -29,9 +30,11 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -53,6 +56,7 @@ module Graphula
   , MonadGraphula
   , MonadGraphulaFrontend(..)
   , MonadGraphulaBackend(..)
+  , GenerateKey(..)
   -- ** Backends
   , runGraphulaT
   , GraphulaT
@@ -76,16 +80,7 @@ import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift
 import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
 import Control.Monad.Trans (MonadTrans, lift)
-import Data.Aeson
-    ( FromJSON
-    , Result(..)
-    , ToJSON
-    , Value
-    , eitherDecodeStrict'
-    , encode
-    , fromJSON
-    , toJSON
-    )
+import Data.Aeson (FromJSON, Result(..), ToJSON, Value, eitherDecodeStrict', encode, fromJSON, toJSON)
 import Data.ByteString (readFile)
 import Data.ByteString.Lazy (hPutStr)
 import Data.Foldable (for_)
@@ -101,11 +96,9 @@ import Graphula.Internal
 import System.Directory (getTemporaryDirectory)
 import System.IO (Handle, IOMode(..), hClose, openFile)
 import System.IO.Temp (openTempFile)
-import Test.HUnit.Lang
-    (FailureReason(..), HUnitFailure(..), formatFailureReason)
+import Test.HUnit.Lang (FailureReason(..), HUnitFailure(..), formatFailureReason)
 import Test.QuickCheck (Arbitrary(..), generate)
-import UnliftIO.Exception
-    (Exception, SomeException, bracket, catch, mask, throwIO)
+import UnliftIO.Exception (Exception, SomeException, bracket, catch, mask, throwIO)
 
 type MonadGraphula m =
   ( Monad m
@@ -131,7 +124,7 @@ type family GraphulaContext (m :: Type -> Type) (ts :: [Type]) :: Constraint whe
    GraphulaContext m '[] = MonadGraphula m
    GraphulaContext m (t ': ts) = (GraphulaNode m t, GraphulaContext m ts)
 
-class MonadGraphulaFrontend m where
+class Monad m => MonadGraphulaFrontend m where
   type NodeConstraint m :: * -> Constraint
   -- ^ A constraint applied to nodes. This is utilized during
   --   insertion and can be leveraged by frontends with typeclass interfaces
@@ -139,10 +132,24 @@ class MonadGraphulaFrontend m where
   type Node m :: * -> *
   -- ^ A wrapper type used to return relevant information about a given
   --   node. `graphula-persistent` returns all nodes in the 'Database.Persist.Entity' type.
-  insert :: NodeConstraint m a => a -> m (Maybe (Node m a))
+  insert :: (GenerateKey a, NodeConstraint m a) => Maybe (ExternalKey a) -> a -> m (Maybe (Node m a))
   remove :: NodeConstraint m a => Node m a -> m ()
 
-class MonadGraphulaBackend m where
+{-
+class GenerateKey a where
+  type ExternalKey a :: *
+  type ExternalKey a = ()
+  generateKey :: (Applicative m, Generate m a) => m (Maybe (ExternalKey a))
+  generateKey = pure Nothing
+-}
+
+class GenerateKey a where
+  type ExternalKey a :: *
+  type ExternalKey a = ()
+  shouldGenerateKey :: Bool
+  shouldGenerateKey = False
+
+class Monad m => MonadGraphulaBackend m where
   type Logging m :: * -> Constraint
   -- ^ A constraint provided to log details of the graph to some form of
   --   persistence. This is used by 'runGraphulaLogged' to store graph nodes as
@@ -171,9 +178,8 @@ instance MonadIO m => MonadGraphulaBackend (GraphulaT m) where
 instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaT m) where
   type NodeConstraint (GraphulaT m) = NodeConstraint m
   type Node (GraphulaT m) = Node m
-  insert = lift . insert
+  insert mKey = lift . insert mKey
   remove = lift . remove
-
 
 newtype GraphulaIdempotentT m a =
   GraphulaIdempotentT {runGraphulaIdempotentT' :: ReaderT (IORef (m ())) m a}
@@ -193,9 +199,9 @@ instance MonadTrans GraphulaIdempotentT where
 instance (Monad m, MonadIO m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaIdempotentT m) where
   type NodeConstraint (GraphulaIdempotentT m) = NodeConstraint m
   type Node (GraphulaIdempotentT m) = Node m
-  insert n = do
+  insert mKey n = do
     finalizersRef <- ask
-    mEnt <- lift $ insert n
+    mEnt <- lift $ insert mKey n
     for_ mEnt $ \ent ->
       liftIO $ modifyIORef' finalizersRef (remove ent >>)
     pure mEnt
@@ -245,7 +251,7 @@ instance MonadIO m => MonadGraphulaBackend (GraphulaLoggedT m) where
 instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaLoggedT m) where
   type NodeConstraint (GraphulaLoggedT m) = NodeConstraint m
   type Node (GraphulaLoggedT m) = Node m
-  insert = lift . insert
+  insert mKey = lift . insert mKey
   remove = lift . remove
 
 -- | An extension of 'runGraphulaT' that logs all json 'Value's to a temporary
@@ -295,7 +301,7 @@ instance MonadIO m => MonadGraphulaBackend (GraphulaReplayT m) where
 instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaReplayT m) where
   type NodeConstraint (GraphulaReplayT m) = NodeConstraint m
   type Node (GraphulaReplayT m) = Node m
-  insert = lift . insert
+  insert mKey = lift . insert mKey
   remove = lift . remove
 
 -- | Run a graph utilizing a JSON file for node generation via 'FromJSON'.
@@ -403,10 +409,12 @@ instance Exception GenerationFailure
 
 type GraphulaNode m a =
   ( Generate m a
+  , Generate m (ExternalKey a)
   , HasDependencies a
   , Logging m a
   , NodeConstraint m a
   , Typeable a
+  , GenerateKey a
   )
 
 {-|
@@ -420,9 +428,13 @@ type GraphulaNode m a =
 nodeEditWith :: forall a m. GraphulaContext m '[a] => Dependencies a -> (a -> a) -> m (Node m a)
 nodeEditWith dependencies edits =
   10 `attemptsToInsertWith` do
+    mKey <-
+      if shouldGenerateKey @a
+        then Just <$> generateNode
+        else pure Nothing
     x <- (`dependsOn` dependencies) . edits <$> generateNode
     logNode x
-    pure x
+    pure (mKey, x)
 
 {-|
   Generate a value with data dependencies. This leverages 'HasDependencies' to
@@ -450,14 +462,14 @@ node = nodeWith ()
 attemptsToInsertWith
   :: forall a m . (Typeable a, GraphulaContext m '[a])
   => Int
-  -> m a
+  -> m (Maybe (ExternalKey a), a)
   -> m (Node m a)
 attemptsToInsertWith attempts source
   | 0 >= attempts =
       throwIO . GenerationFailureMaxAttempts $ typeRep (Proxy :: Proxy a)
   | otherwise = do
-    value <- source
-    insert value >>= \case
+    (mKey, value) <- source
+    insert mKey value >>= \case
       Just a -> pure a
       Nothing -> pred attempts `attemptsToInsertWith` source
 
