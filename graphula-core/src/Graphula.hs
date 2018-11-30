@@ -30,6 +30,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -84,7 +85,18 @@ import Data.Kind (Type)
 import Data.Proxy (Proxy(..))
 import Data.Sequence (Seq, ViewL(..), empty, viewl, (|>))
 import Data.Typeable (TypeRep, Typeable, typeRep)
-import Database.Persist (Entity, Key, PersistEntity, PersistEntityBackend, entityKey)
+import Database.Persist
+  ( Entity
+  , Key
+  , PersistEntity
+  , PersistEntityBackend
+  , checkUnique
+  , delete
+  , entityKey
+  , getEntity
+  , insertKey
+  , insertUnique
+  )
 import Database.Persist.Sql (SqlBackend)
 import Generics.Eot (Eot, HasEot, fromEot, toEot)
 import GHC.Exts (Constraint)
@@ -140,27 +152,54 @@ class MonadGraphulaFrontend m where
   insert
     :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a, EntityKeyGen a)
     => Maybe (Key a) -> a -> m (Maybe (Entity a))
-  remove :: Key a -> m ()
+  remove :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a) => Key a -> m ()
 
 
-newtype GraphulaT m a = GraphulaT
-  { runGraphulaT :: m a
-  -- ^ Run a graph utilizing 'Arbitrary' for node generation.
-  }
-  deriving (Functor, Applicative, Monad, MonadIO)
+newtype RunDB backend n m = RunDB (forall b. ReaderT backend n b -> m b)
 
-instance MonadTrans GraphulaT where
-  lift = GraphulaT
+newtype GraphulaT n m a =
+  GraphulaT { runGraphulaT' :: ReaderT (RunDB SqlBackend n m) m a }
+  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (RunDB SqlBackend n m))
 
-instance MonadIO m => MonadGraphulaBackend (GraphulaT m) where
-  type Logging (GraphulaT m) = NoConstraint
-  type Generate (GraphulaT m) = Arbitrary
+instance MonadTrans (GraphulaT n) where
+  lift = GraphulaT . lift
+
+instance MonadUnliftIO m => MonadUnliftIO (GraphulaT n m) where
+  {-# INLINE askUnliftIO #-}
+  askUnliftIO = GraphulaT $ withUnliftIO $ \u ->
+    return $ UnliftIO $ unliftIO u . runGraphulaT'
+  {-# INLINE withRunInIO #-}
+  withRunInIO inner = GraphulaT $ withRunInIO $ \run ->
+    inner $ run . runGraphulaT'
+
+instance MonadIO m => MonadGraphulaBackend (GraphulaT n m) where
+  type Logging (GraphulaT n m) = NoConstraint
+  type Generate (GraphulaT n m) = Arbitrary
   generateNode = liftIO $ generate arbitrary
   logNode _ = pure ()
 
-instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaT m) where
-  insert mKey = lift . insert mKey
-  remove = lift . remove
+instance (MonadIO m, Applicative n, MonadIO n) => MonadGraphulaFrontend (GraphulaT n m) where
+  insert mKey n = do
+    RunDB runDB <- ask
+    lift . runDB $ do
+      case mKey of
+        Nothing -> insertUnique n >>= \case
+          Nothing -> pure Nothing
+          Just key -> getEntity key
+        Just key -> do
+          checkUnique n >>= \case
+            Nothing -> getEntity key <* insertKey key n
+            Just _ -> pure Nothing
+  remove key = do
+    RunDB runDB <- ask
+    lift . runDB $ delete key
+
+runGraphulaT
+  :: (MonadIO m)
+  => (forall b . ReaderT SqlBackend n b -> m b)
+  -> GraphulaT n m a
+  -> m a
+runGraphulaT runDB action = runGraphulaT' action `runReaderT` RunDB runDB
 
 
 newtype GraphulaIdempotentT m a =
