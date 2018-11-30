@@ -53,6 +53,7 @@ module Graphula
   -- ** Type Classes
   , MonadGraphula
   , MonadGraphulaBackend(..)
+  , MonadGraphulaFrontend(..)
   -- ** Backends
   , runGraphulaT
   , GraphulaT
