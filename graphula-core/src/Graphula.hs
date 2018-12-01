@@ -95,6 +95,7 @@ import Database.Persist
   , checkUnique
   , delete
   , entityKey
+  , get
   , getEntity
   , insertKey
   , insertUnique
@@ -188,14 +189,20 @@ instance (MonadIO m, Applicative n, MonadIO n) => MonadGraphulaFrontend (Graphul
         Nothing -> insertUnique n >>= \case
           Nothing -> pure Nothing
           Just key -> getEntity key
-        Just key -> checkUnique n >>= \case
-          Nothing -> do
-            insertKey key n
-            getEntity key
-          Just _ -> pure Nothing
+        Just key -> do
+          existingKey <- get key
+          whenNothing existingKey $ do
+            existingUnique <- checkUnique n
+            whenNothing existingUnique $ do
+              insertKey key n
+              getEntity key
   remove key = do
     RunDB runDB <- ask
     lift . runDB $ delete key
+
+whenNothing :: Applicative m => Maybe a -> m (Maybe b) -> m (Maybe b)
+whenNothing Nothing f = f
+whenNothing (Just _) _ = pure Nothing
 
 runGraphulaT
   :: (MonadIO m)
