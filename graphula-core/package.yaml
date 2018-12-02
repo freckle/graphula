@@ -1,6 +1,6 @@
 name: graphula-core
 version: 1.0.0.0
-maintainer: Front Row Education
+maintainer: Freckle Education
 
 extra-source-files:
   - ../stack.yaml
