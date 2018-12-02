@@ -153,9 +153,9 @@ class MonadGraphulaBackend m where
 
 class MonadGraphulaFrontend m where
   insert
-    :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a, EntityKeyGen a)
+    :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a, EntityKeyGen a, Monad m)
     => Maybe (Key a) -> a -> m (Maybe (Entity a))
-  remove :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a) => Key a -> m ()
+  remove :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a, Monad m) => Key a -> m ()
 
 
 newtype RunDB backend n m = RunDB (forall b. ReaderT backend n b -> m b)

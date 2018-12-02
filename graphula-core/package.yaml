@@ -37,3 +37,17 @@ benchmarks:
     dependencies:
       - criterion
       - graphula-core
+tests:
+  readme:
+    main: README.lhs
+    ghc-options: -Wall -pgmL markdown-unlit
+    dependencies:
+      - base
+      - graphula-core
+      - hspec
+      - markdown-unlit
+      - persistent-sqlite
+      - persistent-template
+      - persistent-arbitrary
+      - monad-logger
+      - resourcet
