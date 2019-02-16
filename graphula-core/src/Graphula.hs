@@ -39,9 +39,9 @@
 module Graphula
   ( -- * Graph Declaration
     node
-  , nodeEdit
   , nodeWith
-  , nodeEditWith
+  , edit
+  , suchThat
   , GraphulaNode
   , GraphulaContext
   -- * Declaring Dependencies
@@ -70,10 +70,12 @@ module Graphula
   , NoConstraint
   -- * Exceptions
   , GenerationFailure(..)
-  ) where
+  )
+where
 
 import Prelude hiding (readFile)
 
+import Control.Monad (guard)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift
 import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
@@ -95,6 +97,7 @@ import Database.Persist
   , checkUnique
   , delete
   , entityKey
+  , entityVal
   , get
   , getEntity
   , insertKey
@@ -447,64 +450,57 @@ type GraphulaNode m a =
   'HasDependencies' to insert the specified data in the generated value. All
   dependency data is inserted after editing operations.
 
-  > nodeEdit @Dog (ownerId, veterinarianId) $ \dog ->
+  > nodeWith @Dog (ownerId, veterinarianId) . edit $ \dog ->
   >   dog {name = "fido"}
 -}
-nodeEditWith
+nodeWith
   :: forall a m
    . GraphulaContext m '[a]
   => Dependencies a
-  -> (a -> a)
+  -> (a -> Maybe a)
   -> m (Entity a)
-nodeEditWith dependencies edits = 10 `attemptsToInsertWith` do
-  x <- (`dependsOn` dependencies) . edits <$> generateNode
-  logNode x
+nodeWith dependencies edits = do
+  x <- 100 `attemptsToInsertWith` do
+    fmap (`dependsOn` dependencies) . edits <$> generateNode
+  logNode $ entityVal x
   pure x
-
-{-|
-  Generate a value with data dependencies. This leverages 'HasDependencies' to
-  insert the specified data in the generated value.
-
-  > nodeEdit @Dog (ownerId, veterinarianId)
--}
-nodeWith
-  :: forall a m . GraphulaContext m '[a] => Dependencies a -> m (Entity a)
-nodeWith = flip nodeEditWith id
 
 {-|
   Generate and edit a value that does not have any dependencies.
 
-  > nodeEdit @Dog $ \dog -> dog {name = "fido"}
+  > node @Dog . edit $ \dog -> dog {name = "fido"}
 -}
-nodeEdit
+node
   :: forall a m
    . (GraphulaContext m '[a], Dependencies a ~ ())
-  => (a -> a)
+  => (a -> Maybe a)
   -> m (Entity a)
-nodeEdit = nodeEditWith ()
-
--- | Generate a value that does not have any dependencies
---
--- > node @Dog
-node
-  :: forall a m . (GraphulaContext m '[a], Dependencies a ~ ()) => m (Entity a)
 node = nodeWith ()
+
+edit :: (a -> a) -> a -> Maybe a
+edit f = Just . f
+
+suchThat :: (a -> Bool) -> a -> Maybe a
+suchThat f x = x <$ guard (f x)
 
 attemptsToInsertWith
   :: forall a m
    . (Typeable a, GraphulaContext m '[a])
   => Int
-  -> m a
+  -> m (Maybe a)
   -> m (Entity a)
 attemptsToInsertWith attempts source
   | 0 >= attempts = throwIO . GenerationFailureMaxAttempts $ typeRep
     (Proxy :: Proxy a)
   | otherwise = do
-    value <- source
-    mKey <- liftIO $ generate genEntityKey
-    insert mKey value >>= \case
-      Just a -> pure a
+    mValue <- source
+    case mValue of
       Nothing -> pred attempts `attemptsToInsertWith` source
+      Just value -> do
+        mKey <- liftIO $ generate genEntityKey
+        insert mKey value >>= \case
+          Just a -> pure a
+          Nothing -> pred attempts `attemptsToInsertWith` source
 
 -- | For entities that only have singular 'Dependencies'. It uses data instead
 -- of newtype to match laziness of builtin tuples.
