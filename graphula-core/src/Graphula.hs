@@ -70,7 +70,8 @@ module Graphula
   , NoConstraint
   -- * Exceptions
   , GenerationFailure(..)
-  ) where
+  )
+where
 
 import Prelude hiding (readFile)
 
@@ -105,7 +106,7 @@ import Generics.Eot (Eot, HasEot, fromEot, toEot)
 import GHC.Exts (Constraint)
 import GHC.Generics (Generic)
 import Graphula.Internal
-import System.Directory (getTemporaryDirectory)
+import System.Directory (createDirectoryIfMissing, getTemporaryDirectory)
 import System.IO (Handle, IOMode(..), hClose, openFile)
 import System.IO.Temp (openTempFile)
 import Test.HUnit.Lang (FailureReason(..), HUnitFailure(..), formatFailureReason)
@@ -360,8 +361,10 @@ logFailFile :: MonadIO m => FilePath -> IORef (Seq Value) -> HUnitFailure -> m a
 logFailFile path = logFailUsing ((path, ) <$> openFile path WriteMode)
 
 logFailTemp :: MonadIO m => IORef (Seq Value) -> HUnitFailure -> m a
-logFailTemp =
-  logFailUsing (flip openTempFile "fail-.graphula" =<< getTemporaryDirectory)
+logFailTemp = logFailUsing $ do
+  tmp <- (++ "/graphula") <$> getTemporaryDirectory
+  createDirectoryIfMissing True tmp
+  openTempFile tmp "fail-.graphula"
 
 logGraphToHandle
   :: (MonadIO m) => IORef (Seq Value) -> IO (FilePath, Handle) -> m FilePath
