@@ -193,3 +193,5 @@ runDB f = runSqlite "test.db" $ do
   f
 ```
 -->
+
+** This literate Haskell file is using the [markdown-unlit](https://github.com/sol/markdown-unlit) package. You can run the examples in this file by invoking `stack exec -- ghci -pgmL markdown-unlit graphula-core/README.lhs` in your terminal. You might need to install missing packages (`persistent-sqlite` and `persistent-template`).
