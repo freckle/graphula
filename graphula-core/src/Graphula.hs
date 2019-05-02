@@ -412,7 +412,7 @@ class HasDependencies a where
   --
   -- Law:
   --
-  -- prop> dependsOn . dependsOn = dependsOn
+  -- prop> (\x d -> x `dependsOn` d `dependsOn` d) = dependsOn
   dependsOn :: a -> Dependencies a -> a
   default dependsOn
     ::
