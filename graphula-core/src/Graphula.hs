@@ -155,9 +155,9 @@ class EntityKeyGen a where
   -- compound key since persistent doesn't check that the compound
   -- key and the columns in the node are actually the same.
   --
-  emplaceKey :: a -> Key a -> a
-  default emplaceKey :: EmplaceKeyTagged (KeyType a) a => a -> Key a -> a
-  emplaceKey = emplaceKeyTagged (Proxy @(KeyType a))
+  embedKey :: a -> Key a -> a
+  default embedKey :: EmbedKeyTagged (KeyType a) a => a -> Key a -> a
+  embedKey = embedKeyTagged (Proxy @(KeyType a))
 
 class MonadGraphulaBackend m where
   type Logging m :: * -> Constraint
@@ -523,7 +523,7 @@ attemptsToInsertWith attempts source
   | otherwise = do
     value <- source
     mKey <- liftIO $ generate genEntityKey
-    let updated = maybe value (emplaceKey value) mKey
+    let updated = maybe value (embedKey value) mKey
     insert mKey updated >>= \case
       Just a -> pure a
       Nothing -> pred attempts `attemptsToInsertWith` source

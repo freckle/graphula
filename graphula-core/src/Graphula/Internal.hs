@@ -137,12 +137,12 @@ instance GHasDependenciesRecursive (Proxy ('[] :: [Match *])) () () where
 data KeyTag = SimpleKey | CompositeKey
 
 -- | Strategy for emplacing a key in its record
-class EmplaceKeyTagged (k :: KeyTag) a where
-  emplaceKeyTagged :: proxy k -> a -> Key a -> a
+class EmbedKeyTagged (k :: KeyTag) a where
+  embedKeyTagged :: proxy k -> a -> Key a -> a
 
 -- | By default, a key lives outside of its record
-instance EmplaceKeyTagged 'SimpleKey a where
-  emplaceKeyTagged _ a _ = a
+instance EmbedKeyTagged 'SimpleKey a where
+  embedKeyTagged _ a _ = a
 
 -- | A composite key is made up of fields from within its record
 instance
@@ -150,8 +150,8 @@ instance
   , HasEot (Key a)
   , GHasDependencies (Proxy a) (Proxy (Key a)) (Eot a) (Eot (Key a))
   )
-  => EmplaceKeyTagged 'CompositeKey a where
-  emplaceKeyTagged _ a key = fromEot $ genericDependsOn
+  => EmbedKeyTagged 'CompositeKey a where
+  embedKeyTagged _ a key = fromEot $ genericDependsOn
     (Proxy :: Proxy a)
     (Proxy :: Proxy (Key a))
     (toEot a)
