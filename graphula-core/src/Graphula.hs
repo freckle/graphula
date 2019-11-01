@@ -1,23 +1,23 @@
-{-# LANGUAGE ConstrainedClassMethods #-}
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE DeriveFoldable #-}
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DeriveTraversable #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE ConstrainedClassMethods    #-}
+{-# LANGUAGE ConstraintKinds            #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DefaultSignatures          #-}
+{-# LANGUAGE DeriveFoldable             #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE DeriveTraversable          #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE KindSignatures             #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeOperators              #-}
 
 -- |
 --  Graphula is a compact interface for generating data and linking its
@@ -79,57 +79,48 @@ module Graphula
   )
 where
 
-import Control.Monad.IO.Class (MonadIO (..))
-import Control.Monad.IO.Unlift
-import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
-import Control.Monad.Trans (MonadTrans, lift)
-import Data.Aeson (FromJSON, Result (..), ToJSON, Value, eitherDecodeStrict', encode, fromJSON, toJSON)
-import Data.ByteString (readFile)
-import Data.ByteString.Lazy (hPutStr)
-import Data.Either (fromRight)
-import Data.Foldable (for_)
-import Data.IORef (IORef, modifyIORef', newIORef, readIORef, writeIORef)
-import Data.Kind (Type)
-import Data.Maybe (fromMaybe, isNothing)
-import Data.Proxy (Proxy (..))
-import Data.Sequence (Seq, ViewL (..), empty, viewl, (|>))
-import Data.Typeable (TypeRep, Typeable, typeRep)
-import Database.Persist
-  ( Entity,
-    HaskellName,
-    Key,
-    PersistEntity,
-    PersistEntityBackend,
-    PersistValue,
-    checkUnique,
-    delete,
-    entityDef,
-    entityFields,
-    entityKey,
-    entityKeyFields,
-    entityPrimary,
-    fieldHaskell,
-    fromPersistValues,
-    get,
-    getEntity,
-    insertKey,
-    insertUnique,
-    keyToValues,
-    toPersistFields,
-    toPersistValue,
-  )
-import Database.Persist.Sql (SqlBackend)
-import GHC.Exts (Constraint)
-import GHC.Generics (Generic)
-import Generics.Eot (Eot, HasEot, fromEot, toEot)
-import Graphula.Internal
-import System.Directory (createDirectoryIfMissing, getTemporaryDirectory)
-import System.IO (Handle, IOMode (..), hClose, openFile)
-import System.IO.Temp (openTempFile)
-import Test.HUnit.Lang (FailureReason (..), HUnitFailure (..), formatFailureReason)
-import Test.QuickCheck (Arbitrary (..), Gen, generate)
-import UnliftIO.Exception (Exception, SomeException, bracket, catch, mask, throwIO)
-import Prelude hiding (readFile)
+import           Control.Monad.IO.Class  (MonadIO (..))
+import           Control.Monad.IO.Unlift
+import           Control.Monad.Reader    (MonadReader, ReaderT, ask, runReaderT)
+import           Control.Monad.Trans     (MonadTrans, lift)
+import           Data.Aeson              (FromJSON, Result (..), ToJSON, Value,
+                                          eitherDecodeStrict', encode, fromJSON,
+                                          toJSON)
+import           Data.ByteString         (readFile)
+import           Data.ByteString.Lazy    (hPutStr)
+import           Data.Either             (fromRight)
+import           Data.Foldable           (for_)
+import           Data.IORef              (IORef, modifyIORef', newIORef,
+                                          readIORef, writeIORef)
+import           Data.Kind               (Type)
+import           Data.Maybe              (fromMaybe, isNothing)
+import           Data.Proxy              (Proxy (..))
+import           Data.Sequence           (Seq, ViewL (..), empty, viewl, (|>))
+import           Data.Typeable           (TypeRep, Typeable, typeRep)
+import           Database.Persist        (Entity, HaskellName, Key,
+                                          PersistEntity, PersistEntityBackend,
+                                          PersistValue, checkUnique, delete,
+                                          entityDef, entityFields, entityKey,
+                                          entityKeyFields, entityPrimary,
+                                          fieldHaskell, fromPersistValues, get,
+                                          getEntity, insertKey, insertUnique,
+                                          keyToValues, toPersistFields,
+                                          toPersistValue)
+import           Database.Persist.Sql    (SqlBackend)
+import           Generics.Eot            (Eot, HasEot, fromEot, toEot)
+import           GHC.Exts                (Constraint)
+import           GHC.Generics            (Generic)
+import           Graphula.Internal
+import           Prelude                 hiding (readFile)
+import           System.Directory        (createDirectoryIfMissing,
+                                          getTemporaryDirectory)
+import           System.IO               (Handle, IOMode (..), hClose, openFile)
+import           System.IO.Temp          (openTempFile)
+import           Test.HUnit.Lang         (FailureReason (..), HUnitFailure (..),
+                                          formatFailureReason)
+import           Test.QuickCheck         (Arbitrary (..), Gen, generate)
+import           UnliftIO.Exception      (Exception, SomeException, bracket,
+                                          catch, mask, throwIO)
 
 type MonadGraphula m =
   ( Monad m,
@@ -252,7 +243,7 @@ embedKey key n =
     replaceField name value = fromMaybe value $ lookup name keyMap
 
 whenNothing :: Applicative m => Maybe a -> m (Maybe b) -> m (Maybe b)
-whenNothing Nothing f = f
+whenNothing Nothing f  = f
 whenNothing (Just _) _ = pure Nothing
 
 runGraphulaT ::
@@ -396,7 +387,7 @@ runGraphulaReplayT replayFile action = do
   replayLog <- liftIO $ do
     bytes <- readFile replayFile
     case eitherDecodeStrict' bytes of
-      Left err -> throwIO $ userError err
+      Left err    -> throwIO $ userError err
       Right nodes -> newIORef nodes
   runReaderT (runGraphulaReplayT' action) replayLog
     `catch` rethrowHUnitReplay replayFile
