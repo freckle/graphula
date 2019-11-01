@@ -15,6 +15,7 @@ Graphula is a simple interface for generating persistent data and linking its de
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Main where
 
 import Data.Aeson
@@ -56,6 +57,12 @@ C
   b BId
   c String
   deriving Show Eq Generic
+D
+  a Int
+  b Int
+  c Bool
+  deriving Show Eq Generic
+  Primary a b
 |]
 
 instance Arbitrary A where
@@ -66,6 +73,11 @@ instance Arbitrary B where
 
 instance Arbitrary C where
   arbitrary = C <$> arbitrary <*> arbitrary <*> arbitrary
+
+instance Arbitrary D where
+  arbitrary = D <$> (smallPositive <$> arbitrary) <*> (smallPositive <$> arbitrary) <*> arbitrary
+   where
+    smallPositive = getSmall . getPositive
 ```
 
 ## Dependencies
@@ -76,6 +88,7 @@ By default a type does not have any dependencies. We only need to declare an emp
 
 ```haskell
 instance HasDependencies A
+instance HasDependencies D
 ```
 
 For single dependencies we use the `Only` type.
@@ -100,6 +113,12 @@ Graphula supports non-sequential keys with the `EntityKeyGen` typeclass. This al
 instance EntityKeyGen A
 instance EntityKeyGen B
 instance EntityKeyGen C
+instance EntityKeyGen D where
+  genEntityKey = do
+    x <- elements [1..10]
+    y <- elements [1..10]
+    pure $ Just $ DKey x y
+  emplaceKey = emplaceCompositeKey
 ```
 
 ## Replay And Serialization
@@ -115,6 +134,9 @@ instance FromJSON B
 
 instance ToJSON C
 instance FromJSON C
+
+instance ToJSON D
+instance FromJSON D
 
 loggingAndReplaySpec :: IO ()
 loggingAndReplaySpec = do
@@ -149,6 +171,9 @@ simpleSpec =
     Entity _ c <- nodeEditWith @C (aId, bId) $ \n ->
       n { cC = "spanish" }
     liftIO $ putStrLn "C"
+
+    Entity _ _d <- node @D
+    liftIO $ putStrLn "D"
 
     -- Do something with your data
     liftIO $ do

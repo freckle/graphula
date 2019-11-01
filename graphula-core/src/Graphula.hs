@@ -55,6 +55,7 @@ module Graphula
   , MonadGraphulaBackend(..)
   , MonadGraphulaFrontend(..)
   , EntityKeyGen(..)
+  , emplaceCompositeKey
   -- ** Backends
   , runGraphulaT
   , GraphulaT
@@ -138,8 +139,41 @@ type family GraphulaContext (m :: Type -> Type) (ts :: [Type]) :: Constraint whe
    GraphulaContext m (t ': ts) = (GraphulaNode m t, GraphulaContext m ts)
 
 class EntityKeyGen a where
+  -- | Explicitly generate a key for a node
   genEntityKey :: Gen (Maybe (Key a))
   genEntityKey = pure Nothing
+
+  -- | Update the node with its generated key if applicable
+  --
+  -- This is important when generating nodes that have a generated
+  -- compound key since persistent doesn't check that the compound
+  -- key and the columns in the node are actually the same.
+  --
+  emplaceKey :: a -> Key a -> a
+  emplaceKey a _ = a
+
+-- | Update the node with its generated composite key
+--
+-- We can't this in general because non-composite keys won't have a
+-- @'Generic'@ instance because @'SqlBackendKey'@ doesn't have a
+-- @'Generic'@ instance. Therefore, we place it outside the
+-- @'EntityKeyGen'@ class and allow clients to specify it when
+-- necessary.
+--
+emplaceCompositeKey
+  :: forall a
+   . ( HasEot a
+     , HasEot (Key a)
+     , GHasDependencies (Proxy a) (Proxy (Key a)) (Eot a) (Eot (Key a))
+     )
+  => a
+  -> Key a
+  -> a
+emplaceCompositeKey a key = fromEot $ genericDependsOn
+  (Proxy :: Proxy a)
+  (Proxy :: Proxy (Key a))
+  (toEot a)
+  (toEot key)
 
 class MonadGraphulaBackend m where
   type Logging m :: * -> Constraint
@@ -505,7 +539,8 @@ attemptsToInsertWith attempts source
   | otherwise = do
     value <- source
     mKey <- liftIO $ generate genEntityKey
-    insert mKey value >>= \case
+    let updated = maybe value (emplaceKey value) mKey
+    insert mKey updated >>= \case
       Just a -> pure a
       Nothing -> pred attempts `attemptsToInsertWith` source
 
