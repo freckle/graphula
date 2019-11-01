@@ -5,11 +5,9 @@ Graphula is a simple interface for generating persistent data and linking its de
 
 <!--
 ```haskell
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -64,11 +62,6 @@ D
   Id String
   c Bool
   deriving Show Eq Generic
-E
-  a Int
-  b Int
-  deriving Show Eq Generic
-  Primary a b
 |]
 
 instance Arbitrary A where
@@ -82,11 +75,6 @@ instance Arbitrary C where
 
 instance Arbitrary D where
   arbitrary = D <$> arbitrary
-
-instance Arbitrary E where
-  arbitrary = E <$> (smallPositive <$> arbitrary) <*> (smallPositive <$> arbitrary)
-   where
-    smallPositive = getSmall . getPositive
 ```
 
 ## Dependencies
@@ -113,28 +101,15 @@ instance HasDependencies C where
   type Dependencies C = (AId, BId)
 ```
 
-## Non Sequential Keys
+## Non-Sequential Keys
 
-Graphula supports non-sequential keys by implementing the `genEntityKey` method typeclass. This allows us to provide optional key generation.
+Graphula supports generating non-sequential keys by implementing the `genEntityKey` method. By default this method returns `Nothing`.
 
 ```haskell
 instance HasDependencies D where
   genEntityKey = do
     key <- replicateM 6 $ elements ['a'..'z']
     pure $ Just $ DKey key
-```
-
-## Composite keys
-
-Graphula supports composite keys which `persistent` stores inside the record itself. Set `KeyType a = 'CompositeKey` to mark such occurences. This defaults to `'SimpleKey`.
-
-```haskell
-instance HasDependencies E where
-  type KeyType E = 'CompositeKey
-  genEntityKey = do
-    x <- elements [1..10]
-    y <- elements [1..10]
-    pure $ Just $ EKey x y
 ```
 
 ## Replay And Serialization
@@ -185,13 +160,11 @@ simpleSpec =
     Entity _ c <- nodeEditWith @C (aId, bId) $ \n ->
       n { cC = "spanish" }
     Entity {} <- node @D
-    Entity eKey e <- node @E
 
     -- Do something with your data
     liftIO $ do
       cC c `shouldBe` "spanish"
       cA c `shouldBe` bA b
-      eKey `shouldBe` EKey (eA e) (eB e)
 ```
 
 `runGraphulaT` carries frontend instructions. If we'd like to override them we need to declare our own frontend.

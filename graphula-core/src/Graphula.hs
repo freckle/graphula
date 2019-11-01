@@ -25,7 +25,6 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
@@ -34,10 +33,8 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE UndecidableInstances #-}
 
 module Graphula
   ( -- * Graph Declaration
@@ -57,7 +54,6 @@ module Graphula
   , MonadGraphula
   , MonadGraphulaBackend(..)
   , MonadGraphulaFrontend(..)
-  , KeyTag(..)
   -- ** Backends
   , runGraphulaT
   , GraphulaT
@@ -85,24 +81,37 @@ import Control.Monad.Trans (MonadTrans, lift)
 import Data.Aeson (FromJSON, Result(..), ToJSON, Value, eitherDecodeStrict', encode, fromJSON, toJSON)
 import Data.ByteString (readFile)
 import Data.ByteString.Lazy (hPutStr)
+import Data.Either (fromRight)
 import Data.Foldable (for_)
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef, writeIORef)
 import Data.Kind (Type)
+import Data.Maybe (fromMaybe, isNothing)
 import Data.Proxy (Proxy(..))
 import Data.Sequence (Seq, ViewL(..), empty, viewl, (|>))
 import Data.Typeable (TypeRep, Typeable, typeRep)
 import Database.Persist
   ( Entity
+  , HaskellName
   , Key
   , PersistEntity
   , PersistEntityBackend
+  , PersistValue
   , checkUnique
   , delete
+  , entityDef
+  , entityFields
   , entityKey
+  , entityKeyFields
+  , entityPrimary
+  , fieldHaskell
+  , fromPersistValues
   , get
   , getEntity
   , insertKey
   , insertUnique
+  , keyToValues
+  , toPersistFields
+  , toPersistValue
   )
 import Database.Persist.Sql (SqlBackend)
 import Generics.Eot (Eot, HasEot, fromEot, toEot)
@@ -192,13 +201,35 @@ instance (MonadIO m, Applicative n, MonadIO n) => MonadGraphulaFrontend (Graphul
         Just key -> do
           existingKey <- get key
           whenNothing existingKey $ do
-            existingUnique <- checkUnique n
+            let updated = embedKey key n
+            existingUnique <- checkUnique updated
             whenNothing existingUnique $ do
-              insertKey key n
+              insertKey key updated
               getEntity key
   remove key = do
     RunDB runDB <- ask
     lift . runDB $ delete key
+
+-- | Embed generated key components in record
+--
+-- @'insertKey'@ doesn't do this for us, and we want to update the
+-- record before doing a @'checkUnique'@ anyway.
+--
+embedKey :: PersistEntity a => Key a -> a -> a
+embedKey key n = if isNothing $ entityPrimary def
+  then n
+  else fromRight n $ fromPersistValues $ zipWith
+    replaceField
+    (fieldHaskell <$> entityFields def)
+    (toPersistValue <$> toPersistFields n)
+ where
+  def = entityDef $ Just n
+
+  keyMap :: [(HaskellName, PersistValue)]
+  keyMap = zip (fieldHaskell <$> entityKeyFields def) (keyToValues key)
+
+  replaceField :: HaskellName -> PersistValue -> PersistValue
+  replaceField name value = fromMaybe value $ lookup name keyMap
 
 whenNothing :: Applicative m => Maybe a -> m (Maybe b) -> m (Maybe b)
 whenNothing Nothing f = f
@@ -406,10 +437,6 @@ class HasDependencies a where
   type Dependencies a
   type instance Dependencies a = ()
 
-  -- | Either @'SimpleKey'@ or @'CompositeKey'@
-  type KeyType a :: KeyTag
-  type instance KeyType a = 'SimpleKey
-
   -- | Assign values from the 'Dependencies' collection to a value.
   -- 'dependsOn' must be an idempotent operation.
   --
@@ -435,16 +462,6 @@ class HasDependencies a where
   -- | Explicitly generate a key for a node
   genEntityKey :: Gen (Maybe (Key a))
   genEntityKey = pure Nothing
-
-  -- | Update the node with its generated key if applicable
-  --
-  -- This is important when generating nodes that have a generated
-  -- compound key since persistent doesn't check that the compound
-  -- key and the columns in the node are actually the same.
-  --
-  embedKey :: a -> Key a -> a
-  default embedKey :: EmbedKeyTagged (KeyType a) a => a -> Key a -> a
-  embedKey = embedKeyTagged (Proxy @(KeyType a))
 
 data GenerationFailure =
   GenerationFailureMaxAttempts TypeRep
@@ -521,8 +538,7 @@ attemptsToInsertWith attempts source
   | otherwise = do
     value <- source
     mKey <- liftIO $ generate genEntityKey
-    let updated = maybe value (embedKey value) mKey
-    insert mKey updated >>= \case
+    insert mKey value >>= \case
       Just a -> pure a
       Nothing -> pred attempts `attemptsToInsertWith` source
 
