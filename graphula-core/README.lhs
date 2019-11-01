@@ -5,17 +5,18 @@ Graphula is a simple interface for generating persistent data and linking its de
 
 <!--
 ```haskell
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
 module Main where
 
 import Data.Aeson
@@ -110,15 +111,18 @@ instance HasDependencies C where
 Graphula supports non-sequential keys with the `EntityKeyGen` typeclass. This allows us to provide option key generation. In the case of sequential keys we need only provide an empty instance.
 
 ```haskell
-instance EntityKeyGen A
-instance EntityKeyGen B
-instance EntityKeyGen C
+instance EntityKeyGen A where
+  type KeyType A = 'SimpleKey
+instance EntityKeyGen B where
+  type KeyType B = 'SimpleKey
+instance EntityKeyGen C where
+  type KeyType C = 'SimpleKey
 instance EntityKeyGen D where
+  type KeyType D = 'CompositeKey
   genEntityKey = do
     x <- elements [1..10]
     y <- elements [1..10]
     pure $ Just $ DKey x y
-  emplaceKey = emplaceCompositeKey
 ```
 
 ## Replay And Serialization
@@ -164,21 +168,17 @@ simpleSpec =
   runGraphulaT runDB $ do
     -- Declare the graph at the term level
     Entity aId _ <- node @A
-    liftIO $ putStrLn "A"
     Entity bId b <- nodeWith @B (only aId)
     -- Type application is not necessary, but recommended for clarity.
-    liftIO $ putStrLn "B"
     Entity _ c <- nodeEditWith @C (aId, bId) $ \n ->
       n { cC = "spanish" }
-    liftIO $ putStrLn "C"
-
-    Entity _ _d <- node @D
-    liftIO $ putStrLn "D"
+    Entity dKey d <- node @D
 
     -- Do something with your data
     liftIO $ do
       cC c `shouldBe` "spanish"
       cA c `shouldBe` bA b
+      dKey `shouldBe` DKey (dA d) (dB d)
 ```
 
 `runGraphulaT` carries frontend instructions. If we'd like to override them we need to declare our own frontend.

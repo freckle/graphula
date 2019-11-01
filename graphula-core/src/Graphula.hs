@@ -25,6 +25,7 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
@@ -33,8 +34,10 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Graphula
   ( -- * Graph Declaration
@@ -55,7 +58,7 @@ module Graphula
   , MonadGraphulaBackend(..)
   , MonadGraphulaFrontend(..)
   , EntityKeyGen(..)
-  , emplaceCompositeKey
+  , KeyTag(..)
   -- ** Backends
   , runGraphulaT
   , GraphulaT
@@ -139,6 +142,9 @@ type family GraphulaContext (m :: Type -> Type) (ts :: [Type]) :: Constraint whe
    GraphulaContext m (t ': ts) = (GraphulaNode m t, GraphulaContext m ts)
 
 class EntityKeyGen a where
+  -- | Either @'SimpleKey'@ or @'CompositeKey'@
+  type KeyType a :: KeyTag
+
   -- | Explicitly generate a key for a node
   genEntityKey :: Gen (Maybe (Key a))
   genEntityKey = pure Nothing
@@ -150,30 +156,8 @@ class EntityKeyGen a where
   -- key and the columns in the node are actually the same.
   --
   emplaceKey :: a -> Key a -> a
-  emplaceKey a _ = a
-
--- | Update the node with its generated composite key
---
--- We can't this in general because non-composite keys won't have a
--- @'Generic'@ instance because @'SqlBackendKey'@ doesn't have a
--- @'Generic'@ instance. Therefore, we place it outside the
--- @'EntityKeyGen'@ class and allow clients to specify it when
--- necessary.
---
-emplaceCompositeKey
-  :: forall a
-   . ( HasEot a
-     , HasEot (Key a)
-     , GHasDependencies (Proxy a) (Proxy (Key a)) (Eot a) (Eot (Key a))
-     )
-  => a
-  -> Key a
-  -> a
-emplaceCompositeKey a key = fromEot $ genericDependsOn
-  (Proxy :: Proxy a)
-  (Proxy :: Proxy (Key a))
-  (toEot a)
-  (toEot key)
+  default emplaceKey :: EmplaceKeyTagged (KeyType a) a => a -> Key a -> a
+  emplaceKey = emplaceKeyTagged (Proxy @(KeyType a))
 
 class MonadGraphulaBackend m where
   type Logging m :: * -> Constraint

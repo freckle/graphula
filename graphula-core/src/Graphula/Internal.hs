@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -9,8 +9,9 @@
 
 module Graphula.Internal where
 
-import Generics.Eot (Void, Proxy(..))
-import GHC.TypeLits (TypeError, ErrorMessage(..))
+import Database.Persist (Key)
+import Generics.Eot (HasEot(..), Proxy(..), Void)
+import GHC.TypeLits (ErrorMessage(..), TypeError)
 
 data Match t
   = NoMatch t
@@ -131,3 +132,27 @@ instance
 -- instance for nullary constructors
 instance GHasDependenciesRecursive (Proxy ('[] :: [Match *])) () () where
   genericDependsOnRecursive _ _ _ = ()
+
+-- | Used for @'KeyType'@ type instances
+data KeyTag = SimpleKey | CompositeKey
+
+-- | Strategy for emplacing a key in its record
+class EmplaceKeyTagged (k :: KeyTag) a where
+  emplaceKeyTagged :: proxy k -> a -> Key a -> a
+
+-- | By default, a key lives outside of its record
+instance EmplaceKeyTagged 'SimpleKey a where
+  emplaceKeyTagged _ a _ = a
+
+-- | A composite key is made up of fields from within its record
+instance
+  ( HasEot a
+  , HasEot (Key a)
+  , GHasDependencies (Proxy a) (Proxy (Key a)) (Eot a) (Eot (Key a))
+  )
+  => EmplaceKeyTagged 'CompositeKey a where
+  emplaceKeyTagged _ a key = fromEot $ genericDependsOn
+    (Proxy :: Proxy a)
+    (Proxy :: Proxy (Key a))
+    (toEot a)
+    (toEot key)
