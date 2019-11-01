@@ -14,12 +14,14 @@ Graphula is a simple interface for generating persistent data and linking its de
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 module Main where
 
 import Data.Aeson
+import Control.Monad (replicateM)
 import Control.Monad.Trans.Reader (ReaderT)
 import Control.Monad.Logger (NoLoggingT)
 import Control.Monad.Trans.Resource (ResourceT)
@@ -59,9 +61,12 @@ C
   c String
   deriving Show Eq Generic
 D
+  Id String
+  c Bool
+  deriving Show Eq Generic
+E
   a Int
   b Int
-  c Bool
   deriving Show Eq Generic
   Primary a b
 |]
@@ -76,7 +81,10 @@ instance Arbitrary C where
   arbitrary = C <$> arbitrary <*> arbitrary <*> arbitrary
 
 instance Arbitrary D where
-  arbitrary = D <$> (smallPositive <$> arbitrary) <*> (smallPositive <$> arbitrary) <*> arbitrary
+  arbitrary = D <$> arbitrary
+
+instance Arbitrary E where
+  arbitrary = E <$> (smallPositive <$> arbitrary) <*> (smallPositive <$> arbitrary)
    where
     smallPositive = getSmall . getPositive
 ```
@@ -89,7 +97,6 @@ By default a type does not have any dependencies. We only need to declare an emp
 
 ```haskell
 instance HasDependencies A
-instance HasDependencies D
 ```
 
 For single dependencies we use the `Only` type.
@@ -108,21 +115,26 @@ instance HasDependencies C where
 
 ## Non Sequential Keys
 
-Graphula supports non-sequential keys with the `EntityKeyGen` typeclass. This allows us to provide option key generation. In the case of sequential keys we need only provide an empty instance.
+Graphula supports non-sequential keys by implementing the `genEntityKey` method typeclass. This allows us to provide optional key generation.
 
 ```haskell
-instance EntityKeyGen A where
-  type KeyType A = 'SimpleKey
-instance EntityKeyGen B where
-  type KeyType B = 'SimpleKey
-instance EntityKeyGen C where
-  type KeyType C = 'SimpleKey
-instance EntityKeyGen D where
-  type KeyType D = 'CompositeKey
+instance HasDependencies D where
+  genEntityKey = do
+    key <- replicateM 6 $ elements ['a'..'z']
+    pure $ Just $ DKey key
+```
+
+## Composite keys
+
+Graphula supports composite keys which `persistent` stores inside the record itself. Set `KeyType a = 'CompositeKey` to mark such occurences. This defaults to `'SimpleKey`.
+
+```haskell
+instance HasDependencies E where
+  type KeyType E = 'CompositeKey
   genEntityKey = do
     x <- elements [1..10]
     y <- elements [1..10]
-    pure $ Just $ DKey x y
+    pure $ Just $ EKey x y
 ```
 
 ## Replay And Serialization
@@ -172,13 +184,14 @@ simpleSpec =
     -- Type application is not necessary, but recommended for clarity.
     Entity _ c <- nodeEditWith @C (aId, bId) $ \n ->
       n { cC = "spanish" }
-    Entity dKey d <- node @D
+    Entity {} <- node @D
+    Entity eKey e <- node @E
 
     -- Do something with your data
     liftIO $ do
       cC c `shouldBe` "spanish"
       cA c `shouldBe` bA b
-      dKey `shouldBe` DKey (dA d) (dB d)
+      eKey `shouldBe` EKey (eA e) (eB e)
 ```
 
 `runGraphulaT` carries frontend instructions. If we'd like to override them we need to declare our own frontend.

@@ -57,7 +57,6 @@ module Graphula
   , MonadGraphula
   , MonadGraphulaBackend(..)
   , MonadGraphulaFrontend(..)
-  , EntityKeyGen(..)
   , KeyTag(..)
   -- ** Backends
   , runGraphulaT
@@ -141,24 +140,6 @@ type family GraphulaContext (m :: Type -> Type) (ts :: [Type]) :: Constraint whe
    GraphulaContext m '[] = MonadGraphula m
    GraphulaContext m (t ': ts) = (GraphulaNode m t, GraphulaContext m ts)
 
-class EntityKeyGen a where
-  -- | Either @'SimpleKey'@ or @'CompositeKey'@
-  type KeyType a :: KeyTag
-
-  -- | Explicitly generate a key for a node
-  genEntityKey :: Gen (Maybe (Key a))
-  genEntityKey = pure Nothing
-
-  -- | Update the node with its generated key if applicable
-  --
-  -- This is important when generating nodes that have a generated
-  -- compound key since persistent doesn't check that the compound
-  -- key and the columns in the node are actually the same.
-  --
-  embedKey :: a -> Key a -> a
-  default embedKey :: EmbedKeyTagged (KeyType a) a => a -> Key a -> a
-  embedKey = embedKeyTagged (Proxy @(KeyType a))
-
 class MonadGraphulaBackend m where
   type Logging m :: * -> Constraint
   -- ^ A constraint provided to log details of the graph to some form of
@@ -172,7 +153,7 @@ class MonadGraphulaBackend m where
 
 class MonadGraphulaFrontend m where
   insert
-    :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a, EntityKeyGen a, Monad m)
+    :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a, Monad m)
     => Maybe (Key a) -> a -> m (Maybe (Entity a))
   remove :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a, Monad m) => Key a -> m ()
 
@@ -425,6 +406,10 @@ class HasDependencies a where
   type Dependencies a
   type instance Dependencies a = ()
 
+  -- | Either @'SimpleKey'@ or @'CompositeKey'@
+  type KeyType a :: KeyTag
+  type instance KeyType a = 'SimpleKey
+
   -- | Assign values from the 'Dependencies' collection to a value.
   -- 'dependsOn' must be an idempotent operation.
   --
@@ -447,6 +432,20 @@ class HasDependencies a where
         (toEot a)
         (toEot dependencies)
 
+  -- | Explicitly generate a key for a node
+  genEntityKey :: Gen (Maybe (Key a))
+  genEntityKey = pure Nothing
+
+  -- | Update the node with its generated key if applicable
+  --
+  -- This is important when generating nodes that have a generated
+  -- compound key since persistent doesn't check that the compound
+  -- key and the columns in the node are actually the same.
+  --
+  embedKey :: a -> Key a -> a
+  default embedKey :: EmbedKeyTagged (KeyType a) a => a -> Key a -> a
+  embedKey = embedKeyTagged (Proxy @(KeyType a))
+
 data GenerationFailure =
   GenerationFailureMaxAttempts TypeRep
   deriving (Show, Typeable, Eq)
@@ -460,7 +459,6 @@ type GraphulaNode m a =
   , PersistEntityBackend a ~ SqlBackend
   , PersistEntity a
   , Typeable a
-  , EntityKeyGen a
   )
 
 {-|
