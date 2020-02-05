@@ -18,6 +18,7 @@ dependencies:
   - generics-eot
   - mtl
   - persistent
+  - semigroups
   - temporary
   - transformers
   - unliftio

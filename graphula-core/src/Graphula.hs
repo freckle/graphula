@@ -8,11 +8,10 @@
   @
   runGraphIdentity . runGraphulaT $ do
     -- Compose dependencies at the value level
-    Identity vet <- node @Veterinarian
-    Identity owner <- nodeWith @Owner $ only vet
+    Identity vet <- root @Veterinarian mempty
+    Identity owner <- node @Owner (only vet) mempty
     -- TypeApplications is not necessary, but recommended for clarity.
-    Identity dog <- nodeEditWith @Dog (owner, vet) $ \d ->
-      d { name = "fido" }
+    Identity dog <- node @Dog (owner, vet) $ edit $ \d -> d { name = "fido" }
   @
 -}
 {-# LANGUAGE ConstrainedClassMethods #-}
@@ -31,6 +30,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -38,10 +38,13 @@
 
 module Graphula
   ( -- * Graph Declaration
-    node
-  , nodeEdit
-  , nodeWith
-  , nodeEditWith
+    root
+  , node
+    -- * Node options
+  , NodeOptions
+  , edit
+  , suchThat
+  , primaryKey
   , GraphulaNode
   , GraphulaContext
   -- * Declaring Dependencies
@@ -75,6 +78,7 @@ where
 
 import Prelude hiding (readFile)
 
+import Control.Monad (guard)
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift
 import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
@@ -85,8 +89,12 @@ import Data.ByteString.Lazy (hPutStr)
 import Data.Foldable (for_)
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef, writeIORef)
 import Data.Kind (Type)
+import Data.Maybe (fromMaybe)
+import Data.Monoid (Last(..), Endo(..))
 import Data.Proxy (Proxy(..))
 import Data.Sequence (Seq, ViewL(..), empty, viewl, (|>))
+import Data.Semigroup.Generic (gmappend, gmempty)
+import Data.Traversable (for)
 import Data.Typeable (TypeRep, Typeable, typeRep)
 import Database.Persist
   ( Entity
@@ -127,9 +135,9 @@ type MonadGraphula m =
 -- @
 -- mkABC :: (GraphulaContext m '[A, B, C]) => m (Node m C)
 -- mkABC = do
---   a <- node @A
---   b <- nodeWith @B (only a)
---   nodeEditWith @C (a, b) $ \n ->
+--   a <- root @A mempty
+--   b <- node @B (only a) mempty
+--   node @C (a, b) $ edit $ \n ->
 --     n { cc = "spanish" }
 -- @
 --
@@ -243,7 +251,7 @@ instance (MonadIO m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (Graphula
 --
 -- @
 -- runGraphIdentity . runGraphulaIdempotentT . runGraphulaT $ do
---   node @PancakeBreakfast
+--   root @PancakeBreakfast mempty
 -- @
 runGraphulaIdempotentT :: (MonadUnliftIO m) => GraphulaIdempotentT m a -> m a
 runGraphulaIdempotentT action = mask $ \unmasked -> do
@@ -429,8 +437,9 @@ class HasDependencies a where
         (toEot a)
         (toEot dependencies)
 
-data GenerationFailure =
-  GenerationFailureMaxAttempts TypeRep
+data GenerationFailure
+  = GenerationFailureMaxAttemptsToConstrain TypeRep
+  | GenerationFailureMaxAttemptsToInsert TypeRep
   deriving (Show, Typeable, Eq)
 
 instance Exception GenerationFailure
@@ -445,69 +454,124 @@ type GraphulaNode m a =
   , EntityKeyGen a
   )
 
-{-|
-  Generate and edit a value with data dependencies. This leverages
-  'HasDependencies' to insert the specified data in the generated value. All
-  dependency data is inserted after editing operations.
+-- | Options for generating an individual node
+--
+-- @'NodeOptions'@ can be created and combined with the Monoidal
+-- operations @'(<>)'@ and @'mempty'@
+--
+-- @
+-- a1 <- root @A mempty
+-- a2 <- root @A $ primaryKey $ AKey 1
+-- a3 <- root @A $ edit $ \a -> a { someField = True }
+-- a4 <- root @A $ suchThat $ (== True) . someField
+-- a5 <- root @A $ primaryKey (AKey 2) <> edit (\a -> a { someField = True })
+-- a6 <- root @A $ primaryKey (AKey 3) <> do edit $ \a -> a { someField = True }
+-- @
+--
+data NodeOptions a = NodeOptions
+  { nodeOptionsEdit :: Endo (Maybe a)
+  , nodeOptionsPrimaryKey :: Last (Gen (Maybe (Key a)))
+  }
+  deriving (Generic)
 
-  > nodeEdit @Dog (ownerId, veterinarianId) $ \dog ->
-  >   dog {name = "fido"}
--}
-nodeEditWith
-  :: forall a m
-   . GraphulaContext m '[a]
-  => Dependencies a
-  -> (a -> a)
-  -> m (Entity a)
-nodeEditWith dependencies edits = 10 `attemptsToInsertWith` do
-  x <- (`dependsOn` dependencies) . edits <$> generateNode
-  logNode x
-  pure x
+instance Semigroup (NodeOptions a) where
+  (<>) = gmappend
 
-{-|
-  Generate a value with data dependencies. This leverages 'HasDependencies' to
-  insert the specified data in the generated value.
+instance Monoid (NodeOptions a) where
+  mempty = gmempty
 
-  > nodeEdit @Dog (ownerId, veterinarianId)
--}
-nodeWith
-  :: forall a m . GraphulaContext m '[a] => Dependencies a -> m (Entity a)
-nodeWith = flip nodeEditWith id
+-- | Modify the node after it's been generated
+--
+-- @
+-- a <- root @A $ edit $ \a -> a { someField = True }
+-- @
+--
+edit :: (a -> a) -> NodeOptions a
+edit f = mempty
+  { nodeOptionsEdit = Endo $ fmap f
+  }
 
-{-|
-  Generate and edit a value that does not have any dependencies.
+-- | Require a node to satisfy the specified predicate
+--
+-- @
+-- a <- root @A $ suchThat $ (== True) . someField
+-- @
+--
+suchThat :: (a -> Bool) -> NodeOptions a
+suchThat f = mempty
+  { nodeOptionsEdit = Endo $ \ma -> do
+      a <- ma
+      a <$ guard (f a)
+  }
 
-  > nodeEdit @Dog $ \dog -> dog {name = "fido"}
--}
-nodeEdit
-  :: forall a m
-   . (GraphulaContext m '[a], Dependencies a ~ ())
-  => (a -> a)
-  -> m (Entity a)
-nodeEdit = nodeEditWith ()
+-- | Override any automatic key generation with the specified key
+--
+-- @
+-- a <- root @A $ primaryKey $ AKey 1
+-- @
+--
+primaryKey :: Key a -> NodeOptions a
+primaryKey key = mempty
+  { nodeOptionsPrimaryKey = Last $ Just $ pure $ Just key
+  }
 
 -- | Generate a value that does not have any dependencies
 --
--- > node @Dog
-node
-  :: forall a m . (GraphulaContext m '[a], Dependencies a ~ ()) => m (Entity a)
-node = nodeWith ()
+-- @
+-- root @Dog mempty
+-- @
+--
+root
+  :: forall a m . (GraphulaContext m '[a], Dependencies a ~ ()) => NodeOptions a -> m (Entity a)
+root = node ()
 
-attemptsToInsertWith
+{-|
+  Generate a value with data dependencies. This leverages
+  'HasDependencies' to insert the specified data in the generated value. All
+  dependency data is inserted after any editing operations.
+
+  > node @Dog (ownerId, veterinarianId) mempty
+  > node @Dog (ownerId, vererinarianId) $ primaryKey $ DogKey 1
+  > node @Dog (ownerId, vererinarianId) $ edit $ \dog ->
+  >   dog {name = "fido"}
+-}
+node
+  :: forall a m
+   . GraphulaContext m '[a]
+  => Dependencies a
+  -> NodeOptions a
+  -> m (Entity a)
+node dependencies NodeOptions{..} = attempt 100 10 $ do
+  initial <- generateNode
+  for (appEndo nodeOptionsEdit $ Just initial) $ \edited -> do
+    let hydrated = edited `dependsOn` dependencies
+    logNode hydrated
+    mKey <- liftIO $ generate $ fromMaybe genEntityKey $ getLast nodeOptionsPrimaryKey
+    pure (mKey, hydrated)
+
+attempt
   :: forall a m
    . (Typeable a, GraphulaContext m '[a])
   => Int
-  -> m a
+  -> Int
+  -> m (Maybe (Maybe (Key a), a))
   -> m (Entity a)
-attemptsToInsertWith attempts source
-  | 0 >= attempts = throwIO . GenerationFailureMaxAttempts $ typeRep
-    (Proxy :: Proxy a)
-  | otherwise = do
-    value <- source
-    mKey <- liftIO $ generate genEntityKey
-    insert mKey value >>= \case
-      Just a -> pure a
-      Nothing -> pred attempts `attemptsToInsertWith` source
+attempt maxEdits maxInserts source = loop 0 0
+ where
+  loop :: Int -> Int -> m (Entity a)
+  loop numEdits numInserts
+    | numEdits >= maxEdits = die GenerationFailureMaxAttemptsToConstrain
+    | numInserts >= maxInserts = die GenerationFailureMaxAttemptsToInsert
+    | otherwise =
+        source >>= \case
+          Nothing -> loop (succ numEdits) numInserts
+          Just (mKey, value) ->
+            insert mKey value >>= \case
+              Nothing -> loop (succ numEdits) (succ numInserts)
+              Just a -> pure a
+
+  die :: (TypeRep -> GenerationFailure) -> m (Entity a)
+  die e = throwIO $ e $ typeRep (Proxy :: Proxy a)
 
 -- | For entities that only have singular 'Dependencies'. It uses data instead
 -- of newtype to match laziness of builtin tuples.

@@ -122,11 +122,11 @@ loggingAndReplaySpec = do
     logFile = "test.graphula"
     -- We'd typically use `runGraphulaLogged` which utilizes a temp file.
     failingGraph = runGraphulaT runDB . runGraphulaLoggedWithFileT logFile $ do
-      Entity _ a <- nodeEdit @A $ \n ->
+      Entity _ a <- root @A $ edit $ \n ->
         n {aA = "success"}
       liftIO $ aA a `shouldBe` "failed"
     replayGraph = runGraphulaT runDB . runGraphulaReplayT logFile $ do
-      Entity _ a <- node @A
+      Entity _ a <- root @A mempty
       liftIO $ aA a `shouldBe` "success"
 
   failingGraph
@@ -141,12 +141,12 @@ simpleSpec :: IO ()
 simpleSpec =
   runGraphulaT runDB $ do
     -- Declare the graph at the term level
-    Entity aId _ <- node @A
+    Entity aId _ <- root @A mempty
     liftIO $ putStrLn "A"
-    Entity bId b <- nodeWith @B (only aId)
+    Entity bId b <- node @B (only aId) mempty
     -- Type application is not necessary, but recommended for clarity.
     liftIO $ putStrLn "B"
-    Entity _ c <- nodeEditWith @C (aId, bId) $ \n ->
+    Entity _ c <- node @C (aId, bId) $ edit $ \n ->
       n { cC = "spanish" }
     liftIO $ putStrLn "C"
 
@@ -172,10 +172,10 @@ insertionFailureSpec :: IO ()
 insertionFailureSpec = do
   let
     failingGraph =  runGraphulaT runDB . runGraphulaFailT $ do
-      Entity _ _ <- node @A
+      Entity _ _ <- root @A mempty
       pure ()
   failingGraph
-    `shouldThrow` (== (GenerationFailureMaxAttempts (typeRep $ Proxy @A)))
+    `shouldThrow` (== (GenerationFailureMaxAttemptsToInsert (typeRep $ Proxy @A)))
 ```
 
 <!--
