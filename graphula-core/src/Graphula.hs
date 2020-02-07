@@ -37,28 +37,28 @@
 {-# LANGUAGE TypeOperators #-}
 
 module Graphula
-  ( -- * Graph Declaration
+  ( -- ** Graph Declaration
     root
   , node
-    -- * Node options
+  , GraphulaNode
+  , GraphulaContext
+    -- ** Node options
   , NodeOptions
   , edit
   , suchThat
   , primaryKey
-  , GraphulaNode
-  , GraphulaContext
-  -- * Declaring Dependencies
+    -- ** Declaring Dependencies
   , HasDependencies(..)
-  -- ** Singular Dependencies
+    -- *** Singular Dependencies
   , Only(..)
   , only
-  -- * The Graph Monad
-  -- ** Type Classes
+    -- ** The Graph Monad
+    -- *** Type Classes
   , MonadGraphula
   , MonadGraphulaBackend(..)
   , MonadGraphulaFrontend(..)
   , EntityKeyGen(..)
-  -- ** Backends
+    -- *** Backends
   , runGraphulaT
   , GraphulaT
   , runGraphulaLoggedT
@@ -66,12 +66,12 @@ module Graphula
   , GraphulaLoggedT
   , runGraphulaReplayT
   , GraphulaReplayT
-  -- ** Frontends
+    -- *** Frontends
   , runGraphulaIdempotentT
   , GraphulaIdempotentT
-  -- * Extras
+    -- ** Extras
   , NoConstraint
-  -- * Exceptions
+    -- ** Exceptions
   , GenerationFailure(..)
   )
 where
