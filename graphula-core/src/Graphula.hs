@@ -33,6 +33,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -78,7 +79,7 @@ where
 
 import Prelude hiding (readFile)
 
-import Control.Monad (guard)
+import Control.Monad (guard, (<=<))
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift
 import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
@@ -86,14 +87,15 @@ import Control.Monad.Trans (MonadTrans, lift)
 import Data.Aeson (FromJSON, Result(..), ToJSON, Value, eitherDecodeStrict', encode, fromJSON, toJSON)
 import Data.ByteString (readFile)
 import Data.ByteString.Lazy (hPutStr)
+import Data.Coerce (coerce)
 import Data.Foldable (for_)
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef, writeIORef)
 import Data.Kind (Type)
 import Data.Maybe (fromMaybe)
-import Data.Monoid (Last(..), Endo(..))
+import Data.Monoid (Last(..))
 import Data.Proxy (Proxy(..))
-import Data.Sequence (Seq, ViewL(..), empty, viewl, (|>))
 import Data.Semigroup.Generic (gmappend, gmempty)
+import Data.Sequence (Seq, ViewL(..), empty, viewl, (|>))
 import Data.Traversable (for)
 import Data.Typeable (TypeRep, Typeable, typeRep)
 import Database.Persist
@@ -469,16 +471,30 @@ type GraphulaNode m a =
 -- @
 --
 data NodeOptions a = NodeOptions
-  { nodeOptionsEdit :: Endo (Maybe a)
+  { nodeOptionsEdit :: Kendo Maybe a
   , nodeOptionsPrimaryKey :: Last (Gen (Maybe (Key a)))
   }
   deriving (Generic)
 
 instance Semigroup (NodeOptions a) where
   (<>) = gmappend
+  {-# INLINE (<>) #-}
 
 instance Monoid (NodeOptions a) where
   mempty = gmempty
+  {-# INLINE mempty #-}
+
+-- | Like @'Endo'@ but use Kliesli composition
+newtype Kendo m a = Kendo { appKendo :: a -> m a }
+
+instance Monad m => Semigroup (Kendo m a) where
+  (<>) = coerce @((a -> m a) -> (a -> m a) -> a -> m a) (<=<)
+  {-# INLINE (<>) #-}
+
+instance Monad m => Monoid (Kendo m a) where
+  mempty = coerce @(a -> m a) pure
+  {-# INLINE mempty #-}
+
 
 -- | Modify the node after it's been generated
 --
@@ -488,7 +504,7 @@ instance Monoid (NodeOptions a) where
 --
 edit :: (a -> a) -> NodeOptions a
 edit f = mempty
-  { nodeOptionsEdit = Endo $ fmap f
+  { nodeOptionsEdit = Kendo $ Just . f
   }
 
 -- | Require a node to satisfy the specified predicate
@@ -499,9 +515,7 @@ edit f = mempty
 --
 suchThat :: (a -> Bool) -> NodeOptions a
 suchThat f = mempty
-  { nodeOptionsEdit = Endo $ \ma -> do
-      a <- ma
-      a <$ guard (f a)
+  { nodeOptionsEdit = Kendo $ \a -> a <$ guard (f a)
   }
 
 -- | Override any automatic key generation with the specified key
@@ -543,7 +557,7 @@ node
   -> m (Entity a)
 node dependencies NodeOptions{..} = attempt 100 10 $ do
   initial <- generateNode
-  for (appEndo nodeOptionsEdit $ Just initial) $ \edited -> do
+  for (appKendo nodeOptionsEdit initial) $ \edited -> do
     let hydrated = edited `dependsOn` dependencies
     logNode hydrated
     mKey <- liftIO $ generate $ fromMaybe genEntityKey $ getLast nodeOptionsPrimaryKey
