@@ -47,7 +47,7 @@ module Graphula
   , NodeOptions
   , edit
   , suchThat
-  , primaryKey
+  , keyed
     -- ** Declaring Dependencies
   , HasDependencies(..)
     -- *** Singular Dependencies
@@ -463,16 +463,16 @@ type GraphulaNode m a =
 --
 -- @
 -- a1 <- root @A mempty
--- a2 <- root @A $ primaryKey $ AKey 1
+-- a2 <- root @A $ keyed $ AKey 1
 -- a3 <- root @A $ edit $ \a -> a { someField = True }
 -- a4 <- root @A $ suchThat $ (== True) . someField
--- a5 <- root @A $ primaryKey (AKey 2) <> edit (\a -> a { someField = True })
--- a6 <- root @A $ primaryKey (AKey 3) <> do edit $ \a -> a { someField = True }
+-- a5 <- root @A $ keyed (AKey 2) <> edit (\a -> a { someField = True })
+-- a6 <- root @A $ keyed (AKey 3) <> do edit $ \a -> a { someField = True }
 -- @
 --
 data NodeOptions a = NodeOptions
   { nodeOptionsEdit :: Kendo Maybe a
-  , nodeOptionsPrimaryKey :: Last (Gen (Maybe (Key a)))
+  , nodeOptionsKeyed :: Last (Gen (Maybe (Key a)))
   }
   deriving (Generic)
 
@@ -521,12 +521,19 @@ suchThat f = mempty
 -- | Override any automatic key generation with the specified key
 --
 -- @
--- a <- root @A $ primaryKey $ AKey 1
+-- a <- root @A $ keyed $ AKey 1
 -- @
 --
-primaryKey :: Key a -> NodeOptions a
-primaryKey key = mempty
-  { nodeOptionsPrimaryKey = Last $ Just $ pure $ Just key
+-- If this is called more than once, the last key is used. E.g.,
+-- @AKey 2@ would be used below:
+--
+-- @
+-- a <- root @A $ keyed (AKey 1) <> keyed (AKey 2)
+-- @
+--
+keyed :: Key a -> NodeOptions a
+keyed key = mempty
+  { nodeOptionsKeyed = Last $ Just $ pure $ Just key
   }
 
 -- | Generate a value that does not have any dependencies
@@ -545,7 +552,7 @@ root = node ()
   dependency data is inserted after any editing operations.
 
   > node @Dog (ownerId, veterinarianId) mempty
-  > node @Dog (ownerId, vererinarianId) $ primaryKey $ DogKey 1
+  > node @Dog (ownerId, vererinarianId) $ keyed $ DogKey 1
   > node @Dog (ownerId, vererinarianId) $ edit $ \dog ->
   >   dog {name = "fido"}
 -}
@@ -560,7 +567,7 @@ node dependencies NodeOptions{..} = attempt 100 10 $ do
   for (appKendo nodeOptionsEdit initial) $ \edited -> do
     let hydrated = edited `dependsOn` dependencies
     logNode hydrated
-    mKey <- liftIO $ generate $ fromMaybe genEntityKey $ getLast nodeOptionsPrimaryKey
+    mKey <- liftIO $ generate $ fromMaybe genEntityKey $ getLast nodeOptionsKeyed
     pure (mKey, hydrated)
 
 attempt
