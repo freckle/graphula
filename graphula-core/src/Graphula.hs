@@ -84,7 +84,16 @@ import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift
 import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
 import Control.Monad.Trans (MonadTrans, lift)
-import Data.Aeson (FromJSON, Result(..), ToJSON, Value, eitherDecodeStrict', encode, fromJSON, toJSON)
+import Data.Aeson
+  ( FromJSON
+  , Result(..)
+  , ToJSON
+  , Value
+  , eitherDecodeStrict'
+  , encode
+  , fromJSON
+  , toJSON
+  )
 import Data.ByteString (readFile)
 import Data.ByteString.Lazy (hPutStr)
 import Data.Coerce (coerce)
@@ -119,16 +128,14 @@ import Graphula.Internal
 import System.Directory (createDirectoryIfMissing, getTemporaryDirectory)
 import System.IO (Handle, IOMode(..), hClose, openFile)
 import System.IO.Temp (openTempFile)
-import Test.HUnit.Lang (FailureReason(..), HUnitFailure(..), formatFailureReason)
+import Test.HUnit.Lang
+  (FailureReason(..), HUnitFailure(..), formatFailureReason)
 import Test.QuickCheck (Arbitrary(..), Gen, generate)
-import UnliftIO.Exception (Exception, SomeException, bracket, catch, mask, throwIO)
+import UnliftIO.Exception
+  (Exception, SomeException, bracket, catch, mask, throwIO)
 
-type MonadGraphula m =
-  ( Monad m
-  , MonadGraphulaBackend m
-  , MonadGraphulaFrontend m
-  , MonadIO m
-  )
+type MonadGraphula m
+  = (Monad m, MonadGraphulaBackend m, MonadGraphulaFrontend m, MonadIO m)
 
 -- | A constraint over lists of nodes for 'MonadGraphula', and 'GraphulaNode'.
 --
@@ -183,8 +190,8 @@ instance MonadUnliftIO m => MonadUnliftIO (GraphulaT n m) where
   askUnliftIO = GraphulaT $ withUnliftIO $ \u ->
     return $ UnliftIO $ unliftIO u . runGraphulaT'
   {-# INLINE withRunInIO #-}
-  withRunInIO inner = GraphulaT $ withRunInIO $ \run ->
-    inner $ run . runGraphulaT'
+  withRunInIO inner =
+    GraphulaT $ withRunInIO $ \run -> inner $ run . runGraphulaT'
 
 instance MonadIO m => MonadGraphulaBackend (GraphulaT n m) where
   type Logging (GraphulaT n m) = NoConstraint
@@ -242,8 +249,8 @@ instance (MonadIO m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (Graphula
   insert mKey n = do
     finalizersRef <- ask
     mEnt <- lift $ insert mKey n
-    for_ (entityKey <$> mEnt) $ \key ->
-      liftIO $ modifyIORef' finalizersRef (remove key >>)
+    for_ (entityKey <$> mEnt)
+      $ \key -> liftIO $ modifyIORef' finalizersRef (remove key >>)
     pure mEnt
   remove = lift . remove
 
@@ -326,11 +333,11 @@ instance MonadIO m => MonadGraphulaBackend (GraphulaReplayT m) where
     replayRef <- ask
     mJsonNode <- popReplay replayRef
     case mJsonNode of
-      Nothing -> throwIO $ userError "Not enough replay data to fullfill graph."
-      Just jsonNode ->
-        case fromJSON jsonNode of
-          Error err -> throwIO $ userError err
-          Success a -> pure a
+      Nothing ->
+        throwIO $ userError "Not enough replay data to fullfill graph."
+      Just jsonNode -> case fromJSON jsonNode of
+        Error err -> throwIO $ userError err
+        Success a -> pure a
   logNode _ = pure ()
 
 instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaReplayT m) where
@@ -446,15 +453,15 @@ data GenerationFailure
 
 instance Exception GenerationFailure
 
-type GraphulaNode m a =
-  ( Generate m a
-  , HasDependencies a
-  , Logging m a
-  , PersistEntityBackend a ~ SqlBackend
-  , PersistEntity a
-  , Typeable a
-  , EntityKeyGen a
-  )
+type GraphulaNode m a
+  = ( Generate m a
+    , HasDependencies a
+    , Logging m a
+    , PersistEntityBackend a ~ SqlBackend
+    , PersistEntity a
+    , Typeable a
+    , EntityKeyGen a
+    )
 
 -- | Options for generating an individual node
 --
@@ -503,9 +510,7 @@ instance Monad m => Monoid (Kendo m a) where
 -- @
 --
 edit :: (a -> a) -> NodeOptions a
-edit f = mempty
-  { nodeOptionsEdit = Kendo $ Just . f
-  }
+edit f = mempty { nodeOptionsEdit = Kendo $ Just . f }
 
 -- | Require a node to satisfy the specified predicate
 --
@@ -514,9 +519,7 @@ edit f = mempty
 -- @
 --
 suchThat :: (a -> Bool) -> NodeOptions a
-suchThat f = mempty
-  { nodeOptionsEdit = Kendo $ \a -> a <$ guard (f a)
-  }
+suchThat f = mempty { nodeOptionsEdit = Kendo $ \a -> a <$ guard (f a) }
 
 -- | Override any automatic key generation with the specified key
 --
@@ -532,9 +535,7 @@ suchThat f = mempty
 -- @
 --
 keyed :: Key a -> NodeOptions a
-keyed key = mempty
-  { nodeOptionsKeyed = Last $ Just $ pure $ Just key
-  }
+keyed key = mempty { nodeOptionsKeyed = Last $ Just $ pure $ Just key }
 
 -- | Generate a value that does not have any dependencies
 --
@@ -543,7 +544,10 @@ keyed key = mempty
 -- @
 --
 root
-  :: forall a m . (GraphulaContext m '[a], Dependencies a ~ ()) => NodeOptions a -> m (Entity a)
+  :: forall a m
+   . (GraphulaContext m '[a], Dependencies a ~ ())
+  => NodeOptions a
+  -> m (Entity a)
 root = node ()
 
 {-|
@@ -562,12 +566,13 @@ node
   => Dependencies a
   -> NodeOptions a
   -> m (Entity a)
-node dependencies NodeOptions{..} = attempt 100 10 $ do
+node dependencies NodeOptions {..} = attempt 100 10 $ do
   initial <- generateNode
   for (appKendo nodeOptionsEdit initial) $ \edited -> do
     let hydrated = edited `dependsOn` dependencies
     logNode hydrated
-    mKey <- liftIO $ generate $ fromMaybe genEntityKey $ getLast nodeOptionsKeyed
+    mKey <- liftIO $ generate $ fromMaybe genEntityKey $ getLast
+      nodeOptionsKeyed
     pure (mKey, hydrated)
 
 attempt
@@ -583,13 +588,11 @@ attempt maxEdits maxInserts source = loop 0 0
   loop numEdits numInserts
     | numEdits >= maxEdits = die GenerationFailureMaxAttemptsToConstrain
     | numInserts >= maxInserts = die GenerationFailureMaxAttemptsToInsert
-    | otherwise =
-        source >>= \case
-          Nothing -> loop (succ numEdits) numInserts
-          Just (mKey, value) ->
-            insert mKey value >>= \case
-              Nothing -> loop (succ numEdits) (succ numInserts)
-              Just a -> pure a
+    | otherwise = source >>= \case
+      Nothing -> loop (succ numEdits) numInserts
+      Just (mKey, value) -> insert mKey value >>= \case
+        Nothing -> loop (succ numEdits) (succ numInserts)
+        Just a -> pure a
 
   die :: (TypeRep -> GenerationFailure) -> m (Entity a)
   die e = throwIO $ e $ typeRep (Proxy :: Proxy a)
