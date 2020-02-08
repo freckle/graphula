@@ -10,14 +10,14 @@ where
 
 import Prelude
 
-import Data.UUID (UUID)
 import Data.Aeson (FromJSON, ToJSON)
-import qualified Data.UUID as UUID
 import qualified Data.Text as Text
+import Data.UUID (UUID)
+import qualified Data.UUID as UUID
 import Database.Persist
 import Database.Persist.Sql
 import Test.QuickCheck (Arbitrary(..), getLarge)
-import Web.HttpApiData (ToHttpApiData, FromHttpApiData)
+import Web.HttpApiData (FromHttpApiData, ToHttpApiData)
 import Web.PathPieces (PathPiece(..))
 
 -- | Example non-serial key
