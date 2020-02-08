@@ -1,1 +1,1 @@
-graphula-core/README.lhs
+graphula-core/test/README.lhs

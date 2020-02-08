@@ -6,6 +6,7 @@ Graphula is a simple interface for generating persistent data and linking its de
 <!--
 ```haskell
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -15,23 +16,26 @@ Graphula is a simple interface for generating persistent data and linking its de
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Main where
 
-import Data.Aeson
-import Control.Monad.Trans.Reader (ReaderT)
-import Control.Monad.Logger (NoLoggingT)
-import Control.Monad.Trans.Resource (ResourceT)
-import Data.Typeable
 import Control.Monad.IO.Class
 import Control.Monad.IO.Unlift
-import Graphula
-import GHC.Generics (Generic)
-import Test.QuickCheck
-import Test.Hspec
-import Database.Persist (Entity(..))
+import Control.Monad.Logger (NoLoggingT)
+import Control.Monad.Trans.Reader (ReaderT)
+import Control.Monad.Trans.Resource (ResourceT)
+import Data.Aeson
 import Database.Persist.Arbitrary ()
+import Database.Persist (Entity(..))
 import Database.Persist.Sqlite
 import Database.Persist.TH
+import Data.Typeable
+import GHC.Generics (Generic)
+import Graphula
+import Graphula.UUIDKey
+import Test.Hspec
+import Test.QuickCheck
 ```
 -->
 
@@ -56,6 +60,17 @@ C
   b BId
   c String
   deriving Show Eq Generic
+
+D
+  Id UUIDKey
+  a Int
+  b String
+  deriving Show Eq Generic
+
+E
+  Id DId sqltype=uuid
+  a String
+  deriving Show Eq Generic
 |]
 
 instance Arbitrary A where
@@ -66,6 +81,12 @@ instance Arbitrary B where
 
 instance Arbitrary C where
   arbitrary = C <$> arbitrary <*> arbitrary <*> arbitrary
+
+instance Arbitrary D where
+  arbitrary = D <$> arbitrary <*> arbitrary
+
+instance Arbitrary E where
+  arbitrary = E <$> arbitrary
 ```
 
 ## Dependencies
@@ -94,13 +115,27 @@ instance HasDependencies C where
 
 ## Non Sequential Keys
 
-Graphula supports non-sequential keys with the `EntityKeyGen` typeclass. This allows us to provide option key generation. In the case of sequential keys we need only provide an empty instance.
+Graphula supports non-sequential keys with the `KeySource` associated type. To generate a key using
+its `Arbitrary` instance, use `'GenerateKey 'Arbitrary`. Non-serial keys will need to also derive
+an overlapping `Arbitrary` instance.
 
 ```haskell
-instance EntityKeyGen A
-instance EntityKeyGen B
-instance EntityKeyGen C
+instance HasDependencies D where
+  type KeySource D = 'GenerateKey 'Arbitrary
+
+deriving instance {-# OVERLAPPING #-} Arbitrary (Key D)
 ```
+
+You can also elect to always specify an external key using `'SpecifyKey`. This means that
+calls to `root` and `node` will always require an extra argument:
+
+```haskell
+instance HasDependencies E where
+  type KeySource E = 'SpecifyKey
+```
+
+By default, `HasDependencies` instances use `type KeySource _ = 'GenerateKey 'Default`, which means
+that graphula will expect the database to provide a key.
 
 ## Replay And Serialization
 
@@ -116,17 +151,23 @@ instance FromJSON B
 instance ToJSON C
 instance FromJSON C
 
+instance ToJSON D
+instance FromJSON D
+
+instance ToJSON E
+instance FromJSON E
+
 loggingAndReplaySpec :: IO ()
 loggingAndReplaySpec = do
   let
     logFile = "test.graphula"
     -- We'd typically use `runGraphulaLogged` which utilizes a temp file.
     failingGraph = runGraphulaT runDB . runGraphulaLoggedWithFileT logFile $ do
-      Entity _ a <- root @A $ edit $ \n ->
+      Entity _ a <- node @A () $ edit $ \n ->
         n {aA = "success"}
       liftIO $ aA a `shouldBe` "failed"
     replayGraph = runGraphulaT runDB . runGraphulaReplayT logFile $ do
-      Entity _ a <- root @A mempty
+      Entity _ a <- node @A () mempty
       liftIO $ aA a `shouldBe` "success"
 
   failingGraph
@@ -141,19 +182,24 @@ simpleSpec :: IO ()
 simpleSpec =
   runGraphulaT runDB $ do
     -- Declare the graph at the term level
-    Entity aId _ <- root @A mempty
+    Entity aId _ <- node @A () mempty
     liftIO $ putStrLn "A"
     Entity bId b <- node @B (only aId) mempty
     -- Type application is not necessary, but recommended for clarity.
     liftIO $ putStrLn "B"
     Entity _ c <- node @C (aId, bId) $ edit $ \n ->
-      n { cC = "spanish" }
+      n { cC = "edited" }
     liftIO $ putStrLn "C"
+    Entity dId _ <- node @D () mempty
+    liftIO $ putStrLn "D"
+    Entity eId _ <- node @E () (EKey dId) mempty
+    liftIO $ putStrLn "E"
 
     -- Do something with your data
     liftIO $ do
-      cC c `shouldBe` "spanish"
+      cC c `shouldBe` "edited"
       cA c `shouldBe` bA b
+      unEKey eId `shouldBe` dId
 ```
 
 `runGraphulaT` carries frontend instructions. If we'd like to override them we need to declare our own frontend.
@@ -172,7 +218,7 @@ insertionFailureSpec :: IO ()
 insertionFailureSpec = do
   let
     failingGraph =  runGraphulaT runDB . runGraphulaFailT $ do
-      Entity _ _ <- root @A mempty
+      Entity _ _ <- node @A () mempty
       pure ()
   failingGraph
     `shouldThrow` (== (GenerationFailureMaxAttemptsToInsert (typeRep $ Proxy @A)))

@@ -6,8 +6,6 @@ extra-source-files:
   - ../stack.yaml
 
 dependencies:
-  - HUnit
-  - QuickCheck
   - aeson
   - base
   - bytestring
@@ -16,8 +14,10 @@ dependencies:
   - exceptions
   - free
   - generics-eot
+  - HUnit
   - mtl
   - persistent
+  - QuickCheck
   - semigroups
   - temporary
   - transformers
@@ -42,13 +42,19 @@ tests:
   readme:
     main: README.lhs
     ghc-options: -Wall -pgmL markdown-unlit
+    source-dirs:
+      - test
     dependencies:
       - base
       - graphula-core
       - hspec
+      - http-api-data
       - markdown-unlit
+      - monad-logger
+      - path-pieces
+      - persistent-arbitrary
       - persistent-sqlite
       - persistent-template
-      - persistent-arbitrary
-      - monad-logger
       - resourcet
+      - text
+      - uuid
