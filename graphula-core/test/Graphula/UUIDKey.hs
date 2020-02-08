@@ -5,7 +5,8 @@
 
 module Graphula.UUIDKey
   ( UUIDKey
-  ) where
+  )
+where
 
 import Prelude
 
@@ -36,10 +37,9 @@ instance PathPiece UUIDKey where
 instance PersistField UUIDKey where
   toPersistValue = PersistText . Text.pack . UUID.toString . unUUIDKey
   fromPersistValue = \case
-    PersistText t ->
-      case UUID.fromString $ Text.unpack t of
-        Just x -> Right $ UUIDKey x
-        Nothing -> Left "Invalid UUID"
+    PersistText t -> case UUID.fromString $ Text.unpack t of
+      Just x -> Right $ UUIDKey x
+      Nothing -> Left "Invalid UUID"
     _ -> Left "Not PersistText"
 
 instance PersistFieldSql UUIDKey where
