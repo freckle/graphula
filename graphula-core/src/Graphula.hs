@@ -621,10 +621,10 @@ instance ResolveArgs 'SpecifyKey where
      . GraphulaContext m '[a]
     => Dependencies a
     -> Args 'SpecifyKey m a
-  -- -> Dict 'SpecifyKey ()
-  -- -> Key a
-  -- -> NodeOptions a
-  -- -> m (Entity a)
+-- -> Dict 'SpecifyKey ()
+-- -> Key a
+-- -> NodeOptions a
+-- -> m (Entity a)
   resolveArgs deps Dict key o = nodeImpl deps (Just $ pure key) o
 
 instance ResolveArgs ('GenerateKey 'Default) where
@@ -633,9 +633,9 @@ instance ResolveArgs ('GenerateKey 'Default) where
      . GraphulaContext m '[a]
     => Dependencies a
     -> Args ( 'GenerateKey 'Default) m a
-  -- -> Dict ('GenerateKey 'Default) ()
-  -- -> NodeOptions a
-  -- -> m (Entity a)
+-- -> Dict ('GenerateKey 'Default) ()
+-- -> NodeOptions a
+-- -> m (Entity a)
   resolveArgs deps Dict o = nodeImpl deps Nothing o
 
 instance ResolveArgs ('GenerateKey 'Arbitrary) where
@@ -644,9 +644,9 @@ instance ResolveArgs ('GenerateKey 'Arbitrary) where
      . GraphulaContext m '[a]
     => Dependencies a
     -> Args ( 'GenerateKey 'Arbitrary) m a
-  -- -> Dict ('GenerateKey 'Arbitrary) (Arbitrary (Key a))
-  -- -> NodeOptions a
-  -- -> m (Entity a)
+-- -> Dict ('GenerateKey 'Arbitrary) (Arbitrary (Key a))
+-- -> NodeOptions a
+-- -> m (Entity a)
   resolveArgs deps Dict o = nodeImpl deps (Just arbitrary) o
 
 nodeImpl
