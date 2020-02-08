@@ -512,12 +512,12 @@ type GraphulaNode m a
 -}
 node
   :: forall a s m r c
-  . ( GraphulaContext m '[a]
-    , KeySource a ~ s
-    , ResolveArgs s
-    , Args s m a ~ (Dict s c -> r)
-    , c
-    )
+   . ( GraphulaContext m '[a]
+     , KeySource a ~ s
+     , ResolveArgs s
+     , Args s m a ~ (Dict s c -> r)
+     , c
+     )
   => Dependencies a
   -> r
 node deps = resolveArgs @s @a @m deps Dict
@@ -605,7 +605,7 @@ type family Args s m a = r | r -> s where
 
 -- | Pass a tagged constraint at the term level
 data Dict (t :: k) (c :: Constraint) where
-  Dict :: c => Dict t c
+  Dict ::c => Dict t c
 
 -- | Resolve arguments for a specific instantiation of @'node'@
 class ResolveArgs (s :: KeySourceType) where
@@ -621,10 +621,10 @@ instance ResolveArgs 'SpecifyKey where
      . GraphulaContext m '[a]
     => Dependencies a
     -> Args 'SpecifyKey m a
-    -- -> Dict 'SpecifyKey ()
-    -- -> Key a
-    -- -> NodeOptions a
-    -- -> m (Entity a)
+  -- -> Dict 'SpecifyKey ()
+  -- -> Key a
+  -- -> NodeOptions a
+  -- -> m (Entity a)
   resolveArgs deps Dict key o = nodeImpl deps (Just $ pure key) o
 
 instance ResolveArgs ('GenerateKey 'Default) where
@@ -632,10 +632,10 @@ instance ResolveArgs ('GenerateKey 'Default) where
     :: forall a m
      . GraphulaContext m '[a]
     => Dependencies a
-    -> Args ('GenerateKey 'Default) m a
-    -- -> Dict ('GenerateKey 'Default) ()
-    -- -> NodeOptions a
-    -- -> m (Entity a)
+    -> Args ( 'GenerateKey 'Default) m a
+  -- -> Dict ('GenerateKey 'Default) ()
+  -- -> NodeOptions a
+  -- -> m (Entity a)
   resolveArgs deps Dict o = nodeImpl deps Nothing o
 
 instance ResolveArgs ('GenerateKey 'Arbitrary) where
@@ -643,20 +643,20 @@ instance ResolveArgs ('GenerateKey 'Arbitrary) where
     :: forall a m
      . GraphulaContext m '[a]
     => Dependencies a
-    -> Args ('GenerateKey 'Arbitrary) m a
-    -- -> Dict ('GenerateKey 'Arbitrary) (Arbitrary (Key a))
-    -- -> NodeOptions a
-    -- -> m (Entity a)
+    -> Args ( 'GenerateKey 'Arbitrary) m a
+  -- -> Dict ('GenerateKey 'Arbitrary) (Arbitrary (Key a))
+  -- -> NodeOptions a
+  -- -> m (Entity a)
   resolveArgs deps Dict o = nodeImpl deps (Just arbitrary) o
 
 nodeImpl
-    :: forall a m
-     . GraphulaContext m '[a]
-    => Dependencies a
-    -> Maybe (Gen (Key a))
-    -> NodeOptions a
-    -> (m (Entity a))
-nodeImpl dependencies mGenKey NodeOptions{..} = attempt 100 10 $ do
+  :: forall a m
+   . GraphulaContext m '[a]
+  => Dependencies a
+  -> Maybe (Gen (Key a))
+  -> NodeOptions a
+  -> (m (Entity a))
+nodeImpl dependencies mGenKey NodeOptions {..} = attempt 100 10 $ do
   initial <- generateNode
   for (appKendo nodeOptionsEdit initial) $ \edited -> do
     let hydrated = edited `dependsOn` dependencies
