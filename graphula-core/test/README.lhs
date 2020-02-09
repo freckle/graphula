@@ -20,6 +20,7 @@ Graphula is a simple interface for generating persistent data and linking its de
 {-# LANGUAGE FlexibleInstances #-}
 module Main where
 
+import Control.Monad (replicateM_)
 import Control.Monad.IO.Class
 import Control.Monad.IO.Unlift
 import Control.Monad.Logger (NoLoggingT)
@@ -35,7 +36,7 @@ import GHC.Generics (Generic)
 import Graphula
 import Graphula.UUIDKey
 import Test.Hspec
-import Test.QuickCheck
+import Test.QuickCheck hiding (suchThat)
 ```
 -->
 
@@ -71,6 +72,11 @@ E
   Id DId sqltype=uuid
   a String
   deriving Show Eq Generic
+
+F
+  a Bool
+  UniqueFA a
+  deriving Show Eq Generic
 |]
 
 instance Arbitrary A where
@@ -87,6 +93,9 @@ instance Arbitrary D where
 
 instance Arbitrary E where
   arbitrary = E <$> arbitrary
+
+instance Arbitrary F where
+  arbitrary = F <$> arbitrary
 ```
 
 ## Dependencies
@@ -97,6 +106,7 @@ By default a type does not have any dependencies. We only need to declare an emp
 
 ```haskell
 instance HasDependencies A
+instance HasDependencies F
 ```
 
 For single dependencies we use the `Only` type.
@@ -127,7 +137,7 @@ deriving instance {-# OVERLAPPING #-} Arbitrary (Key D)
 ```
 
 You can also elect to always specify an external key using `'SpecifyKey`. This means that
-calls to `root` and `node` will always require an extra argument:
+calls to `node` will always require an extra argument:
 
 ```haskell
 instance HasDependencies E where
@@ -224,6 +234,32 @@ insertionFailureSpec = do
     `shouldThrow` (== (GenerationFailureMaxAttemptsToInsert (typeRep $ Proxy @A)))
 ```
 
+Note that graphula can fail naturally if we define a graph that violates unique constraints
+in the database:
+
+```haskell
+constraintFailureSpec :: IO ()
+constraintFailureSpec = do
+  let
+    failingGraph =  runGraphulaT runDB $
+      replicateM_ 3 $ node @F () mempty
+  failingGraph
+    `shouldThrow` (== (GenerationFailureMaxAttemptsToInsert (typeRep $ Proxy @F)))
+```
+
+or if we define a graph with an unsatisfiable predicates:
+
+```haskell
+suchThatFailureSpec :: IO ()
+suchThatFailureSpec = do
+  let
+    failingGraph =  runGraphulaT runDB $ do
+      Entity _ _ <- node @A () $ suchThat $ \a -> a /= a
+      pure ()
+  failingGraph
+    `shouldThrow` (== (GenerationFailureMaxAttemptsToConstrain (typeRep $ Proxy @A)))
+```
+
 <!--
 ```haskell
 main :: IO ()
@@ -232,6 +268,8 @@ main = hspec $
     it "generates and links arbitrary graphs of data" simpleSpec
     it "allows logging and replaying graphs" loggingAndReplaySpec
     it "attempts to retry node generation on insertion failure" insertionFailureSpec
+    it "attempts to retry node generation on a database constraint violation" constraintFailureSpec
+    it "attempts to retry node generation on unsatisfiable predicates" suchThatFailureSpec
 
 runDB :: MonadUnliftIO m => ReaderT SqlBackend (NoLoggingT (ResourceT m)) a -> m a
 runDB f = runSqlite "test.db" $ do
