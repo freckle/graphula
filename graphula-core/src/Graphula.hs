@@ -573,11 +573,11 @@ type GraphulaNode m a
 -}
 node
   :: forall a s m
-  . ( GraphulaContext m '[a]
-    , KeySource a ~ s
-    , GenEntityKey s a
-    , KeyConstraint s a
-    )
+   . ( GraphulaContext m '[a]
+     , KeySource a ~ s
+     , GenEntityKey s a
+     , KeyConstraint s a
+     )
   => Dependencies a
   -> NodeOptions a
   -> (m (Entity a))
@@ -599,7 +599,7 @@ node = nodeImpl $ genEntityKey @s @a
 -}
 nodeKeyed
   :: forall a m
-  . GraphulaContext m '[a]
+   . GraphulaContext m '[a]
   => Key a
   -> Dependencies a
   -> NodeOptions a
@@ -608,7 +608,7 @@ nodeKeyed key = nodeImpl $ pure $ Just key
 
 nodeImpl
   :: forall a m
-  . GraphulaContext m '[a]
+   . GraphulaContext m '[a]
   => Gen (Maybe (Key a))
   -> Dependencies a
   -> NodeOptions a
@@ -628,9 +628,7 @@ nodeImpl genKey dependencies NodeOptions {..} = attempt 100 10 $ do
 -- @
 --
 edit :: (a -> a) -> NodeOptions a
-edit f = mempty
-  { nodeOptionsEdit = Kendo $ Just . f
-  }
+edit f = mempty { nodeOptionsEdit = Kendo $ Just . f }
 
 -- | Require a node to satisfy the specified predicate
 --
@@ -639,9 +637,7 @@ edit f = mempty
 -- @
 --
 suchThat :: (a -> Bool) -> NodeOptions a
-suchThat f = mempty
-  { nodeOptionsEdit = Kendo $ \a -> a <$ guard (f a)
-  }
+suchThat f = mempty { nodeOptionsEdit = Kendo $ \a -> a <$ guard (f a) }
 
 -- | Options for generating an individual node
 --
