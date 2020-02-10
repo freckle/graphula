@@ -30,6 +30,7 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
@@ -40,10 +41,12 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Graphula
   ( -- * Graph Declaration
     node
+  , nodeKeyed
   , GraphulaNode
   , GraphulaContext
     -- ** Node options
@@ -53,7 +56,6 @@ module Graphula
     -- * Declaring Dependencies and key source
   , HasDependencies(..)
   , KeySourceType(..)
-  , KeyStrategy(..)
     -- ** Singular Dependencies
   , Only(..)
   , only
@@ -124,13 +126,14 @@ import Database.Persist.Sql (SqlBackend)
 import Generics.Eot (Eot, HasEot, fromEot, toEot)
 import GHC.Exts (Constraint)
 import GHC.Generics (Generic)
+import GHC.TypeLits (TypeError, ErrorMessage(..))
 import Graphula.Internal
 import System.Directory (createDirectoryIfMissing, getTemporaryDirectory)
 import System.IO (Handle, IOMode(..), hClose, openFile)
 import System.IO.Temp (openTempFile)
 import Test.HUnit.Lang
   (FailureReason(..), HUnitFailure(..), formatFailureReason)
-import Test.QuickCheck (Arbitrary(..), Gen, generate)
+import Test.QuickCheck (Gen, Arbitrary(..), generate)
 import UnliftIO.Exception
   (Exception, SomeException, bracket, catch, mask, throwIO)
 
@@ -412,6 +415,8 @@ class NoConstraint a where
 
 instance NoConstraint a where
 
+
+
 class HasDependencies a where
   -- | A data type that contains values to be injected into @a@ via
   -- `dependsOn`. The default generic implementation of `dependsOn` supports
@@ -428,16 +433,17 @@ class HasDependencies a where
   -- This can be
   --
   -- @
-  -- 'GenerateKey 'Default   -- automatically generate keys from the database
-  -- 'GenerateKey 'Arbitrary -- automatically generate keys using @'Arbitrary'@
-  -- 'SpecifyKey             -- explicitly pass keys to @'node'@
+  -- 'SourceDefault   -- automatically generate keys from the database
+  -- 'SourceArbitrary -- automatically generate keys using @'Arbitrary'@
+  -- 'SourceExternal  -- explicitly pass a key using @'nodeKeyed'@
   -- @
   --
-  -- Most types will use @'GenerateKey Default'@ or @'GenerateKey Arbitrary'@.
-  -- Only use @'SpecifyKey'@ if the key for a value is always defined
+  -- Most types will use @'SourceDefault'@ or @'SourceArbitrary'@. Only
+  -- use @'SourceExternal'@ if the key for a value is always defined
   -- externally.
+  --
   type KeySource a :: KeySourceType
-  type instance KeySource a = 'GenerateKey 'Default
+  type instance KeySource a = 'SourceDefault
 
   -- | Assign values from the 'Dependencies' collection to a value.
   -- 'dependsOn' must be an idempotent operation.
@@ -461,19 +467,80 @@ class HasDependencies a where
         (toEot a)
         (toEot dependencies)
 
--- | Source of keys
 data KeySourceType
-  = GenerateKey KeyStrategy
-  -- ^ Generate keys using the specified @'Strategy'@
-  | SpecifyKey
+  = SourceDefault
+  -- ^ Generate keys using the database's @DEFAULT@ strategy
+  | SourceArbitrary
+  -- ^ Generate keys using the @'Arbitrary'@ instance for the @'Key'@
+  | SourceExternal
   -- ^ Always explicitly pass an external key
 
--- | How to implicitly generate keys
-data KeyStrategy
-  = Default
-  -- ^ Let the database generate keys
-  | Arbitrary
-  -- ^ Use '@Arbitrary'@ to generate keys
+-- | Handle key generation for @'SourceDefault'@ and @'SourceArbitrary'@
+--
+-- Ths could be a single-parameter class, but carrying the @a@ around
+-- lets us give a better error message when @'node'@ is called instead
+-- of @'nodeKeyed'@.
+--
+class GenEntityKey (s :: KeySourceType) a where
+  type KeyConstraint s a :: Constraint
+  genEntityKey :: KeyConstraint s a => Gen (Maybe (Key a))
+
+instance GenEntityKey 'SourceDefault a where
+  type KeyConstraint 'SourceDefault a = NoConstraint a
+  genEntityKey = pure Nothing
+
+instance GenEntityKey 'SourceArbitrary a where
+  type KeyConstraint 'SourceArbitrary a = Arbitrary (Key a)
+  genEntityKey = Just <$> arbitrary
+
+type family Quote t where
+  Quote t = 'Text "‘" ':<>: t ':<>: 'Text "’"
+
+-- | Explicit instance for @'SourceExternal'@ to give an actionable error message
+--
+-- Rendered:
+--
+-- @
+-- Cannot generate a value of type ‘X’ using ‘node’ since
+--
+--   instance HasDependencies X where
+--     type KeySource X = 'SourceExternal
+--
+-- Possible fixes include:
+-- • Use ‘nodeKeyed’ instead of ‘node’
+-- • Change ‘KeySource X’ to 'SourceDefault or 'SourceArbitrary
+-- @
+--
+instance TypeError
+  ( 'Text "Cannot generate a value of type "
+    ':<>: Quote ('ShowType a)
+    ':<>: 'Text " using "
+    ':<>: Quote ('Text "node")
+    ':<>: 'Text " since"
+    ':$$: 'Text ""
+    ':$$: 'Text "  instance HasDependencies "
+    ':<>: 'ShowType a
+    ':<>: 'Text " where"
+    ':$$: 'Text "    "
+    ':<>: 'Text "type KeySource "
+    ':<>: 'ShowType a
+    ':<>: 'Text  " = "
+    ':<>: 'ShowType 'SourceExternal
+    ':$$: 'Text ""
+    ':$$: 'Text "Possible fixes include:"
+    ':$$: 'Text "• Use "
+    ':<>: Quote ('Text "nodeKeyed")
+    ':<>: 'Text " instead of "
+    ':<>: Quote ('Text "node")
+    ':$$: 'Text "• Change "
+    ':<>: Quote ('Text "KeySource " ':<>: 'ShowType a)
+    ':<>: 'Text " to "
+    ':<>: 'Text "'SourceDefault"
+    ':<>: 'Text " or "
+    ':<>: 'Text "'SourceArbitrary"
+  ) => GenEntityKey 'SourceExternal a where
+  type KeyConstraint 'SourceExternal a = NoConstraint a
+  genEntityKey = error "unreachable"
 
 data GenerationFailure
   = GenerationFailureMaxAttemptsToConstrain TypeRep
@@ -493,7 +560,6 @@ type GraphulaNode m a
     , Typeable a
     )
 
-
 {-|
   Generate a value with data dependencies. This leverages
   'HasDependencies' to insert the specified data in the generated value. All
@@ -503,25 +569,57 @@ type GraphulaNode m a
   > node @Dog (ownerId, veterinarianId) $ edit $ \dog ->
   >   dog {name = "fido"}
 
-  A value that has an externally managed key will always require an extra argument
-
-  > someKey <- generateKey
-  > node @Cat (ownerId, veterinarianId) someKey mempty
-  > anotherKey <- generateKey
-  > node @Cat (ownerId, veterinarianId) anotherKey $ edit $ \cat ->
-  >   cat {name = "milo"}
+  A value that has an externally managed key must use @'nodeKeyed'@ instead.
 -}
 node
-  :: forall a s m r c
-   . ( GraphulaContext m '[a]
-     , KeySource a ~ s
-     , ResolveArgs s
-     , Args s m a ~ (Dict s c -> r)
-     , c
-     )
+  :: forall a s m
+  . ( GraphulaContext m '[a]
+    , KeySource a ~ s
+    , GenEntityKey s a
+    , KeyConstraint s a
+    )
   => Dependencies a
-  -> r
-node deps = resolveArgs @s @a @m deps Dict
+  -> NodeOptions a
+  -> (m (Entity a))
+node = nodeImpl $ genEntityKey @s @a
+
+{-|
+  Generate a value with data dependencies given an externally managed
+  key. This leverages 'HasDependencies' to insert the specified data
+  in the generated value. All dependency data is inserted after any
+  editing operations.
+
+  > someKey <- generateKey
+  > node @Cat someKey (ownerId, veterinarianId) mempty
+  > anotherKey <- generateKey
+  > node @Cat anotherKey (ownerId, veterinarianId) $ edit $ \cat ->
+  >   cat {name = "milo"}
+
+  A value that has an automatically managed key may use @'node'@ instead.
+-}
+nodeKeyed
+  :: forall a m
+  . GraphulaContext m '[a]
+  => Key a
+  -> Dependencies a
+  -> NodeOptions a
+  -> (m (Entity a))
+nodeKeyed key = nodeImpl $ pure $ Just key
+
+nodeImpl
+  :: forall a m
+  . GraphulaContext m '[a]
+  => Gen (Maybe (Key a))
+  -> Dependencies a
+  -> NodeOptions a
+  -> (m (Entity a))
+nodeImpl genKey dependencies NodeOptions {..} = attempt 100 10 $ do
+  initial <- generateNode
+  for (appKendo nodeOptionsEdit initial) $ \edited -> do
+    let hydrated = edited `dependsOn` dependencies
+    logNode hydrated
+    mKey <- liftIO $ generate $ genKey
+    pure (mKey, hydrated)
 
 -- | Modify the node after it's been generated
 --
@@ -530,7 +628,9 @@ node deps = resolveArgs @s @a @m deps Dict
 -- @
 --
 edit :: (a -> a) -> NodeOptions a
-edit f = mempty { nodeOptionsEdit = Kendo $ Just . f }
+edit f = mempty
+  { nodeOptionsEdit = Kendo $ Just . f
+  }
 
 -- | Require a node to satisfy the specified predicate
 --
@@ -539,7 +639,9 @@ edit f = mempty { nodeOptionsEdit = Kendo $ Just . f }
 -- @
 --
 suchThat :: (a -> Bool) -> NodeOptions a
-suchThat f = mempty { nodeOptionsEdit = Kendo $ \a -> a <$ guard (f a) }
+suchThat f = mempty
+  { nodeOptionsEdit = Kendo $ \a -> a <$ guard (f a)
+  }
 
 -- | Options for generating an individual node
 --
@@ -575,95 +677,6 @@ instance Monad m => Semigroup (Kendo m a) where
 instance Monad m => Monoid (Kendo m a) where
   mempty = Kendo pure
   {-# INLINE mempty #-}
-
--- | Define arguments to @'node'@ for each @'KeySourceType'@
---
--- The @'Dict'@ argument has two functions
--- * Carries around any constraints that the corresponding
---   @'ResolveArgs@' instance will need
--- * Differentiates the result type enough that this type family can be
---   injective
---
-type family Args s m a = r | r -> s where
-  Args 'SpecifyKey m a
-    = Dict 'SpecifyKey ()
-    -> Key a
-    -- ^ Key must be explicitly provided
-    -> NodeOptions a
-    -> m (Entity a)
-
-  Args ('GenerateKey 'Arbitrary) m a
-    = Dict ('GenerateKey 'Arbitrary) (Arbitrary (Key a))
-    -- ^ Key will be generated using @'Arbitrary'@
-    -> NodeOptions a
-    -> m (Entity a)
-
-  Args ('GenerateKey 'Default) m a
-    = Dict ('GenerateKey 'Default) ()
-    -- ^ Key will come from database
-    -> NodeOptions a
-    -> m (Entity a)
-
--- | Pass a tagged constraint at the term level
-data Dict (t :: k) (c :: Constraint) where
-  Dict ::c => Dict t c
-
--- | Resolve arguments for a specific instantiation of @'node'@
-class ResolveArgs (s :: KeySourceType) where
-  resolveArgs
-    :: forall a m
-     . GraphulaContext m '[a]
-    => Dependencies a
-    -> Args s m a
-
-instance ResolveArgs 'SpecifyKey where
-  resolveArgs
-    :: forall a m
-     . GraphulaContext m '[a]
-    => Dependencies a
-    -> Args 'SpecifyKey m a
---  -> Dict 'SpecifyKey ()
---  -> Key a
---  -> NodeOptions a
---  -> m (Entity a)
-  resolveArgs deps Dict key o = nodeImpl deps (Just $ pure key) o
-
-instance ResolveArgs ('GenerateKey 'Default) where
-  resolveArgs
-    :: forall a m
-     . GraphulaContext m '[a]
-    => Dependencies a
-    -> Args ( 'GenerateKey 'Default) m a
---  -> Dict ( 'GenerateKey 'Default) ()
---  -> NodeOptions a
---  -> m (Entity a)
-  resolveArgs deps Dict o = nodeImpl deps Nothing o
-
-instance ResolveArgs ('GenerateKey 'Arbitrary) where
-  resolveArgs
-    :: forall a m
-     . GraphulaContext m '[a]
-    => Dependencies a
-    -> Args ( 'GenerateKey 'Arbitrary) m a
---  -> Dict ( 'GenerateKey 'Arbitrary) (Arbitrary (Key a))
---  -> NodeOptions a
---  -> m (Entity a)
-  resolveArgs deps Dict o = nodeImpl deps (Just arbitrary) o
-
-nodeImpl
-  :: forall a m
-   . GraphulaContext m '[a]
-  => Dependencies a
-  -> Maybe (Gen (Key a))
-  -> NodeOptions a
-  -> (m (Entity a))
-nodeImpl dependencies mGenKey NodeOptions {..} = attempt 100 10 $ do
-  initial <- generateNode
-  for (appKendo nodeOptionsEdit initial) $ \edited -> do
-    let hydrated = edited `dependsOn` dependencies
-    logNode hydrated
-    mKey <- traverse (liftIO . generate) mGenKey
-    pure (mKey, hydrated)
 
 attempt
   :: forall a m
