@@ -126,25 +126,25 @@ instance HasDependencies C where
 ## Non Sequential Keys
 
 Graphula supports non-sequential keys with the `KeySource` associated type. To generate a key using
-its `Arbitrary` instance, use `'GenerateKey 'Arbitrary`. Non-serial keys will need to also derive
+its `Arbitrary` instance, use `'SourceArbitrary`. Non-serial keys will need to also derive
 an overlapping `Arbitrary` instance.
 
 ```haskell
 instance HasDependencies D where
-  type KeySource D = 'GenerateKey 'Arbitrary
+  type KeySource D = 'SourceArbitrary
 
 deriving instance {-# OVERLAPPING #-} Arbitrary (Key D)
 ```
 
-You can also elect to always specify an external key using `'SpecifyKey`. This means that
-calls to `node` will always require an extra argument:
+You can also elect to always specify an external key using `'SourceExternal`. This means that
+this type cannot be constructed with `node`; use `nodeKeyed` instead.
 
 ```haskell
 instance HasDependencies E where
-  type KeySource E = 'SpecifyKey
+  type KeySource E = 'SourceExternal
 ```
 
-By default, `HasDependencies` instances use `type KeySource _ = 'GenerateKey 'Default`, which means
+By default, `HasDependencies` instances use `type KeySource _ = 'SourceDefault`, which means
 that graphula will expect the database to provide a key.
 
 ## Replay And Serialization
@@ -202,7 +202,7 @@ simpleSpec =
     liftIO $ putStrLn "C"
     Entity dId _ <- node @D () mempty
     liftIO $ putStrLn "D"
-    Entity eId _ <- node @E () (EKey dId) mempty
+    Entity eId _ <- nodeKeyed @E (EKey dId) () mempty
     liftIO $ putStrLn "E"
 
     -- Do something with your data
