@@ -52,7 +52,7 @@ module Graphula
     -- ** Node options
   , NodeOptions
   , edit
-  , suchThat
+  , ensure
     -- * Declaring Dependencies and key source
   , HasDependencies(..)
   , KeySourceType(..)
@@ -126,14 +126,14 @@ import Database.Persist.Sql (SqlBackend)
 import Generics.Eot (Eot, HasEot, fromEot, toEot)
 import GHC.Exts (Constraint)
 import GHC.Generics (Generic)
-import GHC.TypeLits (TypeError, ErrorMessage(..))
+import GHC.TypeLits (ErrorMessage(..), TypeError)
 import Graphula.Internal
 import System.Directory (createDirectoryIfMissing, getTemporaryDirectory)
 import System.IO (Handle, IOMode(..), hClose, openFile)
 import System.IO.Temp (openTempFile)
 import Test.HUnit.Lang
   (FailureReason(..), HUnitFailure(..), formatFailureReason)
-import Test.QuickCheck (Gen, Arbitrary(..), generate)
+import Test.QuickCheck (Arbitrary(..), Gen, generate)
 import UnliftIO.Exception
   (Exception, SomeException, bracket, catch, mask, throwIO)
 
@@ -544,7 +544,7 @@ instance TypeError
 
 data GenerationFailure
   = GenerationFailureMaxAttemptsToConstrain TypeRep
-  -- ^ Could not satisfy constraints defined using @'suchThat'@
+  -- ^ Could not satisfy constraints defined using @'ensure'@
   | GenerationFailureMaxAttemptsToInsert TypeRep
   -- ^ Could not satisfy database constraints on insert
   deriving (Show, Typeable, Eq)
@@ -573,11 +573,11 @@ type GraphulaNode m a
 -}
 node
   :: forall a s m
-  . ( GraphulaContext m '[a]
-    , KeySource a ~ s
-    , GenEntityKey s a
-    , KeyConstraint s a
-    )
+   . ( GraphulaContext m '[a]
+     , KeySource a ~ s
+     , GenEntityKey s a
+     , KeyConstraint s a
+     )
   => Dependencies a
   -> NodeOptions a
   -> (m (Entity a))
@@ -599,7 +599,7 @@ node = nodeImpl $ genEntityKey @s @a
 -}
 nodeKeyed
   :: forall a m
-  . GraphulaContext m '[a]
+   . GraphulaContext m '[a]
   => Key a
   -> Dependencies a
   -> NodeOptions a
@@ -608,7 +608,7 @@ nodeKeyed key = nodeImpl $ pure $ Just key
 
 nodeImpl
   :: forall a m
-  . GraphulaContext m '[a]
+   . GraphulaContext m '[a]
   => Gen (Maybe (Key a))
   -> Dependencies a
   -> NodeOptions a
@@ -628,20 +628,16 @@ nodeImpl genKey dependencies NodeOptions {..} = attempt 100 10 $ do
 -- @
 --
 edit :: (a -> a) -> NodeOptions a
-edit f = mempty
-  { nodeOptionsEdit = Kendo $ Just . f
-  }
+edit f = mempty { nodeOptionsEdit = Kendo $ Just . f }
 
 -- | Require a node to satisfy the specified predicate
 --
 -- @
--- a <- node @A () $ suchThat $ (== True) . someField
+-- a <- node @A () $ ensure $ (== True) . someField
 -- @
 --
-suchThat :: (a -> Bool) -> NodeOptions a
-suchThat f = mempty
-  { nodeOptionsEdit = Kendo $ \a -> a <$ guard (f a)
-  }
+ensure :: (a -> Bool) -> NodeOptions a
+ensure f = mempty { nodeOptionsEdit = Kendo $ \a -> a <$ guard (f a) }
 
 -- | Options for generating an individual node
 --
@@ -651,7 +647,7 @@ suchThat f = mempty
 -- @
 -- a1 <- node @A () mempty
 -- a2 <- node @A () $ edit $ \a -> a { someField = True }
--- a3 <- node @A () $ suchThat $ (== True) . someField
+-- a3 <- node @A () $ ensure $ (== True) . someField
 -- @
 --
 newtype NodeOptions a = NodeOptions
