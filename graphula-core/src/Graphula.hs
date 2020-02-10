@@ -126,14 +126,14 @@ import Database.Persist.Sql (SqlBackend)
 import Generics.Eot (Eot, HasEot, fromEot, toEot)
 import GHC.Exts (Constraint)
 import GHC.Generics (Generic)
-import GHC.TypeLits (TypeError, ErrorMessage(..))
+import GHC.TypeLits (ErrorMessage(..), TypeError)
 import Graphula.Internal
 import System.Directory (createDirectoryIfMissing, getTemporaryDirectory)
 import System.IO (Handle, IOMode(..), hClose, openFile)
 import System.IO.Temp (openTempFile)
 import Test.HUnit.Lang
   (FailureReason(..), HUnitFailure(..), formatFailureReason)
-import Test.QuickCheck (Gen, Arbitrary(..), generate)
+import Test.QuickCheck (Arbitrary(..), Gen, generate)
 import UnliftIO.Exception
   (Exception, SomeException, bracket, catch, mask, throwIO)
 
