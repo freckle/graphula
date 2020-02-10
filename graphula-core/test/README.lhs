@@ -36,7 +36,7 @@ import GHC.Generics (Generic)
 import Graphula
 import Graphula.UUIDKey
 import Test.Hspec
-import Test.QuickCheck hiding (suchThat)
+import Test.QuickCheck
 ```
 -->
 
@@ -250,11 +250,11 @@ constraintFailureSpec = do
 or if we define a graph with an unsatisfiable predicates:
 
 ```haskell
-suchThatFailureSpec :: IO ()
-suchThatFailureSpec = do
+ensureFailureSpec :: IO ()
+ensureFailureSpec = do
   let
     failingGraph =  runGraphulaT runDB $ do
-      Entity _ _ <- node @A () $ suchThat $ \a -> a /= a
+      Entity _ _ <- node @A () $ ensure $ \a -> a /= a
       pure ()
   failingGraph
     `shouldThrow` (== (GenerationFailureMaxAttemptsToConstrain (typeRep $ Proxy @A)))
@@ -269,7 +269,7 @@ main = hspec $
     it "allows logging and replaying graphs" loggingAndReplaySpec
     it "attempts to retry node generation on insertion failure" insertionFailureSpec
     it "attempts to retry node generation on a database constraint violation" constraintFailureSpec
-    it "attempts to retry node generation on unsatisfiable predicates" suchThatFailureSpec
+    it "attempts to retry node generation on unsatisfiable predicates" ensureFailureSpec
 
 runDB :: MonadUnliftIO m => ReaderT SqlBackend (NoLoggingT (ResourceT m)) a -> m a
 runDB f = runSqlite "test.db" $ do
