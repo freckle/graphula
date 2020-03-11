@@ -1,7 +1,9 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NoStarIsType #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -10,7 +12,10 @@
 module Graphula.Internal where
 
 import Generics.Eot (Void, Proxy(..))
+import Test.QuickCheck (Arbitrary(..), Gen)
+import Data.Kind (Type, Constraint)
 import GHC.TypeLits (TypeError, ErrorMessage(..))
+import Database.Persist (Key)
 
 data Match t
   = NoMatch t
@@ -22,7 +27,7 @@ type family DependenciesTypeInstance nodeTy depsTy where
     'Text " = " ':<>: 'ShowType depsTy ':<>: 'Text "’"
 
 -- Walk through the fields of our node and match them up with fields from the dependencies.
-type family FindMatches nodeTy depsTy as ds :: [Match *] where
+type family FindMatches nodeTy depsTy as ds :: [Match Type] where
   -- Excess dependencies
   FindMatches nodeTy depsTy () (d, ds) =
     TypeError
@@ -129,5 +134,86 @@ instance
 
 -- Without the kind-signature for '[], ghc will fail to find this
 -- instance for nullary constructors
-instance GHasDependenciesRecursive (Proxy ('[] :: [Match *])) () () where
+instance GHasDependenciesRecursive (Proxy ('[] :: [Match Type])) () () where
   genericDependsOnRecursive _ _ _ = ()
+
+data KeySourceType
+  = SourceDefault
+  -- ^ Generate keys using the database's @DEFAULT@ strategy
+  | SourceArbitrary
+  -- ^ Generate keys using the @'Arbitrary'@ instance for the @'Key'@
+  | SourceExternal
+  -- ^ Always explicitly pass an external key
+
+-- | Handle key generation for @'SourceDefault'@ and @'SourceArbitrary'@
+--
+-- Ths could be a single-parameter class, but carrying the @a@ around
+-- lets us give a better error message when @'node'@ is called instead
+-- of @'nodeKeyed'@.
+--
+class GenerateKeyInternal (s :: KeySourceType) a where
+  type KeyConstraint s a :: Constraint
+  generateKey :: KeyConstraint s a => Gen (Maybe (Key a))
+
+instance GenerateKeyInternal 'SourceDefault a where
+  type KeyConstraint 'SourceDefault a = NoConstraint a
+  generateKey = pure Nothing
+
+instance GenerateKeyInternal 'SourceArbitrary a where
+  type KeyConstraint 'SourceArbitrary a = Arbitrary (Key a)
+  generateKey = Just <$> arbitrary
+
+-- | Explicit instance for @'SourceExternal'@ to give an actionable error message
+--
+-- Rendered:
+--
+-- @
+-- Cannot generate a value of type ‘X’ using ‘node’ since
+--
+--   instance HasDependencies X where
+--     type KeySource X = 'SourceExternal
+--
+-- Possible fixes include:
+-- • Use ‘nodeKeyed’ instead of ‘node’
+-- • Change ‘KeySource X’ to 'SourceDefault or 'SourceArbitrary
+-- @
+--
+instance TypeError
+  ( 'Text "Cannot generate a value of type "
+    ':<>: Quote ('ShowType a)
+    ':<>: 'Text " using "
+    ':<>: Quote ('Text "node")
+    ':<>: 'Text " since"
+    ':$$: 'Text ""
+    ':$$: 'Text "  instance HasDependencies "
+    ':<>: 'ShowType a
+    ':<>: 'Text " where"
+    ':$$: 'Text "    "
+    ':<>: 'Text "type KeySource "
+    ':<>: 'ShowType a
+    ':<>: 'Text  " = "
+    ':<>: 'ShowType 'SourceExternal
+    ':$$: 'Text ""
+    ':$$: 'Text "Possible fixes include:"
+    ':$$: 'Text "• Use "
+    ':<>: Quote ('Text "nodeKeyed")
+    ':<>: 'Text " instead of "
+    ':<>: Quote ('Text "node")
+    ':$$: 'Text "• Change "
+    ':<>: Quote ('Text "KeySource " ':<>: 'ShowType a)
+    ':<>: 'Text " to "
+    ':<>: 'Text "'SourceDefault"
+    ':<>: 'Text " or "
+    ':<>: 'Text "'SourceArbitrary"
+  ) => GenerateKeyInternal 'SourceExternal a where
+  type KeyConstraint 'SourceExternal a = NoConstraint a
+  generateKey = error "unreachable"
+
+type family Quote t where
+  Quote t = 'Text "‘" ':<>: t ':<>: 'Text "’"
+
+-- | Graphula accepts constraints for various uses. Frontends do not always
+-- utilize these constraints. 'NoConstraint' is a universal class that all
+-- types inhabit. It has no behavior and no additional constraints.
+class NoConstraint a
+instance NoConstraint a
