@@ -69,7 +69,7 @@ instance
       DependenciesTypeInstance nodeTy depsTy
     )
   ) => GHasDependencies (Proxy nodeTy) (Proxy depsTy) Void (Either deps rest) where
-    genericDependsOn _ _ _ _ = error "Impossible"
+  genericDependsOn _ _ _ _ = error "Impossible"
 
 -- This instance head only matches EoT representations of
 -- datatypes with a single constructor
@@ -77,7 +77,8 @@ instance
   ( FindMatches nodeTy depsTy node deps ~ fields
   , GHasDependenciesRecursive (Proxy fields) node deps
   ) => GHasDependencies (Proxy nodeTy) (Proxy depsTy) (Either node Void) (Either deps Void) where
-  genericDependsOn _ _ (Left node) (Left deps) = Left (genericDependsOnRecursive (Proxy :: Proxy fields) node deps)
+  genericDependsOn _ _ (Left node) (Left deps) =
+    Left (genericDependsOnRecursive (Proxy :: Proxy fields) node deps)
   genericDependsOn _ _ _ _ = error "Impossible" -- EoT never generates an actual `Right (x :: Void)` here
 
 -- This instance matches a sum type as both node and dependencies.
@@ -88,7 +89,7 @@ instance
       DependenciesTypeInstance nodeTy depsTy
     )
   ) => GHasDependencies (Proxy nodeTy) (Proxy depsTy) (Either left (Either right rest)) (Either deps Void) where
-    genericDependsOn _ _ _ _ = error "Impossible"
+  genericDependsOn _ _ _ _ = error "Impossible"
 
 -- This instance matches a sum type as the node.
 -- This is also an error.
@@ -98,7 +99,7 @@ instance
       DependenciesTypeInstance nodeTy depsTy
     )
   ) => GHasDependencies (Proxy nodeTy) (Proxy depsTy) (Either node Void) (Either left (Either right rest)) where
-    genericDependsOn _ _ _ _ = error "Impossible"
+  genericDependsOn _ _ _ _ = error "Impossible"
 
 -- This instance matches a sum type as the dependencies.
 -- This is also an error.
@@ -108,7 +109,7 @@ instance
       DependenciesTypeInstance nodeTy depsTy
     )
   ) => GHasDependencies (Proxy nodeTy) (Proxy depsTy) (Either left1 (Either right1 rest1)) (Either left2 (Either right2 rest2)) where
-    genericDependsOn _ _ _ _ = error "Impossible"
+  genericDependsOn _ _ _ _ = error "Impossible"
 
 -- Don't let the user specify `Void` as a dependency
 instance
@@ -117,7 +118,7 @@ instance
       DependenciesTypeInstance nodeTy depsTy
     )
   ) => GHasDependencies (Proxy nodeTy) (Proxy depsTy) node Void where
-    genericDependsOn _ _ _ _ = error "Impossible"
+  genericDependsOn _ _ _ _ = error "Impossible"
 
 instance
   ( a ~ dep

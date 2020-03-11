@@ -496,9 +496,7 @@ type GraphulaNode m a
 -}
 node
   :: forall a m
-   . ( GraphulaContext m '[a]
-     , GenerateKey a
-     )
+   . (GraphulaContext m '[a], GenerateKey a)
   => Dependencies a
   -> NodeOptions a
   -> (m (Entity a))
