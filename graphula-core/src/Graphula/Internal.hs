@@ -11,11 +11,11 @@
 
 module Graphula.Internal where
 
-import Generics.Eot (Void, Proxy(..))
-import Test.QuickCheck (Arbitrary(..), Gen)
-import Data.Kind (Type, Constraint)
-import GHC.TypeLits (TypeError, ErrorMessage(..))
+import Data.Kind (Constraint, Type)
 import Database.Persist (Key)
+import Generics.Eot (Proxy(..), Void)
+import GHC.TypeLits (ErrorMessage(..), TypeError)
+import Test.QuickCheck (Arbitrary(..), Gen)
 
 data Match t
   = NoMatch t
