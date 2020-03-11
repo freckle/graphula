@@ -31,6 +31,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NoStarIsType #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
@@ -42,6 +43,7 @@
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE UndecidableSuperClasses #-}
 
 module Graphula
   ( -- * Graph Declaration
@@ -56,10 +58,9 @@ module Graphula
     -- * Declaring Dependencies and key source
   , HasDependencies(..)
   , KeySourceType(..)
-    -- Not implemented by clients, but may appear
-    -- in generic type signatures
-  , GenEntityKey
-  , KeyConstraint
+    -- * Abstract over how keys are generated using 'SourceDefault' or
+    -- 'SourceArbitrary'
+  , GenerateKey
     -- ** Singular Dependencies
   , Only(..)
   , only
@@ -107,7 +108,7 @@ import Data.ByteString (readFile)
 import Data.ByteString.Lazy (hPutStr)
 import Data.Foldable (for_)
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef, writeIORef)
-import Data.Kind (Type)
+import Data.Kind (Type, Constraint)
 import Data.Proxy (Proxy(..))
 import Data.Semigroup.Generic (gmappend, gmempty)
 import Data.Sequence (Seq, ViewL(..), empty, viewl, (|>))
@@ -128,9 +129,7 @@ import Database.Persist
   )
 import Database.Persist.Sql (SqlBackend)
 import Generics.Eot (Eot, HasEot, fromEot, toEot)
-import GHC.Exts (Constraint)
 import GHC.Generics (Generic)
-import GHC.TypeLits (ErrorMessage(..), TypeError)
 import Graphula.Internal
 import System.Directory (createDirectoryIfMissing, getTemporaryDirectory)
 import System.IO (Handle, IOMode(..), hClose, openFile)
@@ -162,11 +161,11 @@ type family GraphulaContext (m :: Type -> Type) (ts :: [Type]) :: Constraint whe
    GraphulaContext m (t ': ts) = (GraphulaNode m t, GraphulaContext m ts)
 
 class MonadGraphulaBackend m where
-  type Logging m :: * -> Constraint
+  type Logging m :: Type -> Constraint
   -- ^ A constraint provided to log details of the graph to some form of
   --   persistence. This is used by 'runGraphulaLogged' to store graph nodes as
   --   JSON 'Value's.
-  type Generate m :: * -> Constraint
+  type Generate m :: Type -> Constraint
   -- ^ A constraint for pluggable node generation. 'runGraphula'
   --   utilizes 'Arbitrary', 'runGraphulaReplay' utilizes 'FromJSON'.
   generateNode :: Generate m a => m a
@@ -412,15 +411,6 @@ rethrowHUnitReplay filePath =
   rethrowHUnitWith ("Using graph file: " ++ filePath)
 
 
--- | Graphula accepts constraints for various uses. Frontends do not always
--- utilize these constraints. 'NoConstraint' is a universal class that all
--- types inhabit. It has no behavior and no additional constraints.
-class NoConstraint a where
-
-instance NoConstraint a where
-
-
-
 class HasDependencies a where
   -- | A data type that contains values to be injected into @a@ via
   -- `dependsOn`. The default generic implementation of `dependsOn` supports
@@ -471,80 +461,9 @@ class HasDependencies a where
         (toEot a)
         (toEot dependencies)
 
-data KeySourceType
-  = SourceDefault
-  -- ^ Generate keys using the database's @DEFAULT@ strategy
-  | SourceArbitrary
-  -- ^ Generate keys using the @'Arbitrary'@ instance for the @'Key'@
-  | SourceExternal
-  -- ^ Always explicitly pass an external key
-
--- | Handle key generation for @'SourceDefault'@ and @'SourceArbitrary'@
---
--- Ths could be a single-parameter class, but carrying the @a@ around
--- lets us give a better error message when @'node'@ is called instead
--- of @'nodeKeyed'@.
---
-class GenEntityKey (s :: KeySourceType) a where
-  type KeyConstraint s a :: Constraint
-  genEntityKey :: KeyConstraint s a => Gen (Maybe (Key a))
-
-instance GenEntityKey 'SourceDefault a where
-  type KeyConstraint 'SourceDefault a = NoConstraint a
-  genEntityKey = pure Nothing
-
-instance GenEntityKey 'SourceArbitrary a where
-  type KeyConstraint 'SourceArbitrary a = Arbitrary (Key a)
-  genEntityKey = Just <$> arbitrary
-
-type family Quote t where
-  Quote t = 'Text "‘" ':<>: t ':<>: 'Text "’"
-
--- | Explicit instance for @'SourceExternal'@ to give an actionable error message
---
--- Rendered:
---
--- @
--- Cannot generate a value of type ‘X’ using ‘node’ since
---
---   instance HasDependencies X where
---     type KeySource X = 'SourceExternal
---
--- Possible fixes include:
--- • Use ‘nodeKeyed’ instead of ‘node’
--- • Change ‘KeySource X’ to 'SourceDefault or 'SourceArbitrary
--- @
---
-instance TypeError
-  ( 'Text "Cannot generate a value of type "
-    ':<>: Quote ('ShowType a)
-    ':<>: 'Text " using "
-    ':<>: Quote ('Text "node")
-    ':<>: 'Text " since"
-    ':$$: 'Text ""
-    ':$$: 'Text "  instance HasDependencies "
-    ':<>: 'ShowType a
-    ':<>: 'Text " where"
-    ':$$: 'Text "    "
-    ':<>: 'Text "type KeySource "
-    ':<>: 'ShowType a
-    ':<>: 'Text  " = "
-    ':<>: 'ShowType 'SourceExternal
-    ':$$: 'Text ""
-    ':$$: 'Text "Possible fixes include:"
-    ':$$: 'Text "• Use "
-    ':<>: Quote ('Text "nodeKeyed")
-    ':<>: 'Text " instead of "
-    ':<>: Quote ('Text "node")
-    ':$$: 'Text "• Change "
-    ':<>: Quote ('Text "KeySource " ':<>: 'ShowType a)
-    ':<>: 'Text " to "
-    ':<>: 'Text "'SourceDefault"
-    ':<>: 'Text " or "
-    ':<>: 'Text "'SourceArbitrary"
-  ) => GenEntityKey 'SourceExternal a where
-  type KeyConstraint 'SourceExternal a = NoConstraint a
-  genEntityKey = error "unreachable"
+-- | Abstract over how keys are generated using @'SourceDefault'@ or @'SourceArbitrary'@
+class (GenerateKeyInternal (KeySource a) a, KeyConstraint (KeySource a) a) => GenerateKey a
+instance (GenerateKeyInternal (KeySource a) a, KeyConstraint (KeySource a) a) => GenerateKey a
 
 data GenerationFailure
   = GenerationFailureMaxAttemptsToConstrain TypeRep
@@ -576,16 +495,14 @@ type GraphulaNode m a
   A value that has an externally managed key must use @'nodeKeyed'@ instead.
 -}
 node
-  :: forall a s m
+  :: forall a m
    . ( GraphulaContext m '[a]
-     , KeySource a ~ s
-     , GenEntityKey s a
-     , KeyConstraint s a
+     , GenerateKey a
      )
   => Dependencies a
   -> NodeOptions a
   -> (m (Entity a))
-node = nodeImpl $ genEntityKey @s @a
+node = nodeImpl $ generateKey @(KeySource a) @a
 
 {-|
   Generate a value with data dependencies given an externally managed
