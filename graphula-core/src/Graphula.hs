@@ -56,6 +56,10 @@ module Graphula
     -- * Declaring Dependencies and key source
   , HasDependencies(..)
   , KeySourceType(..)
+    -- Not implemented by clients, but may appear
+    -- in generic type signatures
+  , GenEntityKey
+  , KeyConstraint
     -- ** Singular Dependencies
   , Only(..)
   , only
