@@ -26,7 +26,6 @@ import Control.Monad.IO.Unlift
 import Control.Monad.Logger (NoLoggingT)
 import Control.Monad.Trans.Reader (ReaderT)
 import Control.Monad.Trans.Resource (ResourceT)
-import Data.Aeson
 import Database.Persist.Arbitrary ()
 import Database.Persist (Entity(..))
 import Database.Persist.Sqlite
@@ -152,21 +151,6 @@ that graphula will expect the database to provide a key.
 Graphula allows logging of graphs via `runGraphulaLogged`. We use `JSON` as a human readable serialization format. Graphula dumps graphs to a temp file on test failure. You can inspect or `runGraphulaReplay` a failed graph for red/green refactor.
 
 ```haskell
-instance ToJSON A
-instance FromJSON A
-
-instance ToJSON B
-instance FromJSON B
-
-instance ToJSON C
-instance FromJSON C
-
-instance ToJSON D
-instance FromJSON D
-
-instance ToJSON E
-instance FromJSON E
-
 loggingAndReplaySpec :: IO ()
 loggingAndReplaySpec = do
   let

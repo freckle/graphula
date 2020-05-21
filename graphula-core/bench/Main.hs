@@ -47,8 +47,6 @@ data A
 instance Arbitrary A where
   arbitrary = A <$> arbitrary <*> arbitrary
 
-instance ToJSON A
-
 instance HasDependencies A
 
 graphIdentity :: Free.Frontend NoConstraint Identity (IO r) -> IO r

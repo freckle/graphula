@@ -94,15 +94,12 @@ import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift
 import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
 import Control.Monad.Trans (MonadTrans, lift)
+import Graphula.AsJSON
 import Data.Aeson
-  ( FromJSON
-  , Result(..)
-  , ToJSON
+  ( Result(..)
   , Value
   , eitherDecodeStrict'
   , encode
-  , fromJSON
-  , toJSON
   )
 import Data.ByteString (readFile)
 import Data.ByteString.Lazy (hPutStr)
@@ -291,12 +288,12 @@ instance MonadTrans GraphulaLoggedT where
   lift = GraphulaLoggedT . lift
 
 instance MonadIO m => MonadGraphulaBackend (GraphulaLoggedT m) where
-  type Logging (GraphulaLoggedT m) = ToJSON
+  type Logging (GraphulaLoggedT m) = DumpJSON
   type Generate (GraphulaLoggedT m) = Arbitrary
   generateNode = liftIO $ generate arbitrary
   logNode n = do
     graphLog <- ask
-    liftIO $ modifyIORef' graphLog (|> toJSON n)
+    liftIO $ modifyIORef' graphLog (|> dumpJSON n)
 
 instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaLoggedT m) where
   insert mKey = lift . insert mKey
@@ -333,14 +330,14 @@ instance MonadTrans GraphulaReplayT where
 
 instance MonadIO m => MonadGraphulaBackend (GraphulaReplayT m) where
   type Logging (GraphulaReplayT m) = NoConstraint
-  type Generate (GraphulaReplayT m) = FromJSON
+  type Generate (GraphulaReplayT m) = LoadJSON
   generateNode = do
     replayRef <- ask
     mJsonNode <- popReplay replayRef
     case mJsonNode of
       Nothing ->
         throwIO $ userError "Not enough replay data to fullfill graph."
-      Just jsonNode -> case fromJSON jsonNode of
+      Just jsonNode -> case loadJSON jsonNode of
         Error err -> throwIO $ userError err
         Success a -> pure a
   logNode _ = pure ()
