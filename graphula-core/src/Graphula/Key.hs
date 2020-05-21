@@ -3,7 +3,12 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
-module Graphula.Key (onlyKey, keys, Keys) where
+module Graphula.Key
+  ( onlyKey
+  , keys
+  , Keys
+  )
+where
 
 import Database.Persist
 import GHC.TypeLits (ErrorMessage(..), TypeError)
@@ -38,6 +43,12 @@ instance EntityKeys (Entity a, Entity b) where
 instance EntityKeys (Entity a, Entity b, Entity c) where
   type Keys (Entity a, Entity b, Entity c) = (Key a, Key b, Key c)
   keys (a, b, c) = (entityKey a, entityKey b, entityKey c)
+
+-- For some reason, this definition (but no others) triggers
+--
+--   ERROR: brittany pretty printer returned syntactically invalid result.
+--
+-- brittany-disable-next-binding
 
 instance EntityKeys (Entity a, Entity b, Entity c, Entity d) where
   type Keys (Entity a, Entity b, Entity c, Entity d) = (Key a, Key b, Key c, Key d)
