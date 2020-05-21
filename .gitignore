@@ -4,3 +4,4 @@
 *.graphula
 *.tix
 *.prof
+*/test.db
