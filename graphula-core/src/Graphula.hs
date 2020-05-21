@@ -28,7 +28,6 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoStarIsType #-}
@@ -39,7 +38,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -203,19 +201,17 @@ instance MonadIO m => MonadGraphulaBackend (GraphulaT n m) where
 instance (MonadIO m, Applicative n, MonadIO n) => MonadGraphulaFrontend (GraphulaT n m) where
   insert mKey n = do
     RunDB runDB <- ask
-    lift . runDB $ do
-      case mKey of
-        Nothing -> do
-          insertUnique n >>= \case
-            Nothing -> pure Nothing
-            Just key -> getEntity key
-        Just key -> do
-          existingKey <- get key
-          whenNothing existingKey $ do
-            existingUnique <- checkUnique n
-            whenNothing existingUnique $ do
-              insertKey key n
-              getEntity key
+    lift . runDB $ case mKey of
+      Nothing -> insertUnique n >>= \case
+        Nothing -> pure Nothing
+        Just key -> getEntity key
+      Just key -> do
+        existingKey <- get key
+        whenNothing existingKey $ do
+          existingUnique <- checkUnique n
+          whenNothing existingUnique $ do
+            insertKey key n
+            getEntity key
 
   remove key = do
     RunDB runDB <- ask
@@ -498,7 +494,7 @@ node
    . (GraphulaContext m '[a], GenerateKey a)
   => Dependencies a
   -> NodeOptions a
-  -> (m (Entity a))
+  -> m (Entity a)
 node = nodeImpl $ generateKey @(KeySource a) @a
 
 {-|
@@ -521,7 +517,7 @@ nodeKeyed
   => Key a
   -> Dependencies a
   -> NodeOptions a
-  -> (m (Entity a))
+  -> m (Entity a)
 nodeKeyed key = nodeImpl $ pure $ Just key
 
 nodeImpl
@@ -530,13 +526,13 @@ nodeImpl
   => Gen (Maybe (Key a))
   -> Dependencies a
   -> NodeOptions a
-  -> (m (Entity a))
+  -> m (Entity a)
 nodeImpl genKey dependencies NodeOptions {..} = attempt 100 10 $ do
   initial <- generateNode
   for (appKendo nodeOptionsEdit initial) $ \edited -> do
     let hydrated = edited `dependsOn` dependencies
     logNode hydrated
-    mKey <- liftIO $ generate $ genKey
+    mKey <- liftIO $ generate genKey
     pure (mKey, hydrated)
 
 -- | Modify the node after it's been generated
@@ -607,16 +603,17 @@ attempt maxEdits maxInserts source = loop 0 0
     | numInserts >= maxInserts = die GenerationFailureMaxAttemptsToInsert
     | otherwise = source >>= \case
       Nothing -> loop (succ numEdits) numInserts
+      --               ^ failed to edit, only increments this
       Just (mKey, value) -> insert mKey value >>= \case
         Nothing -> loop (succ numEdits) (succ numInserts)
+        --               ^ failed to insert, but also increments this
         Just a -> pure a
 
   die :: (TypeRep -> GenerationFailure) -> m (Entity a)
   die e = throwIO $ e $ typeRep (Proxy :: Proxy a)
 
--- | For entities that only have singular 'Dependencies'. It uses data instead
--- of newtype to match laziness of builtin tuples.
-data Only a = Only { fromOnly :: a }
+-- | For entities that only have singular 'Dependencies'
+newtype Only a = Only { fromOnly :: a }
   deriving (Eq, Show, Ord, Generic, Functor, Foldable, Traversable)
 
 only :: a -> Only a
