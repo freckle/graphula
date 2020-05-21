@@ -90,7 +90,6 @@ where
 import Prelude hiding (readFile)
 
 import Control.Monad (guard, (<=<))
-import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift
 import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
 import Control.Monad.Trans (MonadTrans, lift)

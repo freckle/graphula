@@ -18,6 +18,7 @@ Graphula is a simple interface for generating persistent data and linking its de
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Main where
 
 import Control.Monad (replicateM_)
@@ -28,7 +29,6 @@ import Control.Monad.Trans.Reader (ReaderT)
 import Control.Monad.Trans.Resource (ResourceT)
 import Data.Aeson
 import Database.Persist.Arbitrary ()
-import Database.Persist (Entity(..))
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Typeable
