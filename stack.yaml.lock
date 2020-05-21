@@ -3,10 +3,17 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: generics-eot-0.4.0.1@sha256:3d8df1d8ca010238ec5f20ba30282daa0fac99c7de495fae64e26a7ea1dadb08,2312
+    pantry-tree:
+      size: 1384
+      sha256: 0895826ac5485a85e6fa37ae2b76195872fa2d92e901478c42d0690fc206a5ab
+  original:
+    hackage: generics-eot-0.4.0.1@sha256:3d8df1d8ca010238ec5f20ba30282daa0fac99c7de495fae64e26a7ea1dadb08,2312
 snapshots:
 - completed:
-    size: 497508
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/13/17.yaml
-    sha256: 3d8fabe77d4f7618554cfb1001c820b9859820b8639bfd6f02a1c41660afb53b
-  original: lts-13.17
+    size: 496112
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/15/13.yaml
+    sha256: 75a1a0f870e1876898b117b0e443f911b3fa2985bfabb53158c81ab5765beda5
+  original: lts-15.13
