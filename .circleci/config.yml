@@ -1,0 +1,10 @@
+version: 2.1
+
+orbs:
+  stack-build: pbrisbin/stack-build@1.0.0
+
+workflows:
+  commit:
+    jobs:
+      - stack-build/build-test-lint:
+          name: build
