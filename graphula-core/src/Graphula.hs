@@ -94,13 +94,7 @@ import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.IO.Unlift
 import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
 import Control.Monad.Trans (MonadTrans, lift)
-import Graphula.AsJSON
-import Data.Aeson
-  ( Result(..)
-  , Value
-  , eitherDecodeStrict'
-  , encode
-  )
+import Data.Aeson (Result(..), Value, eitherDecodeStrict', encode)
 import Data.ByteString (readFile)
 import Data.ByteString.Lazy (hPutStr)
 import Data.Foldable (for_)
@@ -127,6 +121,7 @@ import Database.Persist
 import Database.Persist.Sql (SqlBackend)
 import Generics.Eot (Eot, HasEot, fromEot, toEot)
 import GHC.Generics (Generic)
+import Graphula.AsJSON
 import Graphula.Internal
 import System.Directory (createDirectoryIfMissing, getTemporaryDirectory)
 import System.IO (Handle, IOMode(..), hClose, openFile)
