@@ -29,15 +29,6 @@ library:
     - src
   ghc-options: -Wall
 
-benchmarks:
-  bench:
-    source-dirs:
-      - bench
-    main: Main.hs
-    ghc-options: -Wall -O2
-    dependencies:
-      - criterion
-      - graphula-core
 tests:
   readme:
     main: README.lhs
