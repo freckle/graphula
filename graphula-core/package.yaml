@@ -6,28 +6,27 @@ extra-source-files:
   - ../stack.yaml
 
 dependencies:
-  - aeson
   - base
-  - bytestring
-  - containers
-  - directory
-  - exceptions
-  - free
-  - generics-eot
-  - HUnit
-  - mtl
-  - persistent
-  - QuickCheck
-  - semigroups
-  - temporary
-  - transformers
-  - unliftio
-  - unliftio-core
 
 library:
   source-dirs:
     - src
   ghc-options: -Wall
+  dependencies:
+    - aeson
+    - bytestring
+    - containers
+    - directory
+    - generics-eot
+    - HUnit
+    - mtl
+    - persistent
+    - QuickCheck
+    - semigroups
+    - temporary
+    - transformers
+    - unliftio
+    - unliftio-core
 
 tests:
   readme:
@@ -36,16 +35,23 @@ tests:
     source-dirs:
       - test
     dependencies:
-      - base
+      - aeson
+      - bytestring
+      - containers
       - graphula-core
       - hspec
       - http-api-data
       - markdown-unlit
       - monad-logger
       - path-pieces
+      - persistent
       - persistent-arbitrary
       - persistent-sqlite
       - persistent-template
+      - QuickCheck
       - resourcet
+      - semigroups
       - text
+      - transformers
+      - unliftio-core
       - uuid
