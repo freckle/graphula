@@ -147,9 +147,11 @@ instance HasDependencies E where
 By default, `HasDependencies` instances use `type KeySource _ = 'SourceDefault`, which means
 that graphula will expect the database to provide a key.
 
-## Replay And Serialization
+## Serialization
 
-Graphula allows logging of graphs via `runGraphulaLogged`. We use `JSON` as a human readable serialization format. Graphula dumps graphs to a temp file on test failure. You can inspect or `runGraphulaReplay` a failed graph for red/green refactor.
+Graphula allows logging of graphs via `runGraphulaLogged`. We use `JSON` as a
+human readable serialization format. Graphula dumps graphs to a temp file on
+test failure.
 
 ```haskell
 instance ToJSON A
@@ -167,8 +169,8 @@ instance FromJSON D
 instance ToJSON E
 instance FromJSON E
 
-loggingAndReplaySpec :: IO ()
-loggingAndReplaySpec = do
+loggingSpec :: IO ()
+loggingSpec = do
   let
     logFile = "test.graphula"
     -- We'd typically use `runGraphulaLogged` which utilizes a temp file.
@@ -176,13 +178,12 @@ loggingAndReplaySpec = do
       Entity _ a <- node @A () $ edit $ \n ->
         n {aA = "success"}
       liftIO $ aA a `shouldBe` "failed"
-    replayGraph = runGraphulaT runDB . runGraphulaReplayT logFile $ do
-      Entity _ a <- node @A () mempty
-      liftIO $ aA a `shouldBe` "success"
 
   failingGraph
     `shouldThrow` anyException
-  replayGraph
+
+  n <- lines <$> readFile "test.graphula"
+  n `shouldSatisfy` (not . null)
 ```
 
 ## Running It
@@ -266,7 +267,7 @@ main :: IO ()
 main = hspec $
   describe "graphula-core" . parallel $ do
     it "generates and links arbitrary graphs of data" simpleSpec
-    it "allows logging and replaying graphs" loggingAndReplaySpec
+    it "allows logging graphs" loggingSpec
     it "attempts to retry node generation on insertion failure" insertionFailureSpec
     it "attempts to retry node generation on a database constraint violation" constraintFailureSpec
     it "attempts to retry node generation on unsatisfiable predicates" ensureFailureSpec

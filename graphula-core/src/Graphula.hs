@@ -73,8 +73,6 @@ module Graphula
   , runGraphulaLoggedT
   , runGraphulaLoggedWithFileT
   , GraphulaLoggedT
-  , runGraphulaReplayT
-  , GraphulaReplayT
     -- ** Frontends
   , runGraphulaIdempotentT
   , GraphulaIdempotentT
@@ -91,24 +89,14 @@ import Control.Monad (guard, (<=<))
 import Control.Monad.IO.Unlift
 import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
 import Control.Monad.Trans (MonadTrans, lift)
-import Data.Aeson
-  ( FromJSON
-  , Result(..)
-  , ToJSON
-  , Value
-  , eitherDecodeStrict'
-  , encode
-  , fromJSON
-  , toJSON
-  )
-import Data.ByteString (readFile)
+import Data.Aeson (ToJSON, Value, encode, toJSON)
 import Data.ByteString.Lazy (hPutStr)
 import Data.Foldable (for_)
-import Data.IORef (IORef, modifyIORef', newIORef, readIORef, writeIORef)
+import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
 import Data.Kind (Constraint, Type)
 import Data.Proxy (Proxy(..))
 import Data.Semigroup.Generic (gmappend, gmempty)
-import Data.Sequence (Seq, ViewL(..), empty, viewl, (|>))
+import Data.Sequence (Seq, empty, (|>))
 import Data.Traversable (for)
 import Data.Typeable (TypeRep, Typeable, typeRep)
 import Database.Persist
@@ -164,7 +152,7 @@ class MonadGraphulaBackend m where
   --   JSON 'Value's.
   type Generate m :: Type -> Constraint
   -- ^ A constraint for pluggable node generation. 'runGraphula'
-  --   utilizes 'Arbitrary', 'runGraphulaReplay' utilizes 'FromJSON'.
+  --   utilizes 'Arbitrary'.
   generateNode :: Generate m a => m a
   logNode :: Logging m a => a -> m ()
 
@@ -318,53 +306,6 @@ runGraphulaLoggedUsingT logFail action = do
   graphLog <- liftIO $ newIORef empty
   runReaderT (runGraphulaLoggedT' action) graphLog `catch` logFail graphLog
 
-
-newtype GraphulaReplayT m a =
-  GraphulaReplayT {runGraphulaReplayT' :: ReaderT (IORef (Seq Value)) m a}
-  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (IORef (Seq Value)))
-
-instance MonadTrans GraphulaReplayT where
-  lift = GraphulaReplayT . lift
-
-instance MonadIO m => MonadGraphulaBackend (GraphulaReplayT m) where
-  type Logging (GraphulaReplayT m) = NoConstraint
-  type Generate (GraphulaReplayT m) = FromJSON
-  generateNode = do
-    replayRef <- ask
-    mJsonNode <- popReplay replayRef
-    case mJsonNode of
-      Nothing ->
-        throwIO $ userError "Not enough replay data to fullfill graph."
-      Just jsonNode -> case fromJSON jsonNode of
-        Error err -> throwIO $ userError err
-        Success a -> pure a
-  logNode _ = pure ()
-
-instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaReplayT m) where
-  insert mKey = lift . insert mKey
-  remove = lift . remove
-
--- | Run a graph utilizing a JSON file for node generation via 'FromJSON'.
-runGraphulaReplayT :: MonadUnliftIO m => FilePath -> GraphulaReplayT m a -> m a
-runGraphulaReplayT replayFile action = do
-  replayLog <- liftIO $ do
-    bytes <- readFile replayFile
-    case eitherDecodeStrict' bytes of
-      Left err -> throwIO $ userError err
-      Right nodes -> newIORef nodes
-  runReaderT (runGraphulaReplayT' action) replayLog
-    `catch` rethrowHUnitReplay replayFile
-
-popReplay :: MonadIO m => IORef (Seq Value) -> m (Maybe Value)
-popReplay ref = liftIO $ do
-  nodes <- readIORef ref
-  case viewl nodes of
-    EmptyL -> pure Nothing
-    n :< ns -> do
-      writeIORef ref ns
-      pure $ Just n
-
-
 logFailUsing
   :: MonadIO m
   => IO (FilePath, Handle)
@@ -392,7 +333,6 @@ logGraphToHandle graphLog openHandle = liftIO $ bracket
     readIORef graphLog >>= hPutStr handle . encode >> pure path
   )
 
-
 rethrowHUnitWith :: MonadIO m => String -> HUnitFailure -> m a
 rethrowHUnitWith message (HUnitFailure l r) =
   throwIO . HUnitFailure l . Reason $ message ++ "\n\n" ++ formatFailureReason r
@@ -400,11 +340,6 @@ rethrowHUnitWith message (HUnitFailure l r) =
 rethrowHUnitLogged :: MonadIO m => FilePath -> HUnitFailure -> m a
 rethrowHUnitLogged path =
   rethrowHUnitWith ("Graph dumped in temp file: " ++ path)
-
-rethrowHUnitReplay :: MonadIO m => FilePath -> HUnitFailure -> m a
-rethrowHUnitReplay filePath =
-  rethrowHUnitWith ("Using graph file: " ++ filePath)
-
 
 class HasDependencies a where
   -- | A data type that contains values to be injected into @a@ via
