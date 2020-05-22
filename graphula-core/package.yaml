@@ -13,8 +13,6 @@ library:
     - src
   ghc-options: -Wall
   dependencies:
-    - aeson
-    - bytestring
     - containers
     - directory
     - generics-eot
