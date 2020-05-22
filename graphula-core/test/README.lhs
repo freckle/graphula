@@ -27,7 +27,6 @@ import Control.Monad.IO.Unlift
 import Control.Monad.Logger (NoLoggingT)
 import Control.Monad.Trans.Reader (ReaderT)
 import Control.Monad.Trans.Resource (ResourceT)
-import Data.Aeson
 import Database.Persist.Arbitrary ()
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -149,26 +148,10 @@ that graphula will expect the database to provide a key.
 
 ## Serialization
 
-Graphula allows logging of graphs via `runGraphulaLogged`. We use `JSON` as a
-human readable serialization format. Graphula dumps graphs to a temp file on
-test failure.
+Graphula allows logging of graphs via `runGraphulaLogged`. Graphula dumps graphs
+to a temp file on test failure.
 
 ```haskell
-instance ToJSON A
-instance FromJSON A
-
-instance ToJSON B
-instance FromJSON B
-
-instance ToJSON C
-instance FromJSON C
-
-instance ToJSON D
-instance FromJSON D
-
-instance ToJSON E
-instance FromJSON E
-
 loggingSpec :: IO ()
 loggingSpec = do
   let
