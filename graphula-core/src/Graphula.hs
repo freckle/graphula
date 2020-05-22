@@ -89,14 +89,14 @@ import Control.Monad (guard, (<=<))
 import Control.Monad.IO.Unlift
 import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
 import Control.Monad.Trans (MonadTrans, lift)
-import Data.Aeson (ToJSON, Value, encode, toJSON)
-import Data.ByteString.Lazy (hPutStr)
-import Data.Foldable (for_)
+import Data.Foldable (for_, traverse_)
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
 import Data.Kind (Constraint, Type)
 import Data.Proxy (Proxy(..))
 import Data.Semigroup.Generic (gmappend, gmempty)
 import Data.Sequence (Seq, empty, (|>))
+import Data.Text (Text, pack)
+import qualified Data.Text.IO as T
 import Data.Traversable (for)
 import Data.Typeable (TypeRep, Typeable, typeRep)
 import Database.Persist
@@ -149,7 +149,7 @@ class MonadGraphulaBackend m where
   type Logging m :: Type -> Constraint
   -- ^ A constraint provided to log details of the graph to some form of
   --   persistence. This is used by 'runGraphulaLogged' to store graph nodes as
-  --   JSON 'Value's.
+  --   'Show'n 'Text' values
   type Generate m :: Type -> Constraint
   -- ^ A constraint for pluggable node generation. 'runGraphula'
   --   utilizes 'Arbitrary'.
@@ -267,26 +267,26 @@ runGraphulaIdempotentT action = mask $ \unmasked -> do
 
 
 newtype GraphulaLoggedT m a =
-  GraphulaLoggedT {runGraphulaLoggedT' :: ReaderT (IORef (Seq Value)) m a}
-  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (IORef (Seq Value)))
+  GraphulaLoggedT {runGraphulaLoggedT' :: ReaderT (IORef (Seq Text)) m a}
+  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (IORef (Seq Text)))
 
 instance MonadTrans GraphulaLoggedT where
   lift = GraphulaLoggedT . lift
 
 instance MonadIO m => MonadGraphulaBackend (GraphulaLoggedT m) where
-  type Logging (GraphulaLoggedT m) = ToJSON
+  type Logging (GraphulaLoggedT m) = Show
   type Generate (GraphulaLoggedT m) = Arbitrary
   generateNode = liftIO $ generate arbitrary
   logNode n = do
     graphLog <- ask
-    liftIO $ modifyIORef' graphLog (|> toJSON n)
+    liftIO $ modifyIORef' graphLog (|> pack (show n))
 
 instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaLoggedT m) where
   insert mKey = lift . insert mKey
   remove = lift . remove
 
--- | An extension of 'runGraphulaT' that logs all json 'Value's to a temporary
--- file on 'Exception' and re-throws the 'Exception'.
+-- | An extension of 'runGraphulaT' that logs all nodes to a temporary file on
+-- 'Exception' and re-throws the 'Exception'.
 runGraphulaLoggedT :: MonadUnliftIO m => GraphulaLoggedT m a -> m a
 runGraphulaLoggedT = runGraphulaLoggedUsingT logFailTemp
 
@@ -299,7 +299,7 @@ runGraphulaLoggedWithFileT logPath =
 
 runGraphulaLoggedUsingT
   :: MonadUnliftIO m
-  => (IORef (Seq Value) -> HUnitFailure -> m a)
+  => (IORef (Seq Text) -> HUnitFailure -> m a)
   -> GraphulaLoggedT m a
   -> m a
 runGraphulaLoggedUsingT logFail action = do
@@ -309,28 +309,29 @@ runGraphulaLoggedUsingT logFail action = do
 logFailUsing
   :: MonadIO m
   => IO (FilePath, Handle)
-  -> IORef (Seq Value)
+  -> IORef (Seq Text)
   -> HUnitFailure
   -> m a
 logFailUsing f graphLog hunitfailure =
   flip rethrowHUnitLogged hunitfailure =<< logGraphToHandle graphLog f
 
-logFailFile :: MonadIO m => FilePath -> IORef (Seq Value) -> HUnitFailure -> m a
+logFailFile :: MonadIO m => FilePath -> IORef (Seq Text) -> HUnitFailure -> m a
 logFailFile path = logFailUsing ((path, ) <$> openFile path WriteMode)
 
-logFailTemp :: MonadIO m => IORef (Seq Value) -> HUnitFailure -> m a
+logFailTemp :: MonadIO m => IORef (Seq Text) -> HUnitFailure -> m a
 logFailTemp = logFailUsing $ do
   tmp <- (++ "/graphula") <$> getTemporaryDirectory
   createDirectoryIfMissing True tmp
   openTempFile tmp "fail-.graphula"
 
 logGraphToHandle
-  :: (MonadIO m) => IORef (Seq Value) -> IO (FilePath, Handle) -> m FilePath
+  :: (MonadIO m) => IORef (Seq Text) -> IO (FilePath, Handle) -> m FilePath
 logGraphToHandle graphLog openHandle = liftIO $ bracket
   openHandle
   (hClose . snd)
-  (\(path, handle) ->
-    readIORef graphLog >>= hPutStr handle . encode >> pure path
+  (\(path, handle) -> do
+    nodes <- readIORef graphLog
+    path <$ traverse_ (T.hPutStrLn handle) nodes
   )
 
 rethrowHUnitWith :: MonadIO m => String -> HUnitFailure -> m a
