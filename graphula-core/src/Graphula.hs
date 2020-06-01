@@ -90,7 +90,7 @@ import Control.Monad.IO.Unlift
 import Control.Monad.Reader (MonadReader, ReaderT, ask, asks, runReaderT)
 import Control.Monad.Trans (MonadTrans, lift)
 import Data.Foldable (for_, traverse_)
-import Data.IORef (IORef, modifyIORef', newIORef, readIORef, writeIORef)
+import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
 import Data.Kind (Constraint, Type)
 import Data.Proxy (Proxy(..))
 import Data.Semigroup.Generic (gmappend, gmempty)
@@ -115,15 +115,15 @@ import Database.Persist
 import Database.Persist.Sql (SqlBackend)
 import Generics.Eot (Eot, HasEot, fromEot, toEot)
 import GHC.Generics (Generic)
+import Graphula.Arbitrary (generate)
 import Graphula.Internal
 import System.Directory (createDirectoryIfMissing, getTemporaryDirectory)
 import System.IO (Handle, IOMode(..), hClose, openFile)
 import System.IO.Temp (openTempFile)
-import System.Random (randomIO, split)
+import System.Random (randomIO)
 import Test.HUnit.Lang
   (FailureReason(..), HUnitFailure(..), formatFailureReason)
-import Test.QuickCheck (Arbitrary(..), Gen)
-import Test.QuickCheck.Gen (unGen)
+import Test.QuickCheck (Arbitrary(..))
 import Test.QuickCheck.Random (QCGen, mkQCGen)
 import UnliftIO.Exception
   (Exception, SomeException, bracket, catch, mask, throwIO)
@@ -147,14 +147,6 @@ type MonadGraphula m
 type family GraphulaContext (m :: Type -> Type) (ts :: [Type]) :: Constraint where
    GraphulaContext m '[] = MonadGraphula m
    GraphulaContext m (t ': ts) = (GraphulaNode m t, GraphulaContext m ts)
-
-class MonadGraphulaBackend m where
-  type Logging m :: Type -> Constraint
-  -- ^ A constraint provided to log details of the graph to some form of
-  --   persistence. This is used by 'runGraphulaLogged' to store graph nodes as
-  --   'Show'n 'Text' values
-  askGen :: m (IORef QCGen)
-  logNode :: Logging m a => a -> m ()
 
 class MonadGraphulaFrontend m where
   insert
@@ -561,13 +553,3 @@ newtype Only a = Only { fromOnly :: a }
 
 only :: a -> Only a
 only = Only
-
-generate :: (MonadIO m, MonadGraphulaBackend m) => Gen a -> m a
-generate gen = do
-  genRef <- askGen
-  g <- liftIO $ readIORef genRef
-  let
-    (g1, g2) = split g
-    x = unGen gen g1 30
-  liftIO $ writeIORef genRef g2
-  pure x
