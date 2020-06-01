@@ -11,11 +11,21 @@
 
 module Graphula.Internal where
 
+import Data.IORef (IORef)
 import Data.Kind (Constraint, Type)
 import Database.Persist (Key)
 import Generics.Eot (Proxy(..), Void)
 import GHC.TypeLits (ErrorMessage(..), TypeError)
 import Test.QuickCheck (Arbitrary(..), Gen)
+import Test.QuickCheck.Random (QCGen)
+
+class MonadGraphulaBackend m where
+  type Logging m :: Type -> Constraint
+  -- ^ A constraint provided to log details of the graph to some form of
+  --   persistence. This is used by 'runGraphulaLogged' to store graph nodes as
+  --   'Show'n 'Text' values
+  askGen :: m (IORef QCGen)
+  logNode :: Logging m a => a -> m ()
 
 data Match t
   = NoMatch t
