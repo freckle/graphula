@@ -214,8 +214,8 @@ whenNothing (Just _) _ = pure Nothing
 
 runGraphulaT
   :: (MonadUnliftIO m)
-  => Maybe Int
-  -> (forall b . ReaderT SqlBackend n b -> m b)
+  => Maybe Int -- ^ Optional seed
+  -> (forall b . ReaderT SqlBackend n b -> m b) -- ^ Database runner
   -> GraphulaT n m a
   -> m a
 runGraphulaT mSeed runDB action = do
