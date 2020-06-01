@@ -157,7 +157,7 @@ loggingSpec = do
   let
     logFile = "test.graphula"
     -- We'd typically use `runGraphulaLogged` which utilizes a temp file.
-    failingGraph = runGraphulaT runDB . runGraphulaLoggedWithFileT logFile $ do
+    failingGraph = runGraphulaT Nothing runDB . runGraphulaLoggedWithFileT logFile $ do
       Entity _ a <- node @A () $ edit $ \n ->
         n {aA = "success"}
       liftIO $ aA a `shouldBe` "failed"
@@ -174,7 +174,7 @@ loggingSpec = do
 ```haskell
 simpleSpec :: IO ()
 simpleSpec =
-  runGraphulaT runDB $ do
+  runGraphulaT Nothing runDB $ do
     -- Declare the graph at the term level
     Entity aId _ <- node @A () mempty
     liftIO $ putStrLn "A"
@@ -211,7 +211,7 @@ instance MonadGraphulaFrontend (GraphulaFailT m) where
 insertionFailureSpec :: IO ()
 insertionFailureSpec = do
   let
-    failingGraph =  runGraphulaT runDB . runGraphulaFailT $ do
+    failingGraph =  runGraphulaT Nothing runDB . runGraphulaFailT $ do
       Entity _ _ <- node @A () mempty
       pure ()
   failingGraph
@@ -225,7 +225,7 @@ in the database:
 constraintFailureSpec :: IO ()
 constraintFailureSpec = do
   let
-    failingGraph =  runGraphulaT runDB $
+    failingGraph =  runGraphulaT Nothing runDB $
       replicateM_ 3 $ node @F () mempty
   failingGraph
     `shouldThrow` (== (GenerationFailureMaxAttemptsToInsert (typeRep $ Proxy @F)))
@@ -237,7 +237,7 @@ or if we define a graph with an unsatisfiable predicates:
 ensureFailureSpec :: IO ()
 ensureFailureSpec = do
   let
-    failingGraph =  runGraphulaT runDB $ do
+    failingGraph =  runGraphulaT Nothing runDB $ do
       Entity _ _ <- node @A () $ ensure $ \a -> a /= a
       pure ()
   failingGraph

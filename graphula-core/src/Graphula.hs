@@ -87,10 +87,10 @@ import Prelude hiding (readFile)
 
 import Control.Monad (guard, (<=<))
 import Control.Monad.IO.Unlift
-import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
+import Control.Monad.Reader (MonadReader, ReaderT, ask, asks, runReaderT)
 import Control.Monad.Trans (MonadTrans, lift)
 import Data.Foldable (for_, traverse_)
-import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
+import Data.IORef (IORef, modifyIORef', newIORef, readIORef, writeIORef)
 import Data.Kind (Constraint, Type)
 import Data.Proxy (Proxy(..))
 import Data.Semigroup.Generic (gmappend, gmempty)
@@ -119,9 +119,12 @@ import Graphula.Internal
 import System.Directory (createDirectoryIfMissing, getTemporaryDirectory)
 import System.IO (Handle, IOMode(..), hClose, openFile)
 import System.IO.Temp (openTempFile)
+import System.Random (randomIO, split)
 import Test.HUnit.Lang
   (FailureReason(..), HUnitFailure(..), formatFailureReason)
-import Test.QuickCheck (Arbitrary(..), Gen, generate)
+import Test.QuickCheck (Arbitrary(..), Gen)
+import Test.QuickCheck.Gen (unGen)
+import Test.QuickCheck.Random (QCGen, mkQCGen)
 import UnliftIO.Exception
   (Exception, SomeException, bracket, catch, mask, throwIO)
 
@@ -150,10 +153,7 @@ class MonadGraphulaBackend m where
   -- ^ A constraint provided to log details of the graph to some form of
   --   persistence. This is used by 'runGraphulaLogged' to store graph nodes as
   --   'Show'n 'Text' values
-  type Generate m :: Type -> Constraint
-  -- ^ A constraint for pluggable node generation. 'runGraphula'
-  --   utilizes 'Arbitrary'.
-  generateNode :: Generate m a => m a
+  askGen :: m (IORef QCGen)
   logNode :: Logging m a => a -> m ()
 
 class MonadGraphulaFrontend m where
@@ -162,12 +162,16 @@ class MonadGraphulaFrontend m where
     => Maybe (Key a) -> a -> m (Maybe (Entity a))
   remove :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a, Monad m) => Key a -> m ()
 
+data Args backend n m = Args
+  { dbRunner :: RunDB backend n m
+  , gen :: IORef QCGen
+  }
 
 newtype RunDB backend n m = RunDB (forall b. ReaderT backend n b -> m b)
 
 newtype GraphulaT n m a =
-  GraphulaT { runGraphulaT' :: ReaderT (RunDB SqlBackend n m) m a }
-  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (RunDB SqlBackend n m))
+  GraphulaT { runGraphulaT' :: ReaderT (Args SqlBackend n m) m a }
+  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (Args SqlBackend n m))
 
 instance MonadTrans (GraphulaT n) where
   lift = GraphulaT . lift
@@ -182,13 +186,12 @@ instance MonadUnliftIO m => MonadUnliftIO (GraphulaT n m) where
 
 instance MonadIO m => MonadGraphulaBackend (GraphulaT n m) where
   type Logging (GraphulaT n m) = NoConstraint
-  type Generate (GraphulaT n m) = Arbitrary
-  generateNode = liftIO $ generate arbitrary
+  askGen = asks gen
   logNode _ = pure ()
 
 instance (MonadIO m, Applicative n, MonadIO n) => MonadGraphulaFrontend (GraphulaT n m) where
   insert mKey n = do
-    RunDB runDB <- ask
+    RunDB runDB <- asks dbRunner
     lift . runDB $ case mKey of
       Nothing -> insertUnique n >>= \case
         Nothing -> pure Nothing
@@ -202,7 +205,7 @@ instance (MonadIO m, Applicative n, MonadIO n) => MonadGraphulaFrontend (Graphul
             getEntity key
 
   remove key = do
-    RunDB runDB <- ask
+    RunDB runDB <- asks dbRunner
     lift . runDB $ delete key
 
 whenNothing :: Applicative m => Maybe a -> m (Maybe b) -> m (Maybe b)
@@ -210,12 +213,19 @@ whenNothing Nothing f = f
 whenNothing (Just _) _ = pure Nothing
 
 runGraphulaT
-  :: (MonadIO m)
-  => (forall b . ReaderT SqlBackend n b -> m b)
+  :: (MonadUnliftIO m)
+  => Maybe Int
+  -> (forall b . ReaderT SqlBackend n b -> m b)
   -> GraphulaT n m a
   -> m a
-runGraphulaT runDB action = runGraphulaT' action `runReaderT` RunDB runDB
+runGraphulaT mSeed runDB action = do
+  seed <- maybe (liftIO randomIO) pure mSeed
+  qcGen <- liftIO $ newIORef $ mkQCGen seed
+  runReaderT (runGraphulaT' action) (Args (RunDB runDB) qcGen)
+    `catch` logFailingSeed seed
 
+logFailingSeed :: MonadIO m => Int -> HUnitFailure -> m a
+logFailingSeed seed = rethrowHUnitWith ("Graphula with seed: " ++ show seed)
 
 newtype GraphulaIdempotentT m a =
   GraphulaIdempotentT {runGraphulaIdempotentT' :: ReaderT (IORef (m ())) m a}
@@ -265,7 +275,6 @@ runGraphulaIdempotentT action = mask $ \unmasked -> do
   rollbackRethrow finalizersRef (e :: SomeException) =
     rollback finalizersRef (throwIO e)
 
-
 newtype GraphulaLoggedT m a =
   GraphulaLoggedT {runGraphulaLoggedT' :: ReaderT (IORef (Seq Text)) m a}
   deriving (Functor, Applicative, Monad, MonadIO, MonadReader (IORef (Seq Text)))
@@ -273,10 +282,9 @@ newtype GraphulaLoggedT m a =
 instance MonadTrans GraphulaLoggedT where
   lift = GraphulaLoggedT . lift
 
-instance MonadIO m => MonadGraphulaBackend (GraphulaLoggedT m) where
+instance (MonadGraphulaBackend m, MonadIO m) => MonadGraphulaBackend (GraphulaLoggedT m) where
   type Logging (GraphulaLoggedT m) = Show
-  type Generate (GraphulaLoggedT m) = Arbitrary
-  generateNode = liftIO $ generate arbitrary
+  askGen = lift askGen
   logNode n = do
     graphLog <- ask
     liftIO $ modifyIORef' graphLog (|> pack (show n))
@@ -294,8 +302,7 @@ runGraphulaLoggedT = runGraphulaLoggedUsingT logFailTemp
 -- instead of utilizing a temp file.
 runGraphulaLoggedWithFileT
   :: MonadUnliftIO m => FilePath -> GraphulaLoggedT m a -> m a
-runGraphulaLoggedWithFileT logPath =
-  runGraphulaLoggedUsingT $ logFailFile logPath
+runGraphulaLoggedWithFileT = runGraphulaLoggedUsingT . logFailFile
 
 runGraphulaLoggedUsingT
   :: MonadUnliftIO m
@@ -406,12 +413,12 @@ data GenerationFailure
 instance Exception GenerationFailure
 
 type GraphulaNode m a
-  = ( Generate m a
-    , HasDependencies a
+  = ( HasDependencies a
     , Logging m a
     , PersistEntityBackend a ~ SqlBackend
     , PersistEntity a
     , Typeable a
+    , Arbitrary a
     )
 
 {-|
@@ -431,7 +438,7 @@ node
   => Dependencies a
   -> NodeOptions a
   -> m (Entity a)
-node = nodeImpl $ generateKey @(KeySource a) @a
+node = nodeImpl $ generate $ generateKey @(KeySource a) @a
 
 {-|
   Generate a value with data dependencies given an externally managed
@@ -459,16 +466,16 @@ nodeKeyed key = nodeImpl $ pure $ Just key
 nodeImpl
   :: forall a m
    . GraphulaContext m '[a]
-  => Gen (Maybe (Key a))
+  => m (Maybe (Key a))
   -> Dependencies a
   -> NodeOptions a
   -> m (Entity a)
 nodeImpl genKey dependencies NodeOptions {..} = attempt 100 10 $ do
-  initial <- generateNode
+  initial <- generate arbitrary
   for (appKendo nodeOptionsEdit initial) $ \edited -> do
     let hydrated = edited `dependsOn` dependencies
     logNode hydrated
-    mKey <- liftIO $ generate genKey
+    mKey <- genKey
     pure (mKey, hydrated)
 
 -- | Modify the node after it's been generated
@@ -554,3 +561,13 @@ newtype Only a = Only { fromOnly :: a }
 
 only :: a -> Only a
 only = Only
+
+generate :: (MonadIO m, MonadGraphulaBackend m) => Gen a -> m a
+generate gen = do
+  genRef <- askGen
+  g <- liftIO $ readIORef genRef
+  let
+    (g1, g2) = split g
+    x = unGen gen g1 30
+  liftIO $ writeIORef genRef g2
+  pure x
