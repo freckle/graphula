@@ -1,4 +1,3 @@
-*.cabal
 *.stack-work
 :test:
 *.graphula
