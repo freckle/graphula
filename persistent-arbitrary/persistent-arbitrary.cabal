@@ -1,0 +1,30 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: e3dd0b7ad844e3ad021b916dbd994c2a465856dcda816606b0b639116db5b875
+
+name:           persistent-arbitrary
+version:        0.1.0
+maintainer:     Front Row Education
+license:        MIT
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    ../stack.yaml
+
+library
+  exposed-modules:
+      Database.Persist.Arbitrary
+  other-modules:
+      Paths_persistent_arbitrary
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      QuickCheck
+    , base
+    , persistent
+  default-language: Haskell2010

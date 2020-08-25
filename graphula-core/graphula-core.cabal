@@ -1,0 +1,78 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 6d2c3c26856ffe4f969fae8c28e11aa6e252225226a3f13590d8526121438327
+
+name:           graphula-core
+version:        2.0.0.0
+maintainer:     Freckle Education
+license:        MIT
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    ../stack.yaml
+
+library
+  exposed-modules:
+      Graphula
+      Graphula.Arbitrary
+      Graphula.Internal
+      Graphula.Key
+  other-modules:
+      Paths_graphula_core
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      HUnit
+    , QuickCheck
+    , base
+    , containers
+    , directory
+    , generics-eot
+    , mtl
+    , persistent
+    , random
+    , semigroups
+    , temporary
+    , text
+    , transformers
+    , unliftio
+    , unliftio-core
+  default-language: Haskell2010
+
+test-suite readme
+  type: exitcode-stdio-1.0
+  main-is: README.lhs
+  other-modules:
+      Graphula.UUIDKey
+      Paths_graphula_core
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -pgmL markdown-unlit
+  build-depends:
+      QuickCheck
+    , aeson
+    , base
+    , bytestring
+    , containers
+    , graphula-core
+    , hspec
+    , http-api-data
+    , markdown-unlit
+    , monad-logger
+    , path-pieces
+    , persistent
+    , persistent-arbitrary
+    , persistent-sqlite
+    , persistent-template
+    , resourcet
+    , semigroups
+    , text
+    , transformers
+    , unliftio-core
+    , uuid
+  default-language: Haskell2010
