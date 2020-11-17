@@ -3,7 +3,8 @@ version: 2.0.0.0
 maintainer: Freckle Education
 
 extra-source-files:
-  - ../stack.yaml
+  - README.md
+  - CHANGELOG.md
 
 dependencies:
   - base
@@ -45,7 +46,7 @@ tests:
       - monad-logger
       - path-pieces
       - persistent
-      - persistent-arbitrary
+        #- persistent-arbitrary
       - persistent-sqlite
       - persistent-template
       - QuickCheck
