@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f2c74205b24377421432714686288b910a90f4d9a5470075974e153ba270bb2a
+-- hash: 06c4f5c757c47cd1cd187f5dc876868ef110ec6ac2747278f2a3afbb5f355d0b
 
 name:           graphula-core
-version:        2.0.0.0
+version:        2.0.0.1
 maintainer:     Freckle Education
 license:        MIT
 license-file:   LICENSE
