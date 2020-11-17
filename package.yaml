@@ -14,13 +14,13 @@ library:
     - src
   ghc-options: -Wall
   dependencies:
+    - HUnit
+    - QuickCheck
     - containers
     - directory
     - generics-eot
-    - HUnit
     - mtl
     - persistent
-    - QuickCheck
     - random
     - semigroups
     - temporary
@@ -36,6 +36,7 @@ tests:
     source-dirs:
       - test
     dependencies:
+      - QuickCheck
       - aeson
       - bytestring
       - containers
@@ -46,10 +47,8 @@ tests:
       - monad-logger
       - path-pieces
       - persistent
-        #- persistent-arbitrary
       - persistent-sqlite
       - persistent-template
-      - QuickCheck
       - resourcet
       - semigroups
       - text
