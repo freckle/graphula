@@ -19,6 +19,7 @@ Graphula is a simple interface for generating persistent data and linking its de
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Main where
 
 import Control.Monad (replicateM_)
@@ -27,7 +28,6 @@ import Control.Monad.IO.Unlift
 import Control.Monad.Logger (NoLoggingT)
 import Control.Monad.Trans.Reader (ReaderT)
 import Control.Monad.Trans.Resource (ResourceT)
-import Database.Persist.Arbitrary ()
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import Data.Typeable
@@ -36,6 +36,9 @@ import Graphula
 import Graphula.UUIDKey
 import Test.Hspec
 import Test.QuickCheck
+
+instance (ToBackendKey SqlBackend a) => Arbitrary (Key a) where
+  arbitrary = toSqlKey <$> arbitrary
 ```
 -->
 
