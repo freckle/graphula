@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  stack-build: pbrisbin/stack-build@1.0.0
+  stack-build: pbrisbin/stack-build@4.0.0
 
 workflows:
   commit:
