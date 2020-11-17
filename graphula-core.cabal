@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c702d130f70b24da8de0ffee7a182f6962fb405feea3f8e1bc1070a191b37900
+-- hash: f2c74205b24377421432714686288b910a90f4d9a5470075974e153ba270bb2a
 
 name:           graphula-core
 version:        2.0.0.0
@@ -26,7 +26,7 @@ library
       Paths_graphula_core
   hs-source-dirs:
       src
-  ghc-options: -Wall
+  ghc-options: -Weverything -Wno-unsafe -Wno-safe -Wno-missing-import-lists -Wno-implicit-prelude
   build-depends:
       HUnit
     , QuickCheck
@@ -53,7 +53,7 @@ test-suite readme
       Paths_graphula_core
   hs-source-dirs:
       test
-  ghc-options: -Wall -pgmL markdown-unlit
+  ghc-options: -Weverything -Wno-unsafe -Wno-safe -Wno-missing-import-lists -Wno-implicit-prelude -pgmL markdown-unlit
   build-depends:
       QuickCheck
     , aeson

@@ -19,8 +19,10 @@ Graphula is a simple interface for generating persistent data and linking its de
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -fno-warn-missing-deriving-strategies #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Main where
+
+module Main (module Main) where
 
 import Control.Monad (replicateM_)
 import Control.Monad.IO.Class
@@ -135,7 +137,7 @@ an overlapping `Arbitrary` instance.
 instance HasDependencies D where
   type KeySource D = 'SourceArbitrary
 
-deriving instance {-# OVERLAPPING #-} Arbitrary (Key D)
+deriving newtype instance {-# OVERLAPPING #-} Arbitrary (Key D)
 ```
 
 You can also elect to always specify an external key using `'SourceExternal`. This means that
@@ -158,8 +160,11 @@ to a temp file on test failure.
 loggingSpec :: IO ()
 loggingSpec = do
   let
+    logFile :: FilePath
     logFile = "test.graphula"
+
     -- We'd typically use `runGraphulaLogged` which utilizes a temp file.
+    failingGraph :: IO ()
     failingGraph = runGraphulaT Nothing runDB . runGraphulaLoggedWithFileT logFile $ do
       Entity _ a <- node @A () $ edit $ \n ->
         n {aA = "success"}
@@ -207,6 +212,7 @@ instance MonadGraphulaFrontend (GraphulaFailT m) where
 insertionFailureSpec :: IO ()
 insertionFailureSpec = do
   let
+    failingGraph :: IO ()
     failingGraph =  runGraphulaT Nothing runDB . runGraphulaFailT $ do
       Entity _ _ <- node @A () mempty
       pure ()
@@ -221,6 +227,7 @@ in the database:
 constraintFailureSpec :: IO ()
 constraintFailureSpec = do
   let
+    failingGraph :: IO ()
     failingGraph =  runGraphulaT Nothing runDB $
       replicateM_ 3 $ node @F () mempty
   failingGraph
@@ -233,6 +240,7 @@ or if we define a graph with an unsatisfiable predicates:
 ensureFailureSpec :: IO ()
 ensureFailureSpec = do
   let
+    failingGraph :: IO ()
     failingGraph =  runGraphulaT Nothing runDB $ do
       Entity _ _ <- node @A () $ ensure $ \a -> a /= a
       pure ()

@@ -6,13 +6,19 @@ extra-source-files:
   - README.md
   - CHANGELOG.md
 
+ghc-options:
+  -Weverything
+  -Wno-unsafe
+  -Wno-safe
+  -Wno-missing-import-lists
+  -Wno-implicit-prelude
+
 dependencies:
   - base
 
 library:
   source-dirs:
     - src
-  ghc-options: -Wall
   dependencies:
     - HUnit
     - QuickCheck
@@ -32,7 +38,7 @@ library:
 tests:
   readme:
     main: README.lhs
-    ghc-options: -Wall -pgmL markdown-unlit
+    ghc-options: -pgmL markdown-unlit
     source-dirs:
       - test
     dependencies:

@@ -1,28 +1,10 @@
-{-|
-  Graphula is a compact interface for generating data and linking its
-  dependencies. You can use this interface to generate fixtures for automated
-  testing.
-
-  The interface is extensible and supports pluggable front-ends.
-
-  @
-  runGraphIdentity . runGraphulaT $ do
-    -- Compose dependencies at the value level
-    Identity vet <- node @Veterinarian () mempty
-    Identity owner <- node @Owner (only vet) mempty
-    -- TypeApplications is not necessary, but recommended for clarity.
-    Identity dog <- node @Dog (owner, vet) $ edit $ \d -> d { name = "fido" }
-  @
--}
 {-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE ConstrainedClassMethods #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE DeriveFoldable #-}
-{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
@@ -43,6 +25,23 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE UndecidableSuperClasses #-}
 
+-- |
+--
+-- Graphula is a compact interface for generating data and linking its
+-- dependencies. You can use this interface to generate fixtures for automated
+-- testing.
+--
+-- The interface is extensible and supports pluggable front-ends.
+--
+-- @
+-- runGraphIdentity . runGraphulaT $ do
+--   -- Compose dependencies at the value level
+--   Identity vet <- node @Veterinarian () mempty
+--   Identity owner <- node @Owner (only vet) mempty
+--   -- TypeApplications is not necessary, but recommended for clarity.
+--   Identity dog <- node @Dog (owner, vet) $ edit $ \d -> d { name = "fido" }
+-- @
+--
 module Graphula
   ( -- * Graph Declaration
     node
@@ -163,7 +162,7 @@ newtype RunDB backend n m = RunDB (forall b. ReaderT backend n b -> m b)
 
 newtype GraphulaT n m a =
   GraphulaT { runGraphulaT' :: ReaderT (Args SqlBackend n m) m a }
-  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (Args SqlBackend n m))
+  deriving newtype (Functor, Applicative, Monad, MonadIO, MonadReader (Args SqlBackend n m))
 
 instance MonadTrans (GraphulaT n) where
   lift = GraphulaT . lift
@@ -221,7 +220,7 @@ logFailingSeed seed = rethrowHUnitWith ("Graphula with seed: " ++ show seed)
 
 newtype GraphulaIdempotentT m a =
   GraphulaIdempotentT {runGraphulaIdempotentT' :: ReaderT (IORef (m ())) m a}
-  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (IORef (m ())))
+  deriving newtype (Functor, Applicative, Monad, MonadIO, MonadReader (IORef (m ())))
 
 instance MonadUnliftIO m => MonadUnliftIO (GraphulaIdempotentT m) where
   {-# INLINE askUnliftIO #-}
@@ -261,15 +260,18 @@ runGraphulaIdempotentT action = mask $ \unmasked -> do
     `catch` rollbackRethrow finalizersRef
   rollback finalizersRef $ pure x
  where
+  rollback :: MonadIO m => IORef (m a) -> m b -> m b
   rollback finalizersRef x = do
     finalizers <- liftIO $ readIORef finalizersRef
     finalizers >> x
+
+  rollbackRethrow :: MonadIO m => IORef (m a) -> SomeException -> m b
   rollbackRethrow finalizersRef (e :: SomeException) =
     rollback finalizersRef (throwIO e)
 
 newtype GraphulaLoggedT m a =
   GraphulaLoggedT {runGraphulaLoggedT' :: ReaderT (IORef (Seq Text)) m a}
-  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (IORef (Seq Text)))
+  deriving newtype (Functor, Applicative, Monad, MonadIO, MonadReader (IORef (Seq Text)))
 
 instance MonadTrans GraphulaLoggedT where
   lift = GraphulaLoggedT . lift
@@ -400,7 +402,7 @@ data GenerationFailure
   -- ^ Could not satisfy constraints defined using @'ensure'@
   | GenerationFailureMaxAttemptsToInsert TypeRep
   -- ^ Could not satisfy database constraints on insert
-  deriving (Show, Typeable, Eq)
+  deriving stock (Show, Eq)
 
 instance Exception GenerationFailure
 
@@ -502,7 +504,7 @@ ensure f = mempty { nodeOptionsEdit = Kendo $ \a -> a <$ guard (f a) }
 newtype NodeOptions a = NodeOptions
   { nodeOptionsEdit :: Kendo Maybe a
   }
-  deriving (Generic)
+  deriving stock Generic
 
 instance Semigroup (NodeOptions a) where
   (<>) = gmappend
@@ -514,6 +516,7 @@ instance Monoid (NodeOptions a) where
 
 -- | Like @'Endo'@ but uses Kliesli composition
 newtype Kendo m a = Kendo { appKendo :: a -> m a }
+    deriving stock Generic
 
 instance Monad m => Semigroup (Kendo m a) where
   Kendo f <> Kendo g = Kendo $ f <=< g
@@ -525,7 +528,7 @@ instance Monad m => Monoid (Kendo m a) where
 
 attempt
   :: forall a m
-   . (Typeable a, GraphulaContext m '[a])
+   . (GraphulaContext m '[a])
   => Int
   -> Int
   -> m (Maybe (Maybe (Key a), a))
@@ -549,7 +552,7 @@ attempt maxEdits maxInserts source = loop 0 0
 
 -- | For entities that only have singular 'Dependencies'
 newtype Only a = Only { fromOnly :: a }
-  deriving (Eq, Show, Ord, Generic, Functor, Foldable, Traversable)
+  deriving stock (Eq, Show, Ord, Generic, Functor, Foldable, Traversable)
 
 only :: a -> Only a
 only = Only

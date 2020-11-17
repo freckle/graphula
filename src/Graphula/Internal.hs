@@ -8,6 +8,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 
 module Graphula.Internal where
 
@@ -39,7 +40,7 @@ type family DependenciesTypeInstance nodeTy depsTy where
 -- Walk through the fields of our node and match them up with fields from the dependencies.
 type family FindMatches nodeTy depsTy as ds :: [Match Type] where
   -- Excess dependencies
-  FindMatches nodeTy depsTy () (d, ds) =
+  FindMatches nodeTy depsTy () (d, _ds) =
     TypeError
       ( 'Text "Excess dependency ‘" ':<>: 'ShowType d ':<>:
         'Text "’ in " ':$$: DependenciesTypeInstance nodeTy depsTy ':$$:
@@ -48,7 +49,7 @@ type family FindMatches nodeTy depsTy as ds :: [Match Type] where
       )
 
   -- No more fields or dependencies left
-  FindMatches nodeTy depsTy () () = '[]
+  FindMatches _nodeTy _depsTy () () = '[]
 
   -- Fields left, but no more dependencies
   FindMatches nodeTy depsTy (a, as) () = 'NoMatch a ': FindMatches nodeTy depsTy as ()
