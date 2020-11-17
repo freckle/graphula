@@ -3,4 +3,4 @@
 *.graphula
 *.tix
 *.prof
-*/test.db
+test.db
