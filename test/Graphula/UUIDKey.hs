@@ -16,7 +16,7 @@ import Data.UUID (UUID)
 import qualified Data.UUID as UUID
 import Database.Persist
 import Database.Persist.Sql
-import Test.QuickCheck (Arbitrary(..), getLarge)
+import Test.QuickCheck (Arbitrary(..), Gen, getLarge)
 import Web.HttpApiData (FromHttpApiData, ToHttpApiData)
 import Web.PathPieces (PathPiece(..))
 
@@ -26,9 +26,10 @@ newtype UUIDKey = UUIDKey { unUUIDKey :: UUID }
 
 instance Arbitrary UUIDKey where
   arbitrary = UUIDKey <$> uuid
-   where
-    uuid = UUID.fromWords <$> word <*> word <*> word <*> word
-    word = getLarge <$> arbitrary
+    where uuid = UUID.fromWords <$> large <*> large <*> large <*> large
+
+large :: (Integral a, Bounded a) => Gen a
+large = getLarge <$> arbitrary
 
 instance PathPiece UUIDKey where
   toPathPiece = Text.pack . UUID.toString . unUUIDKey
