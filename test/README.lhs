@@ -178,19 +178,12 @@ loggingSpec = do
 simpleSpec :: IO ()
 simpleSpec =
   runGraphulaT Nothing runDB $ do
-    -- Declare the graph at the term level
-    Entity aId _ <- node @A () mempty
-    liftIO $ putStrLn "A"
-    Entity bId b <- node @B (only aId) mempty
     -- Type application is not necessary, but recommended for clarity.
-    liftIO $ putStrLn "B"
-    Entity _ c <- node @C (aId, bId) $ edit $ \n ->
-      n { cC = "edited" }
-    liftIO $ putStrLn "C"
+    Entity aId _ <- node @A () mempty
+    Entity bId b <- node @B (only aId) mempty
+    Entity _ c <- node @C (aId, bId) $ edit $ \n -> n { cC = "edited" }
     Entity dId _ <- node @D () mempty
-    liftIO $ putStrLn "D"
     Entity eId _ <- nodeKeyed @E (EKey dId) () mempty
-    liftIO $ putStrLn "E"
 
     -- Do something with your data
     liftIO $ do
