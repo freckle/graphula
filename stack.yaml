@@ -1,6 +1,7 @@
-resolver: lts-15.13
+resolver: lts-16.22
+
 extra-deps:
   - generics-eot-0.4.0.1@sha256:3d8df1d8ca010238ec5f20ba30282daa0fac99c7de495fae64e26a7ea1dadb08,2312
 
-# Fix weeder with stack-2.0
-ghc-options: { "$locals": -ddump-to-file -ddump-hi }
+ghc-options:
+  "$locals": -fwrite-ide-info
