@@ -8,9 +8,15 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 
-module Graphula.Internal where
+module Graphula.Internal
+  ( MonadGraphulaBackend(..)
+  , GHasDependencies(..)
+  , KeySourceType(..)
+  , GenerateKeyInternal(..)
+  , NoConstraint
+  )
+where
 
 import Data.IORef (IORef)
 import Data.Kind (Constraint, Type)
