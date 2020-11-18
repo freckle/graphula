@@ -4,10 +4,15 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 06c4f5c757c47cd1cd187f5dc876868ef110ec6ac2747278f2a3afbb5f355d0b
+-- hash: 0b3346ba04119033e16ceed79b0bf57f23ff4a24c0de9cabae469d7f73873b57
 
 name:           graphula-core
 version:        2.0.0.1
+synopsis:       A declarative library for describing dependencies between data
+description:    Please see README.md
+category:       Network
+homepage:       https://github.com/freckle/graphula#readme
+bug-reports:    https://github.com/freckle/graphula/issues
 maintainer:     Freckle Education
 license:        MIT
 license-file:   LICENSE
@@ -15,6 +20,10 @@ build-type:     Simple
 extra-source-files:
     README.md
     CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/freckle/graphula
 
 library
   exposed-modules:

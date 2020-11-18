@@ -1,6 +1,10 @@
 name: graphula-core
 version: 2.0.0.1
 maintainer: Freckle Education
+category: Network
+github: freckle/graphula
+synopsis: A declarative library for describing dependencies between data
+description: Please see README.md
 
 extra-source-files:
   - README.md
