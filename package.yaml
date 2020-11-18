@@ -50,7 +50,7 @@ tests:
       - aeson
       - bytestring
       - containers
-      - graphula-core
+      - graphula
       - hspec
       - http-api-data
       - markdown-unlit

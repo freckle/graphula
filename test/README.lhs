@@ -252,7 +252,7 @@ ensureFailureSpec = do
 ```haskell
 main :: IO ()
 main = hspec $
-  describe "graphula-core" . parallel $ do
+  describe "graphula" . parallel $ do
     it "generates and links arbitrary graphs of data" simpleSpec
     it "allows logging graphs" loggingSpec
     it "attempts to retry node generation on insertion failure" insertionFailureSpec
