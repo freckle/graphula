@@ -5,3 +5,6 @@ extra-deps:
 
 ghc-options:
   "$locals": -fwrite-ide-info
+
+nix:
+  packages: [zlib]
