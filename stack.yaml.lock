@@ -13,7 +13,7 @@ packages:
     hackage: generics-eot-0.4.0.1@sha256:3d8df1d8ca010238ec5f20ba30282daa0fac99c7de495fae64e26a7ea1dadb08,2312
 snapshots:
 - completed:
-    size: 532414
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/22.yaml
-    sha256: e483fb88549fc0f454c190979bf35ac91c7aceff2c0e71e7d8edd11842d772d8
-  original: lts-16.22
+    size: 555280
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2020/12/3.yaml
+    sha256: f0c88c9cb1e626b5f6ac3e8126d361201e9e3eb5570a556e0469e7f2cc34c086
+  original: nightly-2020-12-03
