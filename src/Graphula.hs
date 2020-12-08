@@ -1,6 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -169,15 +168,9 @@ instance MonadTrans (GraphulaT n) where
   lift = GraphulaT . lift
 
 instance MonadUnliftIO m => MonadUnliftIO (GraphulaT n m) where
-#if MIN_VERSION_unliftio_core(0, 2, 0)
   {-# INLINE withRunInIO #-}
   withRunInIO inner =
     GraphulaT $ withRunInIO $ \run -> inner $ run . runGraphulaT'
-#else
-  {-# INLINE askUnliftIO #-}
-  askUnliftIO = GraphulaT $ withUnliftIO $ \u ->
-    return $ UnliftIO $ unliftIO u . runGraphulaT'
-#endif
 
 instance MonadIO m => MonadGraphulaBackend (GraphulaT n m) where
   type Logging (GraphulaT n m) = NoConstraint
@@ -227,15 +220,9 @@ newtype GraphulaIdempotentT m a =
   deriving newtype (Functor, Applicative, Monad, MonadIO, MonadReader (IORef (m ())))
 
 instance MonadUnliftIO m => MonadUnliftIO (GraphulaIdempotentT m) where
-#if MIN_VERSION_unliftio_core(0, 2, 0)
   {-# INLINE withRunInIO #-}
   withRunInIO inner = GraphulaIdempotentT $ withRunInIO $ \run ->
     inner $ run . runGraphulaIdempotentT'
-#else
-  {-# INLINE askUnliftIO #-}
-  askUnliftIO = GraphulaIdempotentT $ withUnliftIO $ \u ->
-    return $ UnliftIO $ unliftIO u . runGraphulaIdempotentT'
-#endif
 
 instance MonadTrans GraphulaIdempotentT where
   lift = GraphulaIdempotentT . lift
