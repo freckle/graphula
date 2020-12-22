@@ -38,6 +38,7 @@ import Graphula
 import Graphula.UUIDKey
 import Test.Hspec
 import Test.QuickCheck
+import Text.Markdown.Unlit ()
 
 instance (ToBackendKey SqlBackend a) => Arbitrary (Key a) where
   arbitrary = toSqlKey <$> arbitrary
