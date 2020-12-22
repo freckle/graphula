@@ -19,11 +19,9 @@ ghc-options:
 
 when:
   condition: impl(ghc >= 8.10)
-  then:
-    ghc-options:
-      -Wno-missing-safe-haskell-mode
-      -Wno-prepositive-qualified-module
-  else: {}
+  ghc-options:
+    -Wno-missing-safe-haskell-mode
+    -Wno-prepositive-qualified-module
 
 dependencies:
   - base
