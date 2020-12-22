@@ -8,3 +8,17 @@ workflows:
     jobs:
       - stack-build/build-test-lint:
           name: build
+      - stack-build/build-test-nightly:
+          name: "nightly"
+
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - stack-build/build-test-nightly:
+          name: "nightly"

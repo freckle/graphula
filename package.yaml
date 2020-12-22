@@ -17,6 +17,14 @@ ghc-options:
   -Wno-missing-import-lists
   -Wno-implicit-prelude
 
+when:
+  condition: impl(ghc >= 8.10)
+  then:
+    ghc-options:
+      -Wno-missing-safe-haskell-mode
+      -Wno-prepositive-qualified-module
+  else: {}
+
 dependencies:
   - base
 
@@ -60,7 +68,6 @@ tests:
       - persistent-sqlite
       - persistent-template
       - resourcet
-      - semigroups
       - text
       - transformers
       - unliftio-core
