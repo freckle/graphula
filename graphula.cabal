@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 27527492b3fc116beed47b45112585e94cd1d60ba36588977e88f5e43018256a
+-- hash: 60de34a552b27604fcc5429f26bc1d5976b2ac955670630178ce6ad81287986b
 
 name:           graphula
 version:        2.0.0.1
@@ -72,14 +72,12 @@ test-suite readme
     , graphula
     , hspec
     , http-api-data
-    , markdown-unlit
     , monad-logger
     , path-pieces
     , persistent
     , persistent-sqlite
     , persistent-template
     , resourcet
-    , semigroups
     , text
     , transformers
     , unliftio-core

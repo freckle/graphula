@@ -8,3 +8,21 @@ workflows:
     jobs:
       - stack-build/build-test-lint:
           name: build
+          after-dependencies:
+            run: stack build markdown-unlit
+      - stack-build/build-test-nightly:
+          name: "nightly"
+          stack-arguments: --skip readme --ghc-options='-Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module'
+
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - stack-build/build-test-nightly:
+          name: "nightly"
+          stack-arguments: --skip readme --ghc-options='-Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module'
