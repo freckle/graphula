@@ -9,7 +9,7 @@ workflows:
       - stack-build/build-test-lint:
           name: build
           after-dependencies:
-            run: stack build markdown-unlit
+            - run: stack build markdown-unlit
       - stack-build/build-test-nightly:
           name: "nightly"
           stack-arguments: --skip readme --ghc-options='-Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module'
