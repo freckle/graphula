@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 163358dbf95f439cc370402c299179dedba72c12a031fc2618d243bb5fee3b70
+-- hash: a50c9a090435d0f22b0fcb2327429f84e4720e78f921db4d2a2da9017b34037d
 
 name:           graphula
 version:        2.0.0.2
@@ -38,20 +38,20 @@ library
   ghc-options: -Weverything -Wno-unsafe -Wno-safe -Wno-missing-import-lists -Wno-implicit-prelude
   build-depends:
       HUnit
-    , QuickCheck
-    , base
+    , QuickCheck <2.15
+    , base <5
     , containers
     , directory
     , generics-eot
     , mtl
-    , persistent
-    , random
+    , persistent <2.12
+    , random <1.3
     , semigroups
     , temporary
     , text
     , transformers
     , unliftio
-    , unliftio-core
+    , unliftio-core <0.3
   if impl(ghc >= 8.10)
     ghc-options: -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
   default-language: Haskell2010
@@ -66,10 +66,10 @@ test-suite readme
       test
   ghc-options: -Weverything -Wno-unsafe -Wno-safe -Wno-missing-import-lists -Wno-implicit-prelude -pgmL markdown-unlit
   build-depends:
-      QuickCheck
-    , aeson
-    , base
-    , bytestring
+      QuickCheck <2.15
+    , aeson <1.6
+    , base <5
+    , bytestring <0.12
     , containers
     , graphula
     , hspec
@@ -77,13 +77,13 @@ test-suite readme
     , markdown-unlit
     , monad-logger
     , path-pieces
-    , persistent
-    , persistent-sqlite
-    , persistent-template
+    , persistent <2.12
+    , persistent-sqlite <2.12
+    , persistent-template <2.10
     , resourcet
     , text
     , transformers
-    , unliftio-core
+    , unliftio-core <0.3
     , uuid
   if impl(ghc >= 8.10)
     ghc-options: -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
