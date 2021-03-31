@@ -1,6 +1,10 @@
-## [*Unreleased*](https://github.com/freckle/graphula/compare/v2.0.0.3...main)
+## [*Unreleased*](https://github.com/freckle/graphula/compare/v2.0.0.4...main)
 
 None
+
+## [v2.0.0.4](https://github.com/freckle/graphula/compare/v2.0.0.3...v2.0.0.4)
+
+- Relax persistent packages' upper bounds
 
 ## [v2.0.0.3](https://github.com/freckle/graphula/compare/v2.0.0.2...v2.0.0.3)
 
