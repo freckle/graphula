@@ -1,3 +1,5 @@
+name: CI
+
 on:
   pull_request:
   push:
@@ -8,13 +10,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.stack
-            ./.stack-work
-          key: ${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('*.cabal') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ hashFiles('stack.yaml') }}-
-            ${{ runner.os }}-
+      - uses: freckle/stack-cache-action@pb/first
       - uses: freckle/stack-action@v1.1
