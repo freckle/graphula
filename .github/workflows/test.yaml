@@ -10,5 +10,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: freckle/stack-cache-action@pb/first
+      - uses: freckle/stack-cache-action@v1
       - uses: freckle/stack-action@v1.1
