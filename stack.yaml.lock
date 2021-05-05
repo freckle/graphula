@@ -11,6 +11,72 @@ packages:
       sha256: 0895826ac5485a85e6fa37ae2b76195872fa2d92e901478c42d0690fc206a5ab
   original:
     hackage: generics-eot-0.4.0.1@sha256:3d8df1d8ca010238ec5f20ba30282daa0fac99c7de495fae64e26a7ea1dadb08,2312
+- completed:
+    hackage: lift-type-0.1.0.1@sha256:6e38e49bf086fd2203346417d96ad2e6c300d8d8f41d222780abdccc7a4e451b,1106
+    pantry-tree:
+      size: 361
+      sha256: 9de4bdc6ce32b78c28b4bce75b5b2e488bf0f875a136ae269a02df804eb94a1a
+  original:
+    hackage: lift-type-0.1.0.1
+- completed:
+    hackage: persistent-template-2.12.0.0@sha256:7c68de6624ff83e14b674745e1c895dcf7c8676f6f24be131c89e2e4c2fa4510,1008
+    pantry-tree:
+      size: 267
+      sha256: 6d31d8a3bde912d0c8b28d9d18caa77a5a7add42104d8bb109f7cd298f21a78f
+  original:
+    hackage: persistent-template-2.12.0.0
+- completed:
+    subdir: persistent
+    name: persistent
+    version: 2.13.0.0
+    git: git@github.com:yesodweb/persistent
+    pantry-tree:
+      size: 5409
+      sha256: f5b95dcfb4658efe2d1b5abe391b7b148b6896694c9f023062d6b6582127f242
+    commit: 315ae91349ef4fbc2f4f2595cb7d3423e79ef80f
+  original:
+    subdir: persistent
+    git: git@github.com:yesodweb/persistent
+    commit: 315ae91349ef4fbc2f4f2595cb7d3423e79ef80f
+- completed:
+    subdir: persistent-sqlite
+    name: persistent-sqlite
+    version: 2.13.0.0
+    git: git@github.com:yesodweb/persistent
+    pantry-tree:
+      size: 977
+      sha256: d2f4ed9f46fdd378306bc991f70a901362a816051bf165f3bc5b15d6f8e401ac
+    commit: 315ae91349ef4fbc2f4f2595cb7d3423e79ef80f
+  original:
+    subdir: persistent-sqlite
+    git: git@github.com:yesodweb/persistent
+    commit: 315ae91349ef4fbc2f4f2595cb7d3423e79ef80f
+- completed:
+    subdir: persistent-mysql
+    name: persistent-mysql
+    version: 2.13.0.0
+    git: git@github.com:yesodweb/persistent
+    pantry-tree:
+      size: 642
+      sha256: 352881d2ec68f526d3489a1b50793c29493210166d2a70ccd3f39dbdc6aac345
+    commit: 315ae91349ef4fbc2f4f2595cb7d3423e79ef80f
+  original:
+    subdir: persistent-mysql
+    git: git@github.com:yesodweb/persistent
+    commit: 315ae91349ef4fbc2f4f2595cb7d3423e79ef80f
+- completed:
+    subdir: persistent-postgresql
+    name: persistent-postgresql
+    version: 2.13.0.0
+    git: git@github.com:yesodweb/persistent
+    pantry-tree:
+      size: 1093
+      sha256: 2a0d9a6bf84ba1d9a2ecdbe74a46be76a1dc313a0fa1101ff163ce7f55b4a5f8
+    commit: 315ae91349ef4fbc2f4f2595cb7d3423e79ef80f
+  original:
+    subdir: persistent-postgresql
+    git: git@github.com:yesodweb/persistent
+    commit: 315ae91349ef4fbc2f4f2595cb7d3423e79ef80f
 snapshots:
 - completed:
     size: 565720
