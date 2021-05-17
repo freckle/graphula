@@ -1,5 +1,5 @@
 name: graphula
-version: 2.0.0.4
+version: 2.0.0.5
 maintainer: Freckle Education
 category: Network
 github: freckle/graphula
@@ -31,19 +31,19 @@ library:
     - src
   dependencies:
     - HUnit
-    - QuickCheck < 2.15
+    - QuickCheck
     - containers
     - directory
     - generics-eot
     - mtl
-    - persistent < 2.13
-    - random < 1.3
+    - persistent
+    - random
     - semigroups
     - temporary
     - text
     - transformers
     - unliftio
-    - unliftio-core < 0.3
+    - unliftio-core
 
 tests:
   readme:
@@ -52,9 +52,9 @@ tests:
     source-dirs:
       - test
     dependencies:
-      - QuickCheck < 2.15
-      - aeson < 1.6
-      - bytestring < 0.12
+      - QuickCheck
+      - aeson
+      - bytestring
       - containers
       - graphula
       - hspec
@@ -62,11 +62,11 @@ tests:
       - markdown-unlit
       - monad-logger
       - path-pieces
-      - persistent < 2.13
-      - persistent-sqlite < 2.13
-      - persistent-template < 2.13
+      - persistent
+      - persistent-sqlite
+      - persistent-template
       - resourcet
       - text
       - transformers
-      - unliftio-core < 0.3
+      - unliftio-core
       - uuid

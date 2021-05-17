@@ -1,6 +1,10 @@
-## [*Unreleased*](https://github.com/freckle/graphula/compare/v2.0.0.4...main)
+## [*Unreleased*](https://github.com/freckle/graphula/compare/v2.0.0.5...main)
 
 None
+
+## [v2.0.0.5](https://github.com/freckle/graphula/compare/v2.0.0.4...v2.0.0.5)
+
+- Release without dependencies upper bounds
 
 ## [v2.0.0.4](https://github.com/freckle/graphula/compare/v2.0.0.3...v2.0.0.4)
 
