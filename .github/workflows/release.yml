@@ -1,0 +1,23 @@
+name: Release
+
+on:
+  push:
+    branches: main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - id: tag
+        uses: freckle/haskell-tag-action@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - if: steps.tag.outputs.tag
+        uses: freckle/stack-upload-action@main
+        with:
+          pvp-bounds: lower
+        env:
+          HACKAGE_API_KEY: ${{ secrets.HACKAGE_UPLOAD_API_KEY }}
