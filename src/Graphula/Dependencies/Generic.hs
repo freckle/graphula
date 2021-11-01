@@ -10,6 +10,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
+-- | Machinery for the 'Generic'-based 'HasDependencies' instance
 module Graphula.Dependencies.Generic
   ( GHasDependencies(..)
   ) where

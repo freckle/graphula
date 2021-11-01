@@ -17,6 +17,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE UndecidableSuperClasses #-}
 
+-- | A version of 'GraphulaT' that @'remove'@s all @'insert'@ed data afterward
 module Graphula.Idempotent
   ( GraphulaIdempotentT
   , runGraphulaIdempotentT
@@ -33,7 +34,6 @@ import Database.Persist (Entity(..))
 import Graphula.Class
 import UnliftIO.Exception (SomeException, catch, mask, throwIO)
 
--- | 'GraphulaT', but 'remove'ing every 'insert' at the end
 newtype GraphulaIdempotentT m a = GraphulaIdempotentT
   { runGraphulaIdempotentT' :: ReaderT (IORef (m ())) m a
   }

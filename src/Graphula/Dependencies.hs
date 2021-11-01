@@ -43,13 +43,28 @@ import Test.QuickCheck.Arbitrary (Arbitrary(..))
 import Test.QuickCheck.Gen (Gen)
 
 class HasDependencies a where
-  -- | A data type that contains values to be injected into @a@ via
-  -- `dependsOn`. The default generic implementation of `dependsOn` supports
-  -- tuples as 'Dependencies'. Data types with a single dependency should use
-  -- 'Only' as a 1-tuple.
+  -- | A data type declaring the model's dependencies
   --
-  -- note: The contents of a tuple must be ordered as they appear in the
-  -- definition of @a@.
+  -- Models with no dependencies can declare an empty instance,
+  --
+  -- @
+  -- instance 'HasDependencies' School
+  -- @
+  --
+  -- Models with one dependency must use the 'Only' 1-tuple constructor,
+  --
+  -- @
+  -- instance 'HasDependencies' Teacher where
+  --   type Dependencies Teacher = Only SchoolId
+  -- @
+  --
+  -- Models with multiple dependencies use tuple syntax,
+  --
+  -- @
+  -- instance 'HasDependencies' Course where
+  --   type Dependencies Course = (SchoolId, TeacherId)
+  -- @
+  --
   type Dependencies a
   type instance Dependencies _a = ()
 
@@ -63,19 +78,21 @@ class HasDependencies a where
   -- 'SourceExternal  -- explicitly pass a key using @'nodeKeyed'@
   -- @
   --
-  -- Most types will use @'SourceDefault'@ or @'SourceArbitrary'@. Only
-  -- use @'SourceExternal'@ if the key for a value is always defined
-  -- externally.
+  -- Most types will use 'SourceDefault' or 'SourceArbitrary'. Only use
+  -- 'SourceExternal' if the key for a value is always defined externally.
   --
   type KeySource a :: KeySourceType
   type instance KeySource _a = 'SourceDefault
 
-  -- | Assign values from the 'Dependencies' collection to a value.
-  -- 'dependsOn' must be an idempotent operation.
+  -- | Assign values from the 'Dependencies' collection to a value
   --
-  -- Law:
+  -- This must be an idempotent operation. Law:
   --
   -- prop> (\x d -> x `dependsOn` d `dependsOn` d) = dependsOn
+  --
+  -- The default, 'Generic'-based implementation will assign values by the order
+  -- of the fields in the model's type.
+  --
   dependsOn :: a -> Dependencies a -> a
   default dependsOn
     ::
@@ -103,20 +120,20 @@ data KeySourceType
   = SourceDefault
   -- ^ Generate keys using the database's @DEFAULT@ strategy
   | SourceArbitrary
-  -- ^ Generate keys using the @'Arbitrary'@ instance for the @'Key'@
+  -- ^ Generate keys using the 'Arbitrary' instance for the 'Key'
   | SourceExternal
   -- ^ Always explicitly pass an external key
+  --
+  -- See 'nodeKeyed'.
+  --
 
--- | Abstract over how keys are generated using @'SourceDefault'@ or @'SourceArbitrary'@
+-- | Abstract constraint that some @a@ can generate a key
+--
+-- This is part of ensuring better error messages.
+--
 class (GenerateKeyInternal (KeySource a) a, KeyConstraint (KeySource a) a) => GenerateKey a
 instance (GenerateKeyInternal (KeySource a) a, KeyConstraint (KeySource a) a) => GenerateKey a
 
--- | Handle key generation for @'SourceDefault'@ and @'SourceArbitrary'@
---
--- Ths could be a single-parameter class, but carrying the @a@ around
--- lets us give a better error message when @'node'@ is called instead
--- of @'nodeKeyed'@.
---
 class GenerateKeyInternal (s :: KeySourceType) a where
   type KeyConstraint s a :: Constraint
   generateKey :: KeyConstraint s a => Gen (Maybe (Key a))
@@ -129,8 +146,6 @@ instance GenerateKeyInternal 'SourceArbitrary a where
   type KeyConstraint 'SourceArbitrary a = Arbitrary (Key a)
   generateKey = Just <$> arbitrary
 
--- | Explicit instance for @'SourceExternal'@ to give an actionable error message
---
 -- Rendered:
 --
 -- @

@@ -1,8 +1,4 @@
-{-|
-  Graphula tracks its own 'QCGen' for deterministic generation with 'Arbitrary'
-  and 'Gen'. 'generate' can be used to produce arbitrary values utilizing
-  graphula's generation.
--}
+-- | 'Arbitrary' operations that respect Graphula's seed
 module Graphula.Arbitrary
   ( generate
   ) where

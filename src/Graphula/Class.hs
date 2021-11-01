@@ -10,6 +10,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
+-- | Internal type class(es) for Graphula-related behaviors
 module Graphula.Class
   ( MonadGraphula
   , MonadGraphulaFrontend(..)
@@ -40,8 +41,5 @@ class MonadGraphulaFrontend m where
 
 class MonadGraphulaBackend m where
   type Logging m :: Type -> Constraint
-  -- ^ A constraint provided to log details of the graph to some form of
-  --   persistence. This is used by 'runGraphulaLogged' to store graph nodes as
-  --   'Show'n 'Text' values
   askGen :: m (IORef QCGen)
   logNode :: Logging m a => a -> m ()

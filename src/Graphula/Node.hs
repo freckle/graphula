@@ -20,7 +20,9 @@
 {-# LANGUAGE UndecidableSuperClasses #-}
 
 module Graphula.Node
-  ( node
+  (
+  -- * Generating
+    node
   , nodeKeyed
 
   -- * 'NodeOptions'
@@ -54,11 +56,9 @@ import UnliftIO.Exception (Exception, throwIO)
 -- 'NodeOptions' can be created and combined with the Monoidal operations '(<>)'
 -- and 'mempty'.
 --
--- @
--- a1 <- node @A () mempty
--- a2 <- node @A () $ edit $ \a -> a { someField = True }
--- a3 <- node @A () $ ensure $ (== True) . someField
--- @
+-- > a1 <- node @A () mempty
+-- > a2 <- node @A () $ edit $ \a -> a { someField = True }
+-- > a3 <- node @A () $ ensure $ (== True) . someField
 --
 newtype NodeOptions a = NodeOptions
   { nodeOptionsEdit :: Kendo Maybe a
@@ -87,22 +87,24 @@ instance Monad m => Monoid (Kendo m a) where
 
 -- | Modify the node after it's been generated
 --
--- @
--- a <- node @A () $ edit $ \a -> a { someField = True }
--- @
+-- > a <- node @A () $ edit $ \a -> a { someField = True }
 --
 edit :: (a -> a) -> NodeOptions a
 edit f = mempty { nodeOptionsEdit = Kendo $ Just . f }
 
 -- | Require a node to satisfy the specified predicate
 --
--- @
--- a <- node @A () $ ensure $ (== True) . someField
--- @
+-- > a <- node @A () $ ensure $ (== True) . someField
+--
+-- N.B. ensuring a condition that is infrequently met can be innefficient.
 --
 ensure :: (a -> Bool) -> NodeOptions a
 ensure f = mempty { nodeOptionsEdit = Kendo $ \a -> a <$ guard (f a) }
 
+-- | Generate a node with a default (Database-provided) key
+--
+-- > a <- node @A () mempty
+--
 node
   :: forall a m
    . ( MonadGraphula m
@@ -119,6 +121,11 @@ node
   -> m (Entity a)
 node = nodeImpl $ generate $ generateKey @(KeySource a) @a
 
+-- | Generate a node with an explictly-given key
+--
+-- > let someKey = UUID.fromString "..."
+-- > a <- nodeKeyed @A someKey () mempty
+--
 nodeKeyed
   :: forall a m
    . ( MonadGraphula m
@@ -152,6 +159,7 @@ nodeImpl
 nodeImpl genKey dependencies NodeOptions {..} = attempt 100 10 $ do
   initial <- generate arbitrary
   for (appKendo nodeOptionsEdit initial) $ \edited -> do
+    -- N.B. dependencies setting always overrules edits
     let hydrated = edited `dependsOn` dependencies
     logNode hydrated
     mKey <- genKey
@@ -159,9 +167,9 @@ nodeImpl genKey dependencies NodeOptions {..} = attempt 100 10 $ do
 
 data GenerationFailure
   = GenerationFailureMaxAttemptsToConstrain TypeRep
-  -- ^ Could not satisfy constraints defined using @'ensure'@
+  -- ^ Could not satisfy constraints defined using 'ensure'
   | GenerationFailureMaxAttemptsToInsert TypeRep
-  -- ^ Could not satisfy database constraints on insert
+  -- ^ Could not satisfy database constraints on 'insert'
   deriving stock (Show, Eq)
 
 instance Exception GenerationFailure
@@ -188,7 +196,8 @@ attempt maxEdits maxInserts source = loop 0 0
       --               ^ failed to edit, only increments this
       Just (mKey, value) -> insert mKey value >>= \case
         Nothing -> loop (succ numEdits) (succ numInserts)
-        --               ^ failed to insert, but also increments this
+        --               ^ failed to insert, but also increments this. Are we
+        --                 sure that's what we want?
         Just a -> pure a
 
   die :: (TypeRep -> GenerationFailure) -> m (Entity a)

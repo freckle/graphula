@@ -17,11 +17,12 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE UndecidableSuperClasses #-}
 
+-- | A version of 'GraphulaT' that logs the generated graph
 module Graphula.Logged
   ( GraphulaLoggedT
   , runGraphulaLoggedT
-  , runGraphulaLoggedUsingT
   , runGraphulaLoggedWithFileT
+  , runGraphulaLoggedUsingT
   ) where
 
 import Prelude
@@ -67,13 +68,16 @@ instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaLo
   insert mKey = lift . insert mKey
   remove = lift . remove
 
+-- | Run the graph while logging to a temporary file
 runGraphulaLoggedT :: MonadUnliftIO m => GraphulaLoggedT m a -> m a
 runGraphulaLoggedT = runGraphulaLoggedUsingT logFailTemp
 
+-- | 'runGraphulaLoggedT', but to the specified file
 runGraphulaLoggedWithFileT
   :: MonadUnliftIO m => FilePath -> GraphulaLoggedT m a -> m a
 runGraphulaLoggedWithFileT = runGraphulaLoggedUsingT . logFailFile
 
+-- | 'runGraphulaLoggedT', but using the custom action to accumulate
 runGraphulaLoggedUsingT
   :: MonadUnliftIO m
   => (IORef (Seq Text) -> HUnitFailure -> m a)
