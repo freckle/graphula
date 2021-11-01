@@ -1,4 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -9,30 +10,13 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Graphula.Internal
-  ( MonadGraphulaBackend(..)
-  , GHasDependencies(..)
-  , KeySourceType(..)
-  , GenerateKeyInternal(..)
-  , NoConstraint
-  )
-where
+module Graphula.Dependencies.Generic
+  ( GHasDependencies(..)
+  ) where
 
-import Data.IORef (IORef)
-import Data.Kind (Constraint, Type)
-import Database.Persist (Key)
-import Generics.Eot (Proxy(..), Void)
+import Data.Kind (Type)
 import GHC.TypeLits (ErrorMessage(..), TypeError)
-import Test.QuickCheck (Arbitrary(..), Gen)
-import Test.QuickCheck.Random (QCGen)
-
-class MonadGraphulaBackend m where
-  type Logging m :: Type -> Constraint
-  -- ^ A constraint provided to log details of the graph to some form of
-  --   persistence. This is used by 'runGraphulaLogged' to store graph nodes as
-  --   'Show'n 'Text' values
-  askGen :: m (IORef QCGen)
-  logNode :: Logging m a => a -> m ()
+import Generics.Eot (Proxy(..), Void)
 
 data Match t
   = NoMatch t
@@ -154,84 +138,3 @@ instance
 -- instance for nullary constructors
 instance GHasDependenciesRecursive (Proxy ('[] :: [Match Type])) () () where
   genericDependsOnRecursive _ _ _ = ()
-
-data KeySourceType
-  = SourceDefault
-  -- ^ Generate keys using the database's @DEFAULT@ strategy
-  | SourceArbitrary
-  -- ^ Generate keys using the @'Arbitrary'@ instance for the @'Key'@
-  | SourceExternal
-  -- ^ Always explicitly pass an external key
-
--- | Handle key generation for @'SourceDefault'@ and @'SourceArbitrary'@
---
--- Ths could be a single-parameter class, but carrying the @a@ around
--- lets us give a better error message when @'node'@ is called instead
--- of @'nodeKeyed'@.
---
-class GenerateKeyInternal (s :: KeySourceType) a where
-  type KeyConstraint s a :: Constraint
-  generateKey :: KeyConstraint s a => Gen (Maybe (Key a))
-
-instance GenerateKeyInternal 'SourceDefault a where
-  type KeyConstraint 'SourceDefault a = NoConstraint a
-  generateKey = pure Nothing
-
-instance GenerateKeyInternal 'SourceArbitrary a where
-  type KeyConstraint 'SourceArbitrary a = Arbitrary (Key a)
-  generateKey = Just <$> arbitrary
-
--- | Explicit instance for @'SourceExternal'@ to give an actionable error message
---
--- Rendered:
---
--- @
--- Cannot generate a value of type ‘X’ using ‘node’ since
---
---   instance HasDependencies X where
---     type KeySource X = 'SourceExternal
---
--- Possible fixes include:
--- • Use ‘nodeKeyed’ instead of ‘node’
--- • Change ‘KeySource X’ to 'SourceDefault or 'SourceArbitrary
--- @
---
-instance TypeError
-  ( 'Text "Cannot generate a value of type "
-    ':<>: Quote ('ShowType a)
-    ':<>: 'Text " using "
-    ':<>: Quote ('Text "node")
-    ':<>: 'Text " since"
-    ':$$: 'Text ""
-    ':$$: 'Text "  instance HasDependencies "
-    ':<>: 'ShowType a
-    ':<>: 'Text " where"
-    ':$$: 'Text "    "
-    ':<>: 'Text "type KeySource "
-    ':<>: 'ShowType a
-    ':<>: 'Text  " = "
-    ':<>: 'ShowType 'SourceExternal
-    ':$$: 'Text ""
-    ':$$: 'Text "Possible fixes include:"
-    ':$$: 'Text "• Use "
-    ':<>: Quote ('Text "nodeKeyed")
-    ':<>: 'Text " instead of "
-    ':<>: Quote ('Text "node")
-    ':$$: 'Text "• Change "
-    ':<>: Quote ('Text "KeySource " ':<>: 'ShowType a)
-    ':<>: 'Text " to "
-    ':<>: 'Text "'SourceDefault"
-    ':<>: 'Text " or "
-    ':<>: 'Text "'SourceArbitrary"
-  ) => GenerateKeyInternal 'SourceExternal a where
-  type KeyConstraint 'SourceExternal a = NoConstraint a
-  generateKey = error "unreachable"
-
-type family Quote t where
-  Quote t = 'Text "‘" ':<>: t ':<>: 'Text "’"
-
--- | Graphula accepts constraints for various uses. Frontends do not always
--- utilize these constraints. 'NoConstraint' is a universal class that all
--- types inhabit. It has no behavior and no additional constraints.
-class NoConstraint a
-instance NoConstraint a

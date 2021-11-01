@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2af45df8a97eb1d38c97952da5a94506f3cca1fe2092ccb143ee570f789f8977
+-- hash: d3fb852f80fa19f57cf24d5c4dc57c2444154e0b5f68e48e511299484a08ce1f
 
 name:           graphula
 version:        2.0.0.5
@@ -29,8 +29,14 @@ library
   exposed-modules:
       Graphula
       Graphula.Arbitrary
-      Graphula.Internal
+      Graphula.Class
+      Graphula.Dependencies
+      Graphula.Dependencies.Generic
+      Graphula.Idempotent
       Graphula.Key
+      Graphula.Logged
+      Graphula.NoConstraint
+      Graphula.Node
   other-modules:
       Paths_graphula
   hs-source-dirs:

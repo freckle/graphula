@@ -5,14 +5,13 @@
 -}
 module Graphula.Arbitrary
   ( generate
-  )
-where
+  ) where
 
 import Prelude
 
 import Control.Monad.IO.Unlift (MonadIO, liftIO)
 import Data.IORef (readIORef, writeIORef)
-import Graphula.Internal (MonadGraphulaBackend, askGen)
+import Graphula.Class (MonadGraphulaBackend, askGen)
 import System.Random (split)
 import Test.QuickCheck (Gen)
 import Test.QuickCheck.Gen (unGen)
