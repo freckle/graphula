@@ -11,4 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: freckle/stack-cache-action@v1
-      - uses: freckle/stack-action@v1.1
+      - uses: freckle/stack-action@main
+        with:
+          weeder-version: 2.2.0
+          weeder-arguments: --require-hs-files
