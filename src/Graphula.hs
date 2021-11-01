@@ -25,54 +25,115 @@
 -- dependencies. You can use this interface to generate fixtures for automated
 -- testing.
 --
--- The interface is extensible and supports pluggable front-ends.
---
 -- @
--- runGraphIdentity . runGraphulaT $ do
---   -- Compose dependencies at the value level
---   Identity vet <- node @Veterinarian () mempty
---   Identity owner <- node @Owner (only vet) mempty
---   -- TypeApplications is not necessary, but recommended for clarity.
---   Identity dog <- node @Dog (owner, vet) $ edit $ \d -> d { name = "fido" }
+-- {- config/models
+--
+-- School
+--   name Text
+--   deriving Generic
+--
+-- Teacher
+--   schoolId SchoolId
+--   name Text
+--   deriving Generic
+--
+-- Course
+--   schoolId SchoolId
+--   teacherId TeacherId
+--   name Text
+--   deriving Generic
+--
+-- -}
+--
+-- instance Arbitrary School where
+--   -- ...
+--
+-- instance Arbitrary Teacher where
+--   -- ...
+--
+-- instance Arbitrary Course where
+--   -- ...
+--
+-- instance 'HasDependencies' School
+--
+-- instance 'HasDependencies' Teacher where
+--   type Dependencies Teacher = Only SchoolId
+--
+-- instance 'HasDependencies' Course where
+--   type Dependencies Course = (SchoolId, CourseId)
+--
+-- 'runGraphulaT' runDB $ do
+--   school <- 'node' \@School () mempty
+--
+--   teacher <- 'node' \@Teacher ('onlyKey' school)
+--      $ edit
+--      $ \t -> t { teacherName = \"Alice\" }
+--
+--   course <- 'node' \@Course ('keys' (school, teacher))
+--      $ 'ensure'
+--      $ not . courseIsArchived
 -- @
 --
 module Graphula
-  ( -- * Graph Declaration
-    node
-  , nodeKeyed
-  , GraphulaNode
-  , GraphulaContext
-    -- ** Node options
-  , NodeOptions
-  , edit
-  , ensure
-    -- * Declaring Dependencies and key source
-  , HasDependencies(..)
-  , KeySourceType(..)
-    -- * Abstract over how keys are generated using 'SourceDefault' or
-    -- 'SourceArbitrary'
-  , GenerateKey
-    -- ** Singular Dependencies
+  (
+  -- * Basic usage
+  -- ** Model requirements
+    HasDependencies(..)
   , Only(..)
   , only
-    -- * The Graph Monad
-    -- ** Type Classes
+
+  -- ** Defining the graph
+  , node
+  , edit
+  , ensure
+
+  -- ** Running the graph
+  , GraphulaT
+  , runGraphulaT
+  , GenerationFailure(..)
+
+  -- * Advanced usage
+  -- ** Non-serial keys
+  , KeySourceType(..)
+  , nodeKeyed
+
+  -- ** Running with logging
+  , GraphulaLoggedT
+  , runGraphulaLoggedT
+  , runGraphulaLoggedWithFileT
+
+  -- ** Running idempotently
+  , GraphulaIdempotentT
+  , runGraphulaIdempotentT
+
+  -- * Useful synonymns
+  -- |
+  --
+  -- When declaring your own functions that call 'node', these synonyms can help
+  -- with the constraint soup.
+  --
+  -- > genSchoolWithTeacher
+  -- >   :: GraphulaContext m '[School, Teacher]
+  -- >   -> m (Entity Teacher)
+  -- > genSchoolWithTeacher = do
+  -- >   school <- node @School () mempty
+  -- >   node @Teacher (onlyKey school) mempty
+  --
+  , GraphulaContext
+  , GraphulaNode
+
+  -- * Lower-level details
+  -- |
+  --
+  -- These exports are likely to be removed from this module in a future
+  -- version. If you are using them, consider importing from their own modules.
+  --
   , MonadGraphula
   , MonadGraphulaBackend(..)
   , MonadGraphulaFrontend(..)
-    -- ** Backends
-  , runGraphulaT
-  , GraphulaT
-  , runGraphulaLoggedT
-  , runGraphulaLoggedWithFileT
-  , GraphulaLoggedT
-    -- ** Frontends
-  , runGraphulaIdempotentT
-  , GraphulaIdempotentT
-    -- * Extras
+  , NodeOptions
+  , GenerateKey
   , NoConstraint
-    -- * Exceptions
-  , GenerationFailure(..)
   ) where
 
 import Prelude hiding (readFile)
