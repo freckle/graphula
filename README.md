@@ -1,1 +1,1 @@
-test/README.lhs
+README.lhs
