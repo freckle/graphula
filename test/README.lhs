@@ -150,21 +150,16 @@ loggingSpec = do
     failingGraph = runGraphulaT Nothing runDB . runGraphulaLoggedWithFileT logFile $ do
       student <- node @Student () mempty
       question <- node @Question () mempty
-
-      _answer <- node @Answer
+      answer <- node @Answer
         (entityKey question, entityKey student)
         $ edit $ \a -> a { answerYes = True }
 
-      -- Will violate unique constraint
-      _duplicateAnswer <- node @Answer
-        (entityKey question, entityKey student)
-        $ edit $ \a -> a { answerYes = False }
-
-      pure ()
+      -- Test failures will cause the graph to be logged (not any exception)
+      liftIO $ answerYes (entityVal answer) `shouldBe` False
 
   failingGraph `shouldThrow` anyException
 
-  n <- lines <$> readFile "test.graphula"
+  n <- lines <$> readFile logFile
   n `shouldSatisfy` (not . null)
 ```
 
