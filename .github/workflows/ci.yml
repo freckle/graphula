@@ -13,5 +13,4 @@ jobs:
       - uses: freckle/stack-cache-action@v1
       - uses: freckle/stack-action@main
         with:
-          weeder-version: 2.2.0
-          weeder-arguments: --require-hs-files
+          weeder: false
