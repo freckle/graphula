@@ -4,11 +4,11 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d3fb852f80fa19f57cf24d5c4dc57c2444154e0b5f68e48e511299484a08ce1f
+-- hash: fbf7a7a0f44dad0ea63d4f70b57442153982e960d839d2ab2c38d9ad0d40114e
 
 name:           graphula
-version:        2.0.0.5
-synopsis:       A declarative library for describing dependencies between data
+version:        2.0.1.0
+synopsis:       A simple interface for generating persistent data and linking its dependencies
 description:    Please see README.md
 category:       Network
 homepage:       https://github.com/freckle/graphula#readme

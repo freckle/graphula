@@ -1,9 +1,10 @@
 name: graphula
-version: 2.0.0.5
+version: 2.0.1.0
 maintainer: Freckle Education
 category: Network
 github: freckle/graphula
-synopsis: A declarative library for describing dependencies between data
+synopsis: >-
+  A simple interface for generating persistent data and linking its dependencies
 description: Please see README.md
 
 extra-source-files:
