@@ -3,18 +3,42 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+
+-- | Convenience functions for working with 'Key' dependencies
 module Graphula.Key
   ( onlyKey
   , keys
   , Keys
-  )
-where
+  ) where
 
 import Database.Persist
 import GHC.TypeLits (ErrorMessage(..), TypeError)
 import Graphula (Only(..), only)
 
 class EntityKeys a where
+  -- | Type-class for turning a tuple of 'Entity' into a tuple of 'Key'
+  --
+  -- For example, given:
+  --
+  -- @
+  -- instance 'HasDependencies' Course where
+  --   type Dependencies Course = (SchoolId, TeacherId)
+  -- @
+  --
+  -- You would have to do,
+  --
+  -- @
+  -- course <- 'node' @Course (entityKey school, entityKey teacher) mempty
+  -- @
+  --
+  -- This type-class allows you to do:
+  --
+  -- @
+  -- course <- 'node' @Course ('keys' (school, teacher)) mempty
+  -- @
+  --
+  -- The type class instances currently scale up 4-tuple 'Dependencies'.
+  --
   type Keys a
   keys :: a -> Keys a
 
@@ -29,6 +53,7 @@ instance
   type Keys (Entity a) = Key a
   keys = entityKey
 
+-- | Equivalent to @'Only' . 'entityKey'@
 onlyKey :: Entity a -> Only (Key a)
 onlyKey = keys . only
 

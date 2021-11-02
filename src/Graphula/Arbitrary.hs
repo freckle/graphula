@@ -1,18 +1,13 @@
-{-|
-  Graphula tracks its own 'QCGen' for deterministic generation with 'Arbitrary'
-  and 'Gen'. 'generate' can be used to produce arbitrary values utilizing
-  graphula's generation.
--}
+-- | 'Arbitrary' operations that respect Graphula's seed
 module Graphula.Arbitrary
   ( generate
-  )
-where
+  ) where
 
 import Prelude
 
 import Control.Monad.IO.Unlift (MonadIO, liftIO)
 import Data.IORef (readIORef, writeIORef)
-import Graphula.Internal (MonadGraphulaBackend, askGen)
+import Graphula.Class (MonadGraphulaBackend, askGen)
 import System.Random (split)
 import Test.QuickCheck (Gen)
 import Test.QuickCheck.Gen (unGen)
