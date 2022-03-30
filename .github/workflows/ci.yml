@@ -37,15 +37,14 @@ jobs:
         with:
           fail-on: warning
 
-  # Broken on upstream. See stack-nightly.yaml
-  # nightly:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: freckle/stack-cache-action@v2
-  #       with:
-  #         stack-yaml: stack-nightly.yaml
-  #     - uses: freckle/stack-action@v3
-  #       with:
-  #         stack-yaml: stack-nightly.yaml
-  #         stack-arguments: --resolver nightly
+  nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: freckle/stack-cache-action@v2
+        with:
+          stack-yaml: stack-nightly.yaml
+      - uses: freckle/stack-action@v3
+        with:
+          stack-yaml: stack-nightly.yaml
+          stack-arguments: --resolver nightly

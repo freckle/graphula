@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f07abca9cc4e0e29ae8560a745c8b2cc86944deeb041585db5d70a2aa3fea027
+-- hash: 3464c198d7a88930b3809efab46614916f88498d5f0f103fa79676d9bd432726
 
 name:           graphula
 version:        2.0.1.0
@@ -62,6 +62,8 @@ library
     , text
     , unliftio
     , unliftio-core
+  if impl(ghc >= 9.2)
+    ghc-options: -Wno-missing-kind-signatures
   if impl(ghc >= 8.10)
     ghc-options: -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
   if impl(ghc < 8.6)
@@ -89,6 +91,8 @@ test-suite readme
     , resourcet
     , transformers
     , unliftio-core
+  if impl(ghc >= 9.2)
+    ghc-options: -Wno-missing-kind-signatures
   if impl(ghc >= 8.10)
     ghc-options: -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
   if impl(ghc < 8.6)

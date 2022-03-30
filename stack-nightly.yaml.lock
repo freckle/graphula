@@ -3,7 +3,18 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    size: 4911
+    url: https://github.com/typeable/generic-arbitrary/archive/e559ca7591b00ffca49b172b77e9c4150f6c1399.tar.gz
+    name: generic-arbitrary
+    version: 0.2.0
+    sha256: 0da48e4fb19f9b60699a7d3273fae791c1213c07aeba540977cbf2f9efbea571
+    pantry-tree:
+      size: 492
+      sha256: 935937b10d6569ae701a14146b857d45f32a7109f5d8b62e05bae8aa9bb6c4fb
+  original:
+    url: https://github.com/typeable/generic-arbitrary/archive/e559ca7591b00ffca49b172b77e9c4150f6c1399.tar.gz
 snapshots:
 - completed:
     size: 539378
