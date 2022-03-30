@@ -8,9 +8,43 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        stack-yaml:
+          - stack.yaml           # ghc-9.0
+          - stack-lts-18.28.yaml # ghc-8.10
+          - stack-lts-16.31.yaml # ghc-8.8
+          - stack-lts-14.27.yaml # ghc-8.6
+          - stack-lts-12.26.yaml # ghc-8.4
+      fail-fast: false
+
     steps:
       - uses: actions/checkout@v2
-      - uses: freckle/stack-cache-action@v1
-      - uses: freckle/stack-action@main
+      - uses: freckle/stack-cache-action@v2
         with:
-          weeder: false
+          stack-yaml: ${{ matrix.stack-yaml }}
+      - uses: freckle/stack-action@v3
+        with:
+          stack-yaml: ${{ matrix.stack-yaml }}
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: rwe/actions-hlint-setup@v1
+      - uses: rwe/actions-hlint-run@v2
+        with:
+          fail-on: warning
+
+  nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: freckle/stack-cache-action@v2
+        with:
+          stack-yaml: stack-nightly.yaml
+      - uses: freckle/stack-action@v3
+        with:
+          stack-yaml: stack-nightly.yaml
+          stack-arguments: --resolver nightly

@@ -1,0 +1,7 @@
+resolver: lts-16.31
+extra-deps:
+  - generics-eot-0.4.0.1
+
+flags:
+  graphula:
+    persistent-template: true

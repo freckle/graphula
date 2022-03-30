@@ -1,7 +1,4 @@
-resolver: lts-17.8
-
-extra-deps:
-  - generics-eot-0.4.0.1@sha256:3d8df1d8ca010238ec5f20ba30282daa0fac99c7de495fae64e26a7ea1dadb08,2312
+resolver: lts-19.1
 
 ghc-options:
   "$locals": -fwrite-ide-info

@@ -12,17 +12,21 @@ extra-source-files:
   - CHANGELOG.md
 
 ghc-options:
-  -Weverything
-  -Wno-unsafe
-  -Wno-safe
-  -Wno-missing-import-lists
-  -Wno-implicit-prelude
+  - -Weverything
+  - -Wno-all-missed-specialisations
+  - -Wno-implicit-prelude
+  - -Wno-missing-import-lists
+  - -Wno-safe
+  - -Wno-unsafe
 
 when:
-  condition: impl(ghc >= 8.10)
-  ghc-options:
-    -Wno-missing-safe-haskell-mode
-    -Wno-prepositive-qualified-module
+  - condition: impl(ghc >= 8.10)
+    ghc-options:
+      - -Wno-missing-safe-haskell-mode
+      - -Wno-prepositive-qualified-module
+  - condition: impl(ghc < 8.6)
+    ghc-options:
+      - -Wno-redundant-constraints
 
 dependencies:
   - base < 5
@@ -42,7 +46,6 @@ library:
     - semigroups
     - temporary
     - text
-    - transformers
     - unliftio
     - unliftio-core
 
@@ -52,22 +55,30 @@ tests:
     ghc-options: -pgmL markdown-unlit
     source-dirs:
       - test
+
     dependencies:
       - QuickCheck
-      - aeson
-      - bytestring
-      - containers
       - generic-arbitrary
       - graphula
       - hspec
-      - http-api-data
       - markdown-unlit
       - monad-logger
-      - path-pieces
       - persistent
       - persistent-sqlite
-      - persistent-template
       - resourcet
-      - text
       - transformers
       - unliftio-core
+
+    when:
+      - condition: impl(ghc >= 8.8)
+        ghc-options:
+          - -Wno-missing-deriving-strategies
+      - condition: "flag(persistent-template)"
+        dependencies:
+          - persistent-template
+
+flags:
+  persistent-template:
+    description: Include dependency on persistent-template
+    manual: false
+    default: false
