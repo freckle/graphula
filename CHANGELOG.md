@@ -1,6 +1,10 @@
-## [*Unreleased*](https://github.com/freckle/graphula/compare/v2.0.1.0...main)
+## [*Unreleased*](https://github.com/freckle/graphula/compare/v2.0.1.1...main)
 
 None
+
+## [v2.0.1.1](https://github.com/freckle/graphula/compare/v2.0.0.5...v2.0.1.1)
+
+- Support GHCs 9.0 and 9.2
 
 ## [v2.0.1.0](https://github.com/freckle/graphula/compare/v2.0.0.5...v2.0.1.0)
 
