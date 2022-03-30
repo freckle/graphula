@@ -1,0 +1,4 @@
+resolver: nightly-2022-03-30
+
+# BROKEN on upstream
+# generic-arbitrary-0.2.0 must support GHC 9.2
