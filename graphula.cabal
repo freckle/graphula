@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fbf7a7a0f44dad0ea63d4f70b57442153982e960d839d2ab2c38d9ad0d40114e
+-- hash: f07abca9cc4e0e29ae8560a745c8b2cc86944deeb041585db5d70a2aa3fea027
 
 name:           graphula
 version:        2.0.1.0
@@ -25,6 +25,11 @@ source-repository head
   type: git
   location: https://github.com/freckle/graphula
 
+flag persistent-template
+  description: Include dependency on persistent-template
+  manual: False
+  default: False
+
 library
   exposed-modules:
       Graphula
@@ -41,7 +46,7 @@ library
       Paths_graphula
   hs-source-dirs:
       src
-  ghc-options: -Weverything -Wno-unsafe -Wno-safe -Wno-missing-import-lists -Wno-implicit-prelude
+  ghc-options: -Weverything -Wno-all-missed-specialisations -Wno-implicit-prelude -Wno-missing-import-lists -Wno-safe -Wno-unsafe
   build-depends:
       HUnit
     , QuickCheck
@@ -55,11 +60,12 @@ library
     , semigroups
     , temporary
     , text
-    , transformers
     , unliftio
     , unliftio-core
   if impl(ghc >= 8.10)
     ghc-options: -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
+  if impl(ghc < 8.6)
+    ghc-options: -Wno-redundant-constraints
   default-language: Haskell2010
 
 test-suite readme
@@ -69,27 +75,27 @@ test-suite readme
       Paths_graphula
   hs-source-dirs:
       test
-  ghc-options: -Weverything -Wno-unsafe -Wno-safe -Wno-missing-import-lists -Wno-implicit-prelude -pgmL markdown-unlit
+  ghc-options: -Weverything -Wno-all-missed-specialisations -Wno-implicit-prelude -Wno-missing-import-lists -Wno-safe -Wno-unsafe -pgmL markdown-unlit
   build-depends:
       QuickCheck
-    , aeson
     , base <5
-    , bytestring
-    , containers
     , generic-arbitrary
     , graphula
     , hspec
-    , http-api-data
     , markdown-unlit
     , monad-logger
-    , path-pieces
     , persistent
     , persistent-sqlite
-    , persistent-template
     , resourcet
-    , text
     , transformers
     , unliftio-core
   if impl(ghc >= 8.10)
     ghc-options: -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
+  if impl(ghc < 8.6)
+    ghc-options: -Wno-redundant-constraints
+  if impl(ghc >= 8.8)
+    ghc-options: -Wno-missing-deriving-strategies
+  if flag(persistent-template)
+    build-depends:
+        persistent-template
   default-language: Haskell2010
