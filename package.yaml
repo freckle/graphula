@@ -20,6 +20,9 @@ ghc-options:
   - -Wno-unsafe
 
 when:
+  - condition: impl(ghc >= 9.2)
+    ghc-options:
+      - -Wno-missing-kind-signatures
   - condition: impl(ghc >= 8.10)
     ghc-options:
       - -Wno-missing-safe-haskell-mode

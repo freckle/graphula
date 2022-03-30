@@ -1,4 +1,6 @@
 resolver: nightly-2022-03-30
 
-# BROKEN on upstream
-# generic-arbitrary-0.2.0 must support GHC 9.2
+extra-deps:
+  # https://github.com/typeable/generic-arbitrary/issues/12
+  - github: typeable/generic-arbitrary
+    commit: e559ca7591b00ffca49b172b77e9c4150f6c1399
