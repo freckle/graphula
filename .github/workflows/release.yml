@@ -11,12 +11,12 @@ jobs:
       - uses: actions/checkout@v2
 
       - id: tag
-        uses: freckle/haskell-tag-action@main
+        uses: freckle/haskell-tag-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - if: steps.tag.outputs.tag
-        uses: freckle/stack-upload-action@main
+        uses: freckle/stack-upload-action@v2
         with:
           pvp-bounds: lower
         env:
