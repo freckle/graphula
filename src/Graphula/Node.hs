@@ -182,9 +182,7 @@ attempt
      , PersistEntityBackend a ~ SqlBackend
      , PersistEntity a
      , Typeable a
-#if MIN_VERSION_persistent(2,14,0)
-     , SafeToInsert a
-#endif
+     , GraphulaSafeToInsert a
      )
   => Int
   -> Int
