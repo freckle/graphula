@@ -2,3 +2,6 @@ resolver: lts-19.1
 
 ghc-options:
   "$locals": -fwrite-ide-info
+
+extra-deps:
+  - persistent-2.14.0.0

@@ -49,6 +49,10 @@ import Graphula.Dependencies
 import Test.QuickCheck (Arbitrary(..))
 import UnliftIO.Exception (Exception, throwIO)
 
+#if MIN_VERSION_persistent(2,14,0)
+import Database.Persist.Class.PersistEntity
+#endif
+
 -- | Options for generating an individual node
 --
 --
@@ -114,6 +118,7 @@ node
      , PersistEntityBackend a ~ SqlBackend
      , PersistEntity a
      , Typeable a
+     , GraphulaSafeToInsert a
      )
   => Dependencies a
   -> NodeOptions a
@@ -134,6 +139,7 @@ nodeKeyed
      , PersistEntityBackend a ~ SqlBackend
      , PersistEntity a
      , Typeable a
+     , GraphulaSafeToInsert a
      )
   => Key a
   -> Dependencies a
@@ -150,6 +156,7 @@ nodeImpl
      , PersistEntityBackend a ~ SqlBackend
      , PersistEntity a
      , Typeable a
+     , GraphulaSafeToInsert a
      )
   => m (Maybe (Key a))
   -> Dependencies a
@@ -179,6 +186,9 @@ attempt
      , PersistEntityBackend a ~ SqlBackend
      , PersistEntity a
      , Typeable a
+#if MIN_VERSION_persistent(2,14,0)
+     , SafeToInsert a
+#endif
      )
   => Int
   -> Int
