@@ -33,12 +33,21 @@ import Database.Persist.Class.PersistEntity
 -- If you are using that version or above, then this is a class alias for
 -- 'SafeToInsert'. Otherwise, it is an identity alias.
 --
-type GraphulaSafeToInsert a =
+class
 #if MIN_VERSION_persistent(2,14,0)
-    SafeToInsert a
+    (SafeToInsert a) =>
 #else
-    () :: Constraint
+    () =>
 #endif
+    GraphulaSafeToInsert a
+
+instance
+#if MIN_VERSION_persistent(2,14,0)
+    (SafeToInsert a) =>
+#else
+    () =>
+#endif
+    GraphulaSafeToInsert a
 
 type MonadGraphula m
   = (Monad m, MonadIO m, MonadGraphulaBackend m, MonadGraphulaFrontend m)
