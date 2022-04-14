@@ -28,9 +28,11 @@ import Test.QuickCheck.Random (QCGen)
 import Database.Persist.Class.PersistEntity
 #endif
 
--- | A clas that provides backwards compatibility with @persistent-2.14@.
+-- | A class that provides backwards compatibility with @persistent-2.14@
+--
 -- If you are using that version or above, then this is a class alias for
--- @SafeToInsert@. Otherwise, it is an identity alias.
+-- 'SafeToInsert'. Otherwise, it is an identity alias.
+--
 type GraphulaSafeToInsert a =
 #if MIN_VERSION_persistent(2,14,0)
     SafeToInsert a
