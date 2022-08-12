@@ -25,7 +25,7 @@ import Database.Persist (Entity(..), Key, PersistEntity, PersistEntityBackend)
 import Database.Persist.Sql (SqlBackend)
 import Test.QuickCheck.Random (QCGen)
 #if MIN_VERSION_persistent(2,14,0)
-import Database.Persist.Class.PersistEntity
+import Database.Persist.Class.PersistEntity (SafeToInsert)
 #endif
 
 -- | A class that provides backwards compatibility with @persistent-2.14@
