@@ -1,5 +1,8 @@
 restylers:
   - brittany
+      include:
+        - '**/*.hs'
+        - '!src/Graphula/Class.hs' # CPP
   - stylish-haskell
 
 comments: false
