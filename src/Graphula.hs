@@ -208,7 +208,7 @@ instance MonadIO m => MonadGraphulaBackend (GraphulaT n m) where
   askGen = asks gen
   logNode _ = pure ()
 
-instance (MonadIO m, Applicative n, MonadIO n) => MonadGraphulaFrontend (GraphulaT n m) where
+instance (MonadIO m, MonadIO n) => MonadGraphulaFrontend (GraphulaT n m) where
   insert mKey n = do
     RunDB runDB <- asks dbRunner
     lift . runDB $ case mKey of
