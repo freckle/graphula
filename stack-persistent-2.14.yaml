@@ -1,0 +1,5 @@
+# Dedicated config for pre-testing newer persistent. Remove this config once
+# 2.14 is in the nightly's we're using.
+resolver: nightly-2022-08-15
+extra-deps:
+  - persistent-2.14.1.0
