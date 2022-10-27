@@ -53,6 +53,11 @@ newtype GraphulaLoggedT m a = GraphulaLoggedT
     , MonadReader (IORef (Seq Text))
     )
 
+instance MonadUnliftIO m => MonadUnliftIO (GraphulaLoggedT m) where
+  {-# INLINE withRunInIO #-}
+  withRunInIO inner =
+    GraphulaLoggedT $ withRunInIO $ \run -> inner $ run . runGraphulaLoggedT'
+
 instance MonadTrans GraphulaLoggedT where
   lift = GraphulaLoggedT . lift
 

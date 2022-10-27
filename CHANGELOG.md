@@ -2,6 +2,10 @@
 
 None
 
+## [v2.0.2.2](https://github.com/freckle/graphula/compare/v2.0.2.1...v2.0.2.2)
+
+- Add missing MonadUnliftIO instance to GraphulaLoggedT
+
 ## [v2.0.2.1](https://github.com/freckle/graphula/compare/v2.0.1.1...v2.0.2.1)
 
 - Support persistent-2.14
