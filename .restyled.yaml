@@ -1,5 +1,5 @@
 restylers:
-  - brittany
+  - brittany:
       include:
         - '**/*.hs'
         - '!src/Graphula/Class.hs' # CPP
