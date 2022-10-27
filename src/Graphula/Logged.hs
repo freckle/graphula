@@ -50,6 +50,7 @@ newtype GraphulaLoggedT m a = GraphulaLoggedT
     , Applicative
     , Monad
     , MonadIO
+    , MonadUnliftIO
     , MonadReader (IORef (Seq Text))
     )
 
