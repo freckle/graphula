@@ -1,5 +1,10 @@
 # Graphula
 
+[![Hackage](https://img.shields.io/hackage/v/graphula.svg?style=flat)](https://hackage.haskell.org/package/graphula)
+[![Stackage Nightly](http://stackage.org/package/graphula/badge/nightly)](http://stackage.org/nightly/package/graphula)
+[![Stackage LTS](http://stackage.org/package/graphula/badge/lts)](http://stackage.org/lts/package/graphula)
+[![CI](https://github.com/freckle/graphula/actions/workflows/ci.yml/badge.svg)](https://github.com/freckle/graphula/actions/workflows/ci.yml)
+
 Graphula is a simple interface for generating persistent data and linking its
 dependencies. We use this interface to generate fixtures for automated testing.
 
