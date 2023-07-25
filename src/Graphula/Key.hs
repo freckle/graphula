@@ -12,8 +12,8 @@ module Graphula.Key
   ) where
 
 import Database.Persist
-import GHC.TypeLits (ErrorMessage(..), TypeError)
-import Graphula (Only(..), only)
+import GHC.TypeLits (ErrorMessage (..), TypeError)
+import Graphula (Only (..), only)
 
 class EntityKeys a where
   -- | Type-class for turning a tuple of 'Entity' into a tuple of 'Key'
@@ -38,18 +38,21 @@ class EntityKeys a where
   -- @
   --
   -- The type class instances currently scale up 4-tuple 'Dependencies'.
-  --
   type Keys a
+
   keys :: a -> Keys a
 
 instance
-  ( TypeError
-    ( 'Text "Cannot use naked ‘" ':<>: 'ShowType (Entity a) ':<>:
-      'Text "’ as argument to ‘keys’." ':$$:
-      'Text "Did you mean ‘Only (" ':<>:
-      'ShowType (Entity a) ':<>: 'Text ")’?"
+  TypeError
+    ( 'Text "Cannot use naked ‘"
+        ':<>: 'ShowType (Entity a)
+        ':<>: 'Text "’ as argument to ‘keys’."
+        ':$$: 'Text "Did you mean ‘Only ("
+        ':<>: 'ShowType (Entity a)
+        ':<>: 'Text ")’?"
     )
-  ) => EntityKeys (Entity a) where
+  => EntityKeys (Entity a)
+  where
   type Keys (Entity a) = Key a
   keys = entityKey
 
@@ -76,5 +79,7 @@ instance EntityKeys (Entity a, Entity b, Entity c) where
 -- brittany-disable-next-binding
 
 instance EntityKeys (Entity a, Entity b, Entity c, Entity d) where
-  type Keys (Entity a, Entity b, Entity c, Entity d) = (Key a, Key b, Key c, Key d)
+  type
+    Keys (Entity a, Entity b, Entity c, Entity d) =
+      (Key a, Key b, Key c, Key d)
   keys (a, b, c, d) = (entityKey a, entityKey b, entityKey c, entityKey d)

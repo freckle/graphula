@@ -1,6 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -13,20 +13,22 @@
 -- | Internal type class(es) for Graphula-related behaviors
 module Graphula.Class
   ( MonadGraphula
-  , MonadGraphulaFrontend(..)
-  , MonadGraphulaBackend(..)
+  , MonadGraphulaFrontend (..)
+  , MonadGraphulaBackend (..)
   , GraphulaSafeToInsert
   ) where
 
 import Control.Monad.IO.Class (MonadIO)
 import Data.IORef (IORef)
 import Data.Kind (Constraint, Type)
-import Database.Persist (Entity(..), Key, PersistEntity, PersistEntityBackend)
+import Database.Persist (Entity (..), Key, PersistEntity, PersistEntityBackend)
 import Database.Persist.Sql (SqlBackend)
 import Test.QuickCheck.Random (QCGen)
 #if MIN_VERSION_persistent(2,14,0)
 import Database.Persist.Class.PersistEntity (SafeToInsert)
 #endif
+
+{- FOURMOLU_DISABLE -}
 
 -- | A class that provides backwards compatibility with @persistent-2.14@
 --
@@ -49,12 +51,18 @@ instance
 #endif
     GraphulaSafeToInsert a
 
-type MonadGraphula m
-  = (Monad m, MonadIO m, MonadGraphulaBackend m, MonadGraphulaFrontend m)
+{- FOURMOLU_ENABLE -}
+
+type MonadGraphula m =
+  (Monad m, MonadIO m, MonadGraphulaBackend m, MonadGraphulaFrontend m)
 
 class MonadGraphulaFrontend m where
   insert
-    :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a, Monad m, GraphulaSafeToInsert a)
+    :: ( PersistEntityBackend a ~ SqlBackend
+       , PersistEntity a
+       , Monad m
+       , GraphulaSafeToInsert a
+       )
     => Maybe (Key a)
     -> a
     -> m (Maybe (Entity a))
