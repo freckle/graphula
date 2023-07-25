@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.0.
+-- This file has been generated from package.yaml by hpack version 0.35.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 708be6abd7543f73652eb13a394e846b7310dbc15b9a90b1446c37f7363bb07d
+-- hash: ca3c9631f0eb250d085bf4e69cf99d4cd5d82c6c7975a14ce18b57fc549575c5
 
 name:           graphula
 version:        2.0.2.2
@@ -64,7 +64,7 @@ library
     , unliftio-core
   default-language: Haskell2010
   if impl(ghc >= 9.2)
-    ghc-options: -Wno-missing-kind-signatures
+    ghc-options: -Wno-missing-kind-signatures -Wno-operator-whitespace
   if impl(ghc >= 8.10)
     ghc-options: -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
   if impl(ghc < 8.6)
@@ -93,7 +93,7 @@ test-suite readme
     , unliftio-core
   default-language: Haskell2010
   if impl(ghc >= 9.2)
-    ghc-options: -Wno-missing-kind-signatures
+    ghc-options: -Wno-missing-kind-signatures -Wno-operator-whitespace
   if impl(ghc >= 8.10)
     ghc-options: -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
   if impl(ghc < 8.6)
