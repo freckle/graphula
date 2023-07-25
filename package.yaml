@@ -23,6 +23,7 @@ when:
   - condition: impl(ghc >= 9.2)
     ghc-options:
       - -Wno-missing-kind-signatures
+      - -Wno-operator-whitespace
   - condition: impl(ghc >= 8.10)
     ghc-options:
       - -Wno-missing-safe-haskell-mode
