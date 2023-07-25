@@ -17,7 +17,6 @@ import Test.QuickCheck.Gen (unGen)
 -- This is akin to 'Test.QuickCheck.generate', but utilizing graphula's
 -- generation. The size passed to the generator is always 30; if you want
 -- another size then you should explicitly use 'Test.QuickCheck.resize'.
---
 generate :: (MonadIO m, MonadGraphulaBackend m) => Gen a -> m a
 generate gen = do
   genRef <- askGen

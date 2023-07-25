@@ -28,7 +28,7 @@ import Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
 import Control.Monad.Trans (MonadTrans, lift)
 import Data.Foldable (for_)
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
-import Database.Persist (Entity(..))
+import Database.Persist (Entity (..))
 import Graphula.Class
 import UnliftIO.Exception (SomeException, catch, mask, throwIO)
 
@@ -51,12 +51,15 @@ instance MonadUnliftIO m => MonadUnliftIO (GraphulaIdempotentT m) where
 instance MonadTrans GraphulaIdempotentT where
   lift = GraphulaIdempotentT . lift
 
-instance (MonadIO m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaIdempotentT m) where
+instance
+  (MonadIO m, MonadGraphulaFrontend m)
+  => MonadGraphulaFrontend (GraphulaIdempotentT m)
+  where
   insert mKey n = do
     finalizersRef <- ask
     mEnt <- lift $ insert mKey n
-    for_ (entityKey <$> mEnt)
-      $ \key -> liftIO $ modifyIORef' finalizersRef (remove key >>)
+    for_ (entityKey <$> mEnt) $
+      \key -> liftIO $ modifyIORef' finalizersRef (remove key >>)
     pure mEnt
   remove = lift . remove
 
@@ -64,9 +67,9 @@ runGraphulaIdempotentT :: MonadUnliftIO m => GraphulaIdempotentT m a -> m a
 runGraphulaIdempotentT action = mask $ \unmasked -> do
   finalizersRef <- liftIO . newIORef $ pure ()
   x <-
-    unmasked
-    $ runReaderT (runGraphulaIdempotentT' action) finalizersRef
-    `catch` rollbackRethrow finalizersRef
+    unmasked $
+      runReaderT (runGraphulaIdempotentT' action) finalizersRef
+        `catch` rollbackRethrow finalizersRef
   rollback finalizersRef $ pure x
  where
   rollback :: MonadIO m => IORef (m a) -> m b -> m b

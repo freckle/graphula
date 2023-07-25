@@ -72,64 +72,64 @@
 --      $ 'ensure'
 --      $ not . courseIsArchived
 -- @
---
 module Graphula
-  (
-  -- * Basic usage
-  -- ** Model requirements
-    HasDependencies(..)
-  , Only(..)
+  ( -- * Basic usage
+
+    -- ** Model requirements
+    HasDependencies (..)
+  , Only (..)
   , only
 
-  -- ** Defining the graph
+    -- ** Defining the graph
   , node
   , edit
   , ensure
 
-  -- ** Running the graph
+    -- ** Running the graph
   , GraphulaT
   , runGraphulaT
-  , GenerationFailure(..)
+  , GenerationFailure (..)
 
-  -- * Advanced usage
-  -- ** Non-serial keys
-  , KeySourceType(..)
+    -- * Advanced usage
+
+    -- ** Non-serial keys
+  , KeySourceType (..)
   , nodeKeyed
 
-  -- ** Running with logging
+    -- ** Running with logging
   , GraphulaLoggedT
   , runGraphulaLoggedT
   , runGraphulaLoggedWithFileT
 
-  -- ** Running idempotently
+    -- ** Running idempotently
   , GraphulaIdempotentT
   , runGraphulaIdempotentT
 
-  -- * Useful synonymns
-  -- |
-  --
-  -- When declaring your own functions that call 'node', these synonyms can help
-  -- with the constraint soup.
-  --
-  -- > genSchoolWithTeacher
-  -- >   :: GraphulaContext m '[School, Teacher]
-  -- >   -> m (Entity Teacher)
-  -- > genSchoolWithTeacher = do
-  -- >   school <- node @School () mempty
-  -- >   node @Teacher (onlyKey school) mempty
-  --
+    -- * Useful synonymns
+
+    -- |
+    --
+    -- When declaring your own functions that call 'node', these synonyms can help
+    -- with the constraint soup.
+    --
+    -- > genSchoolWithTeacher
+    -- >   :: GraphulaContext m '[School, Teacher]
+    -- >   -> m (Entity Teacher)
+    -- > genSchoolWithTeacher = do
+    -- >   school <- node @School () mempty
+    -- >   node @Teacher (onlyKey school) mempty
   , GraphulaContext
   , GraphulaNode
 
-  -- * Lower-level details
-  -- |
-  --
-  -- These exports are likely to be removed from this module in a future
-  -- version. If you are using them, consider importing from their own modules.
-  --
+    -- * Lower-level details
+
+    -- |
+    --
+    -- These exports are likely to be removed from this module in a future
+    -- version. If you are using them, consider importing from their own modules.
   , MonadGraphula
-  , MonadGraphulaBackend(..)
-  , MonadGraphulaFrontend(..)
+  , MonadGraphulaBackend (..)
+  , MonadGraphulaFrontend (..)
   , NodeOptions
   , GenerateKey
   , NoConstraint
@@ -162,8 +162,11 @@ import Graphula.NoConstraint
 import Graphula.Node
 import System.Random (randomIO)
 import Test.HUnit.Lang
-  (FailureReason(..), HUnitFailure(..), formatFailureReason)
-import Test.QuickCheck (Arbitrary(..))
+  ( FailureReason (..)
+  , HUnitFailure (..)
+  , formatFailureReason
+  )
+import Test.QuickCheck (Arbitrary (..))
 import Test.QuickCheck.Random (QCGen, mkQCGen)
 import UnliftIO.Exception (catch, throwIO)
 
@@ -179,10 +182,9 @@ import UnliftIO.Exception (catch, throwIO)
 --   node @C (a, b) $ edit $ \n ->
 --     n { cc = "spanish" }
 -- @
---
 type family GraphulaContext (m :: Type -> Type) (ts :: [Type]) :: Constraint where
-   GraphulaContext m '[] = MonadGraphula m
-   GraphulaContext m (t ': ts) = (GraphulaNode m t, GraphulaContext m ts)
+  GraphulaContext m '[] = MonadGraphula m
+  GraphulaContext m (t ': ts) = (GraphulaNode m t, GraphulaContext m ts)
 
 data Args backend n m = Args
   { dbRunner :: RunDB backend n m
@@ -191,9 +193,9 @@ data Args backend n m = Args
 
 newtype RunDB backend n m = RunDB (forall b. ReaderT backend n b -> m b)
 
-newtype GraphulaT n m a =
-  GraphulaT { runGraphulaT' :: ReaderT (Args SqlBackend n m) m a }
-  deriving newtype (Functor, Applicative, Monad, MonadIO, MonadReader (Args SqlBackend n m))
+newtype GraphulaT n m a = GraphulaT {runGraphulaT' :: ReaderT (Args SqlBackend n m) m a}
+  deriving newtype
+    (Functor, Applicative, Monad, MonadIO, MonadReader (Args SqlBackend n m))
 
 instance MonadTrans (GraphulaT n) where
   lift = GraphulaT . lift
@@ -212,9 +214,10 @@ instance (MonadIO m, MonadIO n) => MonadGraphulaFrontend (GraphulaT n m) where
   insert mKey n = do
     RunDB runDB <- asks dbRunner
     lift . runDB $ case mKey of
-      Nothing -> insertUnique n >>= \case
-        Nothing -> pure Nothing
-        Just key -> getEntity key
+      Nothing ->
+        insertUnique n >>= \case
+          Nothing -> pure Nothing
+          Just key -> getEntity key
       Just key -> do
         existingKey <- get key
         whenNothing existingKey $ do
@@ -232,9 +235,11 @@ whenNothing Nothing f = f
 whenNothing (Just _) _ = pure Nothing
 
 runGraphulaT
-  :: (MonadUnliftIO m)
-  => Maybe Int -- ^ Optional seed
-  -> (forall b . ReaderT SqlBackend n b -> m b) -- ^ Database runner
+  :: MonadUnliftIO m
+  => Maybe Int
+  -- ^ Optional seed
+  -> (forall b. ReaderT SqlBackend n b -> m b)
+  -- ^ Database runner
   -> GraphulaT n m a
   -> m a
 runGraphulaT mSeed runDB action = do
@@ -250,11 +255,11 @@ rethrowHUnitWith :: MonadIO m => String -> HUnitFailure -> m a
 rethrowHUnitWith message (HUnitFailure l r) =
   throwIO . HUnitFailure l . Reason $ message ++ "\n\n" ++ formatFailureReason r
 
-type GraphulaNode m a
-  = ( HasDependencies a
-    , Logging m a
-    , PersistEntityBackend a ~ SqlBackend
-    , PersistEntity a
-    , Typeable a
-    , Arbitrary a
-    )
+type GraphulaNode m a =
+  ( HasDependencies a
+  , Logging m a
+  , PersistEntityBackend a ~ SqlBackend
+  , PersistEntity a
+  , Typeable a
+  , Arbitrary a
+  )
