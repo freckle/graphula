@@ -9,6 +9,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE LambdaCase #-}
 
 -- | Internal type class(es) for Graphula-related behaviors
 module Graphula.Class
@@ -18,6 +19,7 @@ module Graphula.Class
   , GraphulaSafeToInsert
   ) where
 
+import Control.Exception (SomeException)
 import Control.Monad.IO.Class (MonadIO)
 import Data.IORef (IORef)
 import Data.Kind (Constraint, Type)
@@ -57,6 +59,19 @@ type MonadGraphula m =
   (Monad m, MonadIO m, MonadGraphulaBackend m, MonadGraphulaFrontend m)
 
 class MonadGraphulaFrontend m where
+  insertVerbose
+      :: ( PersistEntityBackend a ~ SqlBackend
+       , PersistEntity a
+       , Monad m
+       , GraphulaSafeToInsert a
+       )
+    => Maybe (Key a)
+    -> a
+    -> m (Either (Maybe SomeException) (Entity a))
+  insertVerbose mk a = insert mk a >>= \case
+    Just ea -> pure (Right ea)
+    Nothing -> pure (Left Nothing)
+
   insert
     :: ( PersistEntityBackend a ~ SqlBackend
        , PersistEntity a
@@ -66,11 +81,15 @@ class MonadGraphulaFrontend m where
     => Maybe (Key a)
     -> a
     -> m (Maybe (Entity a))
+  insert mk a = insertVerbose mk a >>= \case
+    Right ea -> pure (Just ea)
+    Left _ -> pure Nothing
 
   remove
     :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a, Monad m)
     => Key a
     -> m ()
+  {-# MINIMAL remove, insert | remove, insertVerbose #-}
 
 class MonadGraphulaBackend m where
   type Logging m :: Type -> Constraint
