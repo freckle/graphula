@@ -36,6 +36,7 @@ module Graphula.Node
 import Prelude
 
 import Control.Monad (guard, (<=<))
+import Data.Maybe (maybeToList)
 import Data.Proxy (Proxy (..))
 import Data.Semigroup.Generic (gmappend, gmempty)
 import Data.Traversable (for)
@@ -47,7 +48,7 @@ import Graphula.Arbitrary
 import Graphula.Class
 import Graphula.Dependencies
 import Test.QuickCheck (Arbitrary (..))
-import UnliftIO.Exception (Exception, throwIO)
+import UnliftIO.Exception (Exception, SomeException, throwIO)
 
 -- | Options for generating an individual node
 --
@@ -164,10 +165,10 @@ nodeImpl genKey dependencies NodeOptions {..} = attempt 100 10 $ do
 
 data GenerationFailure
   = -- | Could not satisfy constraints defined using 'ensure'
-    GenerationFailureMaxAttemptsToConstrain TypeRep
+    GenerationFailureMaxAttemptsToConstrain TypeRep [SomeException]
   | -- | Could not satisfy database constraints on 'insert'
-    GenerationFailureMaxAttemptsToInsert TypeRep
-  deriving stock (Show, Eq)
+    GenerationFailureMaxAttemptsToInsert TypeRep [SomeException]
+  deriving stock (Show)
 
 instance Exception GenerationFailure
 
@@ -183,22 +184,22 @@ attempt
   -> Int
   -> m (Maybe (Maybe (Key a), a))
   -> m (Entity a)
-attempt maxEdits maxInserts source = loop 0 0
+attempt maxEdits maxInserts source = loop 0 0 []
  where
-  loop :: Int -> Int -> m (Entity a)
-  loop numEdits numInserts
-    | numEdits >= maxEdits = die GenerationFailureMaxAttemptsToConstrain
-    | numInserts >= maxInserts = die GenerationFailureMaxAttemptsToInsert
+  loop :: Int -> Int -> [SomeException] -> m (Entity a)
+  loop numEdits numInserts errs
+    | numEdits >= maxEdits = die $ flip GenerationFailureMaxAttemptsToConstrain errs
+    | numInserts >= maxInserts = die $ flip GenerationFailureMaxAttemptsToInsert errs
     | otherwise =
         source >>= \case
-          Nothing -> loop (succ numEdits) numInserts
+          Nothing -> loop (succ numEdits) numInserts errs
           --               ^ failed to edit, only increments this
           Just (mKey, value) ->
-            insert mKey value >>= \case
-              Nothing -> loop (succ numEdits) (succ numInserts)
+            insertVerbose mKey value >>= \case
+              Left errMay -> loop (succ numEdits) (succ numInserts) (maybeToList errMay ++ errs)
               --               ^ failed to insert, but also increments this. Are we
               --                 sure that's what we want?
-              Just a -> pure a
+              Right a -> pure a
 
   die :: (TypeRep -> GenerationFailure) -> m (Entity a)
   die e = throwIO $ e $ typeRep (Proxy :: Proxy a)
