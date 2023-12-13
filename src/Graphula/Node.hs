@@ -47,6 +47,7 @@ import Graphula.Arbitrary
 import Graphula.Class
 import Graphula.Dependencies
 import Test.QuickCheck (Arbitrary (..))
+import UnliftIO (MonadIO)
 import UnliftIO.Exception (Exception, throwIO)
 
 -- | Options for generating an individual node
@@ -97,7 +98,7 @@ edit f = mempty {nodeOptionsEdit = Kendo $ Just . f}
 ensure :: (a -> Bool) -> NodeOptions a
 ensure f = mempty {nodeOptionsEdit = Kendo $ \a -> a <$ guard (f a)}
 
--- | Generate a node with a default (Database-provided) key
+-- | Generate a node with a default (Arbitrary or database-provided) key
 --
 -- > a <- node @A () mempty
 node
@@ -110,12 +111,49 @@ node
      , PersistEntityBackend a ~ SqlBackend
      , PersistEntity a
      , Typeable a
-     , GraphulaSafeToInsert a
      )
   => Dependencies a
   -> NodeOptions a
   -> m (Entity a)
-node = nodeImpl $ generate $ generateKey @(KeySource a) @a
+node dependencies NodeOptions {..} =
+  let genKey = generate $ generateKey @(KeySource a) @a
+  in  attempt 100 10 $ do
+        initial <- generate arbitrary
+        for (appKendo nodeOptionsEdit initial) $ \edited -> do
+          -- N.B. dependencies setting always overrules edits
+          let hydrated = edited `dependsOn` dependencies
+          logNode hydrated
+          mKey <- genKey
+          pure (mKey, hydrated)
+
+attempt
+  :: forall a m
+   . ( MonadGraphula m
+     , PersistEntityBackend a ~ SqlBackend
+     , PersistEntity a
+     , GenerateKey a
+     , Typeable a
+     )
+  => Int
+  -> Int
+  -> m (Maybe (KeyForInsert a, a))
+  -> m (Entity a)
+attempt maxEdits maxInserts source = loop 0 0
+ where
+  loop :: Int -> Int -> m (Entity a)
+  loop numEdits numInserts
+    | numEdits >= maxEdits = die GenerationFailureMaxAttemptsToConstrain
+    | numInserts >= maxInserts = die GenerationFailureMaxAttemptsToInsert
+    | otherwise =
+        source >>= \case
+          Nothing -> loop (succ numEdits) numInserts
+          --               ^ failed to edit, only increments this
+          Just (mKey, value) ->
+            insertWithPossiblyRequiredKey mKey value >>= \case
+              Nothing -> loop (succ numEdits) (succ numInserts)
+              --               ^ failed to insert, but also increments this. Are we
+              --                 sure that's what we want?
+              Just a -> pure a
 
 -- | Generate a node with an explictly-given key
 --
@@ -130,60 +168,33 @@ nodeKeyed
      , PersistEntityBackend a ~ SqlBackend
      , PersistEntity a
      , Typeable a
-     , GraphulaSafeToInsert a
      )
   => Key a
   -> Dependencies a
   -> NodeOptions a
   -> m (Entity a)
-nodeKeyed key = nodeImpl $ pure $ Just key
+nodeKeyed key dependencies NodeOptions {..} =
+  attempt' 100 10 key $ do
+    initial <- generate arbitrary
+    for (appKendo nodeOptionsEdit initial) $ \edited -> do
+      -- N.B. dependencies setting always overrules edits
+      let hydrated = edited `dependsOn` dependencies
+      logNode hydrated
+      pure hydrated
 
-nodeImpl
-  :: forall a m
-   . ( MonadGraphula m
-     , Logging m a
-     , Arbitrary a
-     , HasDependencies a
-     , PersistEntityBackend a ~ SqlBackend
-     , PersistEntity a
-     , Typeable a
-     , GraphulaSafeToInsert a
-     )
-  => m (Maybe (Key a))
-  -> Dependencies a
-  -> NodeOptions a
-  -> m (Entity a)
-nodeImpl genKey dependencies NodeOptions {..} = attempt 100 10 $ do
-  initial <- generate arbitrary
-  for (appKendo nodeOptionsEdit initial) $ \edited -> do
-    -- N.B. dependencies setting always overrules edits
-    let hydrated = edited `dependsOn` dependencies
-    logNode hydrated
-    mKey <- genKey
-    pure (mKey, hydrated)
-
-data GenerationFailure
-  = -- | Could not satisfy constraints defined using 'ensure'
-    GenerationFailureMaxAttemptsToConstrain TypeRep
-  | -- | Could not satisfy database constraints on 'insert'
-    GenerationFailureMaxAttemptsToInsert TypeRep
-  deriving stock (Show, Eq)
-
-instance Exception GenerationFailure
-
-attempt
+attempt'
   :: forall a m
    . ( MonadGraphula m
      , PersistEntityBackend a ~ SqlBackend
      , PersistEntity a
      , Typeable a
-     , GraphulaSafeToInsert a
      )
   => Int
   -> Int
-  -> m (Maybe (Maybe (Key a), a))
+  -> Key a
+  -> m (Maybe a)
   -> m (Entity a)
-attempt maxEdits maxInserts source = loop 0 0
+attempt' maxEdits maxInserts key source = loop 0 0
  where
   loop :: Int -> Int -> m (Entity a)
   loop numEdits numInserts
@@ -193,12 +204,25 @@ attempt maxEdits maxInserts source = loop 0 0
         source >>= \case
           Nothing -> loop (succ numEdits) numInserts
           --               ^ failed to edit, only increments this
-          Just (mKey, value) ->
-            insert mKey value >>= \case
+          Just value ->
+            insertKeyed key value >>= \case
               Nothing -> loop (succ numEdits) (succ numInserts)
               --               ^ failed to insert, but also increments this. Are we
               --                 sure that's what we want?
               Just a -> pure a
 
-  die :: (TypeRep -> GenerationFailure) -> m (Entity a)
-  die e = throwIO $ e $ typeRep (Proxy :: Proxy a)
+die
+  :: forall a m
+   . (MonadIO m, Typeable a)
+  => (TypeRep -> GenerationFailure)
+  -> m (Entity a)
+die e = throwIO $ e $ typeRep $ Proxy @a
+
+data GenerationFailure
+  = -- | Could not satisfy constraints defined using 'ensure'
+    GenerationFailureMaxAttemptsToConstrain TypeRep
+  | -- | Could not satisfy database constraints on 'insert'
+    GenerationFailureMaxAttemptsToInsert TypeRep
+  deriving stock (Show, Eq)
+
+instance Exception GenerationFailure

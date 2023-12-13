@@ -1,13 +1,13 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.2.
+-- This file has been generated from package.yaml by hpack version 0.36.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ca3c9631f0eb250d085bf4e69cf99d4cd5d82c6c7975a14ce18b57fc549575c5
+-- hash: 77f36204ab2afc392bf0f4eb7413aaf8ff36c25b86f28dde5747f3ed9121f0d4
 
 name:           graphula
-version:        2.0.2.2
+version:        2.1.0.0
 synopsis:       A simple interface for generating persistent data and linking its dependencies
 description:    Please see README.md
 category:       Network

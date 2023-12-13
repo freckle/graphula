@@ -1,6 +1,12 @@
-## [*Unreleased*](https://github.com/freckle/graphula/compare/v2.0.2.1...main)
+## [_Unreleased_](https://github.com/freckle/graphula/compare/v2.1.0.0...main)
 
-None
+## [v2.1.0.0](https://github.com/freckle/graphula/compare/v2.0.2.2...v2.1.0.0)
+
+- Some unnecessary `SafeToInsert` have been removed from `node` and `nodeKeyed`.
+  - `node` only requires `SafeToInsert` when the `KeySource` is `SourceDefault`,
+    not when the `KeySource` is `KeyArbitrary`.
+  - `nodeKeyed` no longer ever requires `SafeToInsert`
+- `MonadGraphulaFrontend` has a new `insertKeyed` method.
 
 ## [v2.0.2.2](https://github.com/freckle/graphula/compare/v2.0.2.1...v2.0.2.2)
 

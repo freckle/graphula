@@ -67,6 +67,15 @@ class MonadGraphulaFrontend m where
     -> a
     -> m (Maybe (Entity a))
 
+  insertKeyed
+    :: ( PersistEntityBackend a ~ SqlBackend
+       , PersistEntity a
+       , Monad m
+       )
+    => Key a
+    -> a
+    -> m (Maybe (Entity a))
+
   remove
     :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a, Monad m)
     => Key a

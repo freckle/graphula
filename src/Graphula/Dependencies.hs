@@ -24,18 +24,29 @@ module Graphula.Dependencies
 
     -- * Non-serial keys
   , KeySourceType (..)
+  , KeySourceTypeM
+  , KeyForInsert
+  , KeyRequirementForInsert
+  , InsertWithPossiblyRequiredKey (..)
+  , Required (..)
+  , Optional (..)
   , GenerateKey
   , generateKey
   ) where
 
 import Prelude
 
-import Data.Kind (Constraint)
+import Data.Kind (Constraint, Type)
 import Data.Proxy (Proxy (..))
-import Database.Persist (Key)
+import Database.Persist (Entity (..), Key, PersistEntity, PersistEntityBackend)
+import Database.Persist.Sql (SqlBackend)
 import GHC.Generics (Generic)
 import GHC.TypeLits (ErrorMessage (..), TypeError)
 import Generics.Eot (Eot, HasEot, fromEot, toEot)
+import Graphula.Class (GraphulaSafeToInsert, MonadGraphulaFrontend)
+import qualified Graphula.Class as MonadGraphulaFrontend
+  ( MonadGraphulaFrontend (..)
+  )
 import Graphula.Dependencies.Generic
 import Graphula.NoConstraint
 import Test.QuickCheck.Arbitrary (Arbitrary (..))
@@ -129,28 +140,85 @@ data KeySourceType
     -- See 'nodeKeyed'.
     SourceExternal
 
+newtype Required a = Required a
+
+newtype Optional a = Optional (Maybe a)
+
+-- | When a user of Graphula inserts, this wraps the key they provide.
+--   For 'SourceExternal' a key is required; for others it's optional.
+type family KeySourceTypeM (t :: KeySourceType) :: Type -> Type where
+  KeySourceTypeM 'SourceExternal = Required
+  KeySourceTypeM _ = Optional
+
+type KeyRequirementForInsert record = KeySourceTypeM (KeySource record)
+
+-- | When Graphula inserts into Persistent, this wraps the key is provides.
+--   For 'SourceDefault', a key is optional; for others it has always been
+--   generated.
+type family KeySourceTypeInternalM (t :: KeySourceType) :: Type -> Type where
+  KeySourceTypeInternalM 'SourceDefault = Optional
+  KeySourceTypeInternalM _ = Required
+
+type KeyRequirementForInsertInternal record =
+  KeySourceTypeInternalM (KeySource record)
+
+-- | When Graphula inserts into Persistent, this is the record's key.
+type KeyForInsert record = KeyRequirementForInsertInternal record (Key record)
+
+class InsertWithPossiblyRequiredKey (requirement :: Type -> Type) where
+  type InsertConstraint requirement :: Type -> Constraint
+  insertWithPossiblyRequiredKey
+    :: ( PersistEntityBackend record ~ SqlBackend
+       , PersistEntity record
+       , Monad m
+       , MonadGraphulaFrontend m
+       , InsertConstraint requirement record
+       )
+    => requirement (Key record)
+    -> record
+    -> m (Maybe (Entity record))
+  justKey :: key -> requirement key
+
+instance InsertWithPossiblyRequiredKey Optional where
+  type InsertConstraint Optional = GraphulaSafeToInsert
+  insertWithPossiblyRequiredKey (Optional key) = MonadGraphulaFrontend.insert key
+  justKey = Optional . Just
+
+instance InsertWithPossiblyRequiredKey Required where
+  type InsertConstraint Required = NoConstraint
+  insertWithPossiblyRequiredKey (Required key) = MonadGraphulaFrontend.insertKeyed key
+  justKey = Required
+
 -- | Abstract constraint that some @a@ can generate a key
 --
 -- This is part of ensuring better error messages.
 class
-  (GenerateKeyInternal (KeySource a) a, KeyConstraint (KeySource a) a) =>
+  ( GenerateKeyInternal (KeySource a) a
+  , KeyConstraint (KeySource a) a
+  , InsertWithPossiblyRequiredKey (KeySourceTypeInternalM (KeySource a))
+  , InsertConstraint (KeySourceTypeInternalM (KeySource a)) a
+  ) =>
   GenerateKey a
 
 instance
-  (GenerateKeyInternal (KeySource a) a, KeyConstraint (KeySource a) a)
+  ( GenerateKeyInternal (KeySource a) a
+  , KeyConstraint (KeySource a) a
+  , InsertWithPossiblyRequiredKey (KeySourceTypeInternalM (KeySource a))
+  , InsertConstraint (KeySourceTypeInternalM (KeySource a)) a
+  )
   => GenerateKey a
 
 class GenerateKeyInternal (s :: KeySourceType) a where
   type KeyConstraint s a :: Constraint
-  generateKey :: KeyConstraint s a => Gen (Maybe (Key a))
+  generateKey :: KeyConstraint s a => Gen (KeySourceTypeInternalM s (Key a))
 
 instance GenerateKeyInternal 'SourceDefault a where
-  type KeyConstraint 'SourceDefault a = NoConstraint a
-  generateKey = pure Nothing
+  type KeyConstraint 'SourceDefault a = GraphulaSafeToInsert a
+  generateKey = pure (Optional Nothing)
 
 instance GenerateKeyInternal 'SourceArbitrary a where
   type KeyConstraint 'SourceArbitrary a = Arbitrary (Key a)
-  generateKey = Just <$> arbitrary
+  generateKey = Required <$> arbitrary
 
 -- Rendered:
 --
