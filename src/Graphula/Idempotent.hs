@@ -61,6 +61,12 @@ instance
     for_ (entityKey <$> mEnt) $
       \key -> liftIO $ modifyIORef' finalizersRef (remove key >>)
     pure mEnt
+  insertKeyed key n = do
+    finalizersRef <- ask
+    mEnt <- lift $ insertKeyed key n
+    for_ (entityKey <$> mEnt) $
+      \key' -> liftIO $ modifyIORef' finalizersRef (remove key' >>)
+    pure mEnt
   remove = lift . remove
 
 runGraphulaIdempotentT :: MonadUnliftIO m => GraphulaIdempotentT m a -> m a

@@ -150,9 +150,9 @@ import Database.Persist
   , delete
   , get
   , getEntity
-  , insertKey
   , insertUnique
   )
+import qualified Database.Persist as Persist
 import Database.Persist.Sql (SqlBackend)
 import Graphula.Class
 import Graphula.Dependencies
@@ -223,8 +223,18 @@ instance (MonadIO m, MonadIO n) => MonadGraphulaFrontend (GraphulaT n m) where
         whenNothing existingKey $ do
           existingUnique <- checkUnique n
           whenNothing existingUnique $ do
-            insertKey key n
+            Persist.insertKey key n
             getEntity key
+
+  insertKeyed key n = do
+    RunDB runDB <- asks dbRunner
+    lift . runDB $ do
+      existingKey <- get key
+      whenNothing existingKey $ do
+        existingUnique <- checkUnique n
+        whenNothing existingUnique $ do
+          Persist.insertKey key n
+          getEntity key
 
   remove key = do
     RunDB runDB <- asks dbRunner

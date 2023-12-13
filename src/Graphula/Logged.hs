@@ -73,6 +73,7 @@ instance (MonadGraphulaBackend m, MonadIO m) => MonadGraphulaBackend (GraphulaLo
 
 instance (Monad m, MonadGraphulaFrontend m) => MonadGraphulaFrontend (GraphulaLoggedT m) where
   insert mKey = lift . insert mKey
+  insertKeyed key = lift . insertKeyed key
   remove = lift . remove
 
 -- | Run the graph while logging to a temporary file
