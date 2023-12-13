@@ -1,4 +1,4 @@
-resolver: lts-21.4
+resolver: lts-21.11
 
 ghc-options:
   "$locals": -fwrite-ide-info
