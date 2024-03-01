@@ -3,8 +3,6 @@ cabal-version: 1.12
 -- This file has been generated from package.yaml by hpack version 0.36.0.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: 77f36204ab2afc392bf0f4eb7413aaf8ff36c25b86f28dde5747f3ed9121f0d4
 
 name:           graphula
 version:        2.1.0.0
@@ -63,6 +61,8 @@ library
     , unliftio
     , unliftio-core
   default-language: Haskell2010
+  if impl(ghc >= 9.8)
+    ghc-options: -Wno-missing-role-annotations
   if impl(ghc >= 9.2)
     ghc-options: -Wno-missing-kind-signatures -Wno-operator-whitespace
   if impl(ghc >= 8.10)
@@ -92,6 +92,8 @@ test-suite readme
     , transformers
     , unliftio-core
   default-language: Haskell2010
+  if impl(ghc >= 9.8)
+    ghc-options: -Wno-missing-role-annotations
   if impl(ghc >= 9.2)
     ghc-options: -Wno-missing-kind-signatures -Wno-operator-whitespace
   if impl(ghc >= 8.10)
