@@ -19,6 +19,9 @@ ghc-options:
   - -Wno-unsafe
 
 when:
+  - condition: impl(ghc >= 9.8)
+    ghc-options:
+      - -Wno-missing-role-annotations
   - condition: impl(ghc >= 9.2)
     ghc-options:
       - -Wno-missing-kind-signatures
@@ -30,9 +33,6 @@ when:
   - condition: impl(ghc < 8.6)
     ghc-options:
       - -Wno-redundant-constraints
-  - condition: impl(ghc >= 9.8)
-    ghc-options:
-      - -Wno-missing-role-annotations
 
 dependencies:
   - base < 5
