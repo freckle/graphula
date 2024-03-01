@@ -59,6 +59,10 @@ import UnliftIO.Exception (Exception, throwIO)
 -- > a1 <- node @A () mempty
 -- > a2 <- node @A () $ edit $ \a -> a { someField = True }
 -- > a3 <- node @A () $ ensure $ (== True) . someField
+--
+-- The Semigroup orders the operations from right to left. For example,
+-- @'edit' z <> 'ensure' y <> 'edit' x@ first performs @'edit' x@, then fails if
+-- the value does not satisfy assertion @y@, then performs @'edit' z@.
 newtype NodeOptions a = NodeOptions
   { nodeOptionsEdit :: Kendo Maybe a
   }
