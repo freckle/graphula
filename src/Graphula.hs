@@ -191,17 +191,11 @@ data Args backend n m = Args
   , gen :: IORef QCGen
   }
 
-type role Args representational representational representational
-
 newtype RunDB backend n m = RunDB (forall b. ReaderT backend n b -> m b)
-
-type role RunDB representational representational representational
 
 newtype GraphulaT n m a = GraphulaT {runGraphulaT' :: ReaderT (Args SqlBackend n m) m a}
   deriving newtype
     (Functor, Applicative, Monad, MonadIO, MonadReader (Args SqlBackend n m))
-
-type role GraphulaT representational representational nominal
 
 instance MonadTrans (GraphulaT n) where
   lift = GraphulaT . lift

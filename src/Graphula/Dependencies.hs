@@ -127,8 +127,6 @@ class HasDependencies a where
 newtype Only a = Only {fromOnly :: a}
   deriving stock (Eq, Show, Ord, Generic, Functor, Foldable, Traversable)
 
-type role Only representational
-
 only :: a -> Only a
 only = Only
 
@@ -144,11 +142,7 @@ data KeySourceType
 
 newtype Required a = Required a
 
-type role Required representational
-
 newtype Optional a = Optional (Maybe a)
-
-type role Optional representational
 
 -- | When a user of Graphula inserts, this wraps the key they provide.
 --   For 'SourceExternal' a key is required; for others it's optional.

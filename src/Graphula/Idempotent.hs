@@ -43,8 +43,6 @@ newtype GraphulaIdempotentT m a = GraphulaIdempotentT
     , MonadReader (IORef (m ()))
     )
 
-type role GraphulaIdempotentT representational nominal
-
 instance MonadUnliftIO m => MonadUnliftIO (GraphulaIdempotentT m) where
   {-# INLINE withRunInIO #-}
   withRunInIO inner = GraphulaIdempotentT $ withRunInIO $ \run ->
