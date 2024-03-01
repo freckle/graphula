@@ -67,6 +67,8 @@ library
     ghc-options: -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
   if impl(ghc < 8.6)
     ghc-options: -Wno-redundant-constraints
+  if impl(ghc >= 9.8)
+    ghc-options: -Wno-missing-role-annotations
 
 test-suite readme
   type: exitcode-stdio-1.0
@@ -96,6 +98,8 @@ test-suite readme
     ghc-options: -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module
   if impl(ghc < 8.6)
     ghc-options: -Wno-redundant-constraints
+  if impl(ghc >= 9.8)
+    ghc-options: -Wno-missing-role-annotations
   if impl(ghc >= 8.8)
     ghc-options: -Wno-missing-deriving-strategies
   if flag(persistent-template)
