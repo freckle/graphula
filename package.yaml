@@ -34,6 +34,9 @@ when:
 dependencies:
   - base < 5
 
+default-extensions:
+  - RoleAnnotations
+
 library:
   source-dirs:
     - src

@@ -22,6 +22,8 @@ data Match t
   = NoMatch t
   | Match t
 
+type role Match representational
+
 type family DependenciesTypeInstance nodeTy depsTy where
   DependenciesTypeInstance nodeTy depsTy =
     'Text "‘type Dependencies "

@@ -44,6 +44,8 @@ library
       Paths_graphula
   hs-source-dirs:
       src
+  default-extensions:
+      RoleAnnotations
   ghc-options: -Weverything -Wno-all-missed-specialisations -Wno-implicit-prelude -Wno-missing-import-lists -Wno-safe -Wno-unsafe
   build-depends:
       HUnit
@@ -75,6 +77,8 @@ test-suite readme
       Paths_graphula
   hs-source-dirs:
       test
+  default-extensions:
+      RoleAnnotations
   ghc-options: -Weverything -Wno-all-missed-specialisations -Wno-implicit-prelude -Wno-missing-import-lists -Wno-safe -Wno-unsafe -pgmL markdown-unlit
   build-depends:
       QuickCheck

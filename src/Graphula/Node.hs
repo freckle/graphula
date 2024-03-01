@@ -68,6 +68,8 @@ newtype NodeOptions a = NodeOptions
   }
   deriving stock (Generic)
 
+type role NodeOptions nominal
+
 instance Semigroup (NodeOptions a) where
   (<>) = gmappend
   {-# INLINE (<>) #-}
@@ -79,6 +81,8 @@ instance Monoid (NodeOptions a) where
 -- | Like @'Endo'@ but uses Kliesli composition
 newtype Kendo m a = Kendo {appKendo :: a -> m a}
   deriving stock (Generic)
+
+type role Kendo representational nominal
 
 instance Monad m => Semigroup (Kendo m a) where
   Kendo f <> Kendo g = Kendo $ f <=< g

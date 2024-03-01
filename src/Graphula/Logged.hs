@@ -56,6 +56,8 @@ newtype GraphulaLoggedT m a = GraphulaLoggedT
     , MonadReader (IORef (Seq Text))
     )
 
+type role GraphulaLoggedT representational nominal
+
 instance MonadUnliftIO m => MonadUnliftIO (GraphulaLoggedT m) where
   {-# INLINE withRunInIO #-}
   withRunInIO inner =
