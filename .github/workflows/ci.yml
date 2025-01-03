@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: freckle/stack-action@v4
+      - uses: freckle/stack-action@v5
         with:
           stack-yaml: ${{ matrix.stack-yaml }}
 
