@@ -2,22 +2,31 @@ name: Release
 
 on:
   push:
-    branches: main
+    branches:
+      - main
+      - rc/*
 
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - id: tag
-        uses: freckle/haskell-tag-action@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - if: steps.tag.outputs.tag
-        uses: freckle/stack-upload-action@v2
         with:
-          pvp-bounds: lower
+          persist-credentials: false
+
+      - id: token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.FRECKLE_AUTOMATION_APP_ID }}
+          private-key: ${{ secrets.FRECKLE_AUTOMATION_PRIVATE_KEY }}
+
+      - id: release
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          extra_plugins: |
+            git+https://github.com/pbrisbin/semantic-release-stack-upload.git
         env:
-          HACKAGE_API_KEY: ${{ secrets.HACKAGE_UPLOAD_API_KEY }}
+          FORCE_COLOR: 1
+          GITHUB_TOKEN: ${{ steps.token.outputs.token }}
+          HACKAGE_KEY: ${{ secrets.HACKAGE_UPLOAD_API_KEY }}
+          STACK_YAML: stack-lts-12.26.yaml
