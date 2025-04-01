@@ -24,7 +24,7 @@ jobs:
         uses: cycjimmy/semantic-release-action@v4
         with:
           extra_plugins: |
-            git+https://github.com/pbrisbin/semantic-release-stack-upload.git
+            semantic-release-stack-upload
         env:
           FORCE_COLOR: 1
           GITHUB_TOKEN: ${{ steps.token.outputs.token }}
