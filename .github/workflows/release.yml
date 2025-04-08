@@ -15,7 +15,7 @@ jobs:
           persist-credentials: false
 
       - id: token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ vars.FRECKLE_AUTOMATION_APP_ID }}
           private-key: ${{ secrets.FRECKLE_AUTOMATION_PRIVATE_KEY }}
