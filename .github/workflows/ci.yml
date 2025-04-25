@@ -2,30 +2,30 @@ name: CI
 
 on:
   pull_request:
-  push:
-    branches: main
 
 jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: generate
+        uses: freckle/stack-action/generate-matrix@v5
+    outputs:
+      stack-yamls: ${{ steps.generate.outputs.stack-yamls }}
+      fail-fast: false
+
   test:
+    needs: generate
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        stack-yaml:
-          - stack-nightly.yaml # ghc-9.6
-          - stack.yaml # ghc-9.4
-          - stack-lts-20.26.yaml # ghc-9.2
-          - stack-lts-19.33.yaml # ghc-9.0
-          - stack-lts-18.28.yaml # ghc-8.10
-          - stack-lts-16.31.yaml # ghc-8.8
-          - stack-lts-14.27.yaml # ghc-8.6
-          - stack-lts-12.26.yaml # ghc-8.4
-          - stack-persistent-2.14.yaml
+        stack-yaml: ${{ fromJSON(needs.generate.outputs.stack-yamls) }}
       fail-fast: false
 
     steps:
       - uses: actions/checkout@v4
-      - uses: freckle/stack-action@v4
+      - uses: freckle/stack-action@v5
         with:
           stack-yaml: ${{ matrix.stack-yaml }}
 
@@ -33,7 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: rwe/actions-hlint-setup@v1
-      - uses: rwe/actions-hlint-run@v2
+
+      - uses: haskell-actions/hlint-setup@v2
+      - uses: haskell-actions/hlint-run@v2
         with:
           fail-on: warning
