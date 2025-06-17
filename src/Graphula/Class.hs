@@ -66,6 +66,18 @@ class MonadGraphulaFrontend m where
     => Maybe (Key a)
     -> a
     -> m (Maybe (Entity a))
+  insert mk a = either (const Nothing) Just <$> insertEither mk a
+
+  insertEither
+    :: ( PersistEntityBackend a ~ SqlBackend
+       , PersistEntity a
+       , Monad m
+       , GraphulaSafeToInsert a
+       )
+    => Maybe (Key a)
+    -> a
+    -> m (Either String (Entity a))
+  insertEither mk a = maybe (Left "Unable to insert entity") Right <$> insert mk a
 
   insertKeyed
     :: ( PersistEntityBackend a ~ SqlBackend
@@ -75,11 +87,24 @@ class MonadGraphulaFrontend m where
     => Key a
     -> a
     -> m (Maybe (Entity a))
+  insertKeyed k a = either (const Nothing) Just <$> insertKeyedEither k a
+
+  insertKeyedEither
+    :: ( PersistEntityBackend a ~ SqlBackend
+       , PersistEntity a
+       , Monad m
+       )
+    => Key a
+    -> a
+    -> m (Either String (Entity a))
+  insertKeyedEither k a = maybe (Left "Unable to insert keyed entity") Right <$> insertKeyed k a
 
   remove
     :: (PersistEntityBackend a ~ SqlBackend, PersistEntity a, Monad m)
     => Key a
     -> m ()
+
+  {-# MINIMAL (insert | insertEither), (insertKeyed | insertKeyedEither), remove #-}
 
 class MonadGraphulaBackend m where
   type Logging m :: Type -> Constraint

@@ -107,10 +107,10 @@ class HasDependencies a where
     :: ( HasEot a
        , HasEot (Dependencies a)
        , GHasDependencies
-          (Proxy a)
-          (Proxy (Dependencies a))
-          (Eot a)
-          (Eot (Dependencies a))
+           (Proxy a)
+           (Proxy (Dependencies a))
+           (Eot a)
+           (Eot (Dependencies a))
        )
     => a
     -> Dependencies a
@@ -177,16 +177,28 @@ class InsertWithPossiblyRequiredKey (requirement :: Type -> Type) where
     => requirement (Key record)
     -> record
     -> m (Maybe (Entity record))
+  insertWithPossiblyRequiredKeyEither
+    :: ( PersistEntityBackend record ~ SqlBackend
+       , PersistEntity record
+       , Monad m
+       , MonadGraphulaFrontend m
+       , InsertConstraint requirement record
+       )
+    => requirement (Key record)
+    -> record
+    -> m (Either String (Entity record))
   justKey :: key -> requirement key
 
 instance InsertWithPossiblyRequiredKey Optional where
   type InsertConstraint Optional = GraphulaSafeToInsert
   insertWithPossiblyRequiredKey (Optional key) = MonadGraphulaFrontend.insert key
+  insertWithPossiblyRequiredKeyEither (Optional key) = MonadGraphulaFrontend.insertEither key
   justKey = Optional . Just
 
 instance InsertWithPossiblyRequiredKey Required where
   type InsertConstraint Required = NoConstraint
   insertWithPossiblyRequiredKey (Required key) = MonadGraphulaFrontend.insertKeyed key
+  insertWithPossiblyRequiredKeyEither (Required key) = MonadGraphulaFrontend.insertKeyedEither key
   justKey = Required
 
 -- | Abstract constraint that some @a@ can generate a key
