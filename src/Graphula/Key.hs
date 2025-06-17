@@ -6,9 +6,8 @@
 
 -- | Convenience functions for working with 'Key' dependencies
 module Graphula.Key
-  ( onlyKey
-  , keys
-  , Keys
+  ( EntityKeys(..)
+  , onlyKey
   ) where
 
 import Database.Persist
