@@ -211,38 +211,42 @@ instance MonadIO m => MonadGraphulaBackend (GraphulaT n m) where
   logNode _ = pure ()
 
 instance (MonadIO m, MonadIO n) => MonadGraphulaFrontend (GraphulaT n m) where
-  insert mKey n = do
+  insertEither mKey n = do
     RunDB runDB <- asks dbRunner
     lift . runDB $ case mKey of
       Nothing ->
         insertUnique n >>= \case
-          Nothing -> pure Nothing
-          Just key -> getEntity key
+          Nothing -> pure $ Left "entity violated a unique constraint"
+          Just key -> maybe (Left "inserted entity not found") Right <$> getEntity key
       Just key -> do
         existingKey <- get key
-        whenNothing existingKey $ do
-          existingUnique <- checkUnique n
-          whenNothing existingUnique $ do
-            Persist.insertKey key n
-            getEntity key
+        case existingKey of
+          Just _ -> pure $ Left "entity already exists by this key"
+          Nothing -> do
+            existingUnique <- checkUnique n
+            case existingUnique of
+              Just _ -> pure $ Left "entity would violate unique constraint"
+              Nothing -> do
+                Persist.insertKey key n
+                maybe (Left "inserted entity not found") Right <$> getEntity key
 
-  insertKeyed key n = do
+  insertKeyedEither key n = do
     RunDB runDB <- asks dbRunner
     lift . runDB $ do
       existingKey <- get key
-      whenNothing existingKey $ do
-        existingUnique <- checkUnique n
-        whenNothing existingUnique $ do
-          Persist.insertKey key n
-          getEntity key
+      case existingKey of
+        Just _ -> pure $ Left "entity already exists by this key"
+        Nothing -> do
+          existingUnique <- checkUnique n
+          case existingUnique of
+            Just _ -> pure $ Left "entity would violate unique constraint"
+            Nothing -> do
+              Persist.insertKey key n
+              maybe (Left "inserted entity not found") Right <$> getEntity key
 
   remove key = do
     RunDB runDB <- asks dbRunner
     lift . runDB $ delete key
-
-whenNothing :: Applicative m => Maybe a -> m (Maybe b) -> m (Maybe b)
-whenNothing Nothing f = f
-whenNothing (Just _) _ = pure Nothing
 
 runGraphulaT
   :: MonadUnliftIO m

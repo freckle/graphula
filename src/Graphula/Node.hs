@@ -142,22 +142,20 @@ attempt
   -> Int
   -> m (Maybe (KeyForInsert a, a))
   -> m (Entity a)
-attempt maxEdits maxInserts source = loop 0 0
+attempt maxEdits maxInserts source = loop 0 0 Nothing
  where
-  loop :: Int -> Int -> m (Entity a)
-  loop numEdits numInserts
-    | numEdits >= maxEdits = die GenerationFailureMaxAttemptsToConstrain
-    | numInserts >= maxInserts = die GenerationFailureMaxAttemptsToInsert
+  loop :: Int -> Int -> Maybe String -> m (Entity a)
+  loop numEdits numInserts mmsg
+    | numEdits >= maxEdits = die $ GenerationFailureMaxAttemptsToConstrain mmsg
+    | numInserts >= maxInserts = die $ GenerationFailureMaxAttemptsToInsert mmsg
     | otherwise =
         source >>= \case
-          Nothing -> loop (succ numEdits) numInserts
+          Nothing -> loop (succ numEdits) numInserts Nothing
           --               ^ failed to edit, only increments this
           Just (mKey, value) ->
-            insertWithPossiblyRequiredKey mKey value >>= \case
-              Nothing -> loop (succ numEdits) (succ numInserts)
-              --               ^ failed to insert, but also increments this. Are we
-              --                 sure that's what we want?
-              Just a -> pure a
+            insertWithPossiblyRequiredKeyEither mKey value >>= \case
+              Left msg -> loop (succ numEdits) (succ numInserts) $ Just msg
+              Right a -> pure a
 
 -- | Generate a node with an explictly-given key
 --
@@ -198,22 +196,20 @@ attempt'
   -> Key a
   -> m (Maybe a)
   -> m (Entity a)
-attempt' maxEdits maxInserts key source = loop 0 0
+attempt' maxEdits maxInserts key source = loop 0 0 Nothing
  where
-  loop :: Int -> Int -> m (Entity a)
-  loop numEdits numInserts
-    | numEdits >= maxEdits = die GenerationFailureMaxAttemptsToConstrain
-    | numInserts >= maxInserts = die GenerationFailureMaxAttemptsToInsert
+  loop :: Int -> Int -> Maybe String -> m (Entity a)
+  loop numEdits numInserts mmsg
+    | numEdits >= maxEdits = die $ GenerationFailureMaxAttemptsToConstrain mmsg
+    | numInserts >= maxInserts = die $ GenerationFailureMaxAttemptsToInsert mmsg
     | otherwise =
         source >>= \case
-          Nothing -> loop (succ numEdits) numInserts
+          Nothing -> loop (succ numEdits) numInserts Nothing
           --               ^ failed to edit, only increments this
           Just value ->
-            insertKeyed key value >>= \case
-              Nothing -> loop (succ numEdits) (succ numInserts)
-              --               ^ failed to insert, but also increments this. Are we
-              --                 sure that's what we want?
-              Just a -> pure a
+            insertKeyedEither key value >>= \case
+              Left msg -> loop (succ numEdits) (succ numInserts) $ Just msg
+              Right a -> pure a
 
 die
   :: forall a m
@@ -224,9 +220,9 @@ die e = throwIO $ e $ typeRep $ Proxy @a
 
 data GenerationFailure
   = -- | Could not satisfy constraints defined using 'ensure'
-    GenerationFailureMaxAttemptsToConstrain TypeRep
+    GenerationFailureMaxAttemptsToConstrain (Maybe String) TypeRep
   | -- | Could not satisfy database constraints on 'insert'
-    GenerationFailureMaxAttemptsToInsert TypeRep
+    GenerationFailureMaxAttemptsToInsert (Maybe String) TypeRep
   deriving stock (Show, Eq)
 
 instance Exception GenerationFailure

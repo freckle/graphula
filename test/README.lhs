@@ -32,6 +32,7 @@ dependencies. We use this interface to generate fixtures for automated testing.
 
 module Main (module Main) where
 
+import Control.Exception (try, Exception(..))
 import Control.Monad.IO.Class
 import Control.Monad.IO.Unlift
 import Control.Monad.Logger (NoLoggingT)
@@ -170,6 +171,28 @@ loggingSpec = do
   n `shouldSatisfy` (not . null)
 ```
 
+## Generation Failures
+
+Generating the graph can fail if you ask it do impossible things, such as
+generate entities that collide on a unique constraint. In such cases, you will
+receive an informative error:
+
+```haskell
+generationFailureSpec :: IO ()
+generationFailureSpec = do
+  result <- try $ runGraphulaT Nothing runDB $ do
+    school <- node @School () mempty
+
+    -- collision that will never resolve
+    nodeKeyed @School (entityKey school) () mempty
+
+  case result of
+    Left ex ->
+      displayException @GenerationFailure ex
+        `shouldBe` "GenerationFailureMaxAttemptsToInsert (Just \"entity already exists by this key\") School"
+    Right _ -> pure ()
+```
+
 ## Running It
 
 ```haskell
@@ -202,6 +225,7 @@ main = hspec $
   describe "graphula" . parallel $ do
     it "generates and links arbitrary graphs of data" simpleSpec
     it "allows logging graphs" loggingSpec
+    it "shows informative generation failures" generationFailureSpec
 
 runDB :: MonadUnliftIO m => ReaderT SqlBackend (NoLoggingT (ResourceT m)) a -> m a
 runDB f = runSqlite "test.db" $ do
