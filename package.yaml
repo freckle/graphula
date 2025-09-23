@@ -9,7 +9,6 @@ description: Please see README.md
 extra-source-files:
   - README.md
   - CHANGELOG.md
-
 ghc-options:
   - -Weverything
   - -Wno-all-missed-specialisations
@@ -17,7 +16,6 @@ ghc-options:
   - -Wno-missing-import-lists
   - -Wno-safe
   - -Wno-unsafe
-
 when:
   - condition: impl(ghc >= 9.8)
     ghc-options:
@@ -33,10 +31,8 @@ when:
   - condition: impl(ghc < 8.6)
     ghc-options:
       - -Wno-redundant-constraints
-
 dependencies:
   - base < 5
-
 library:
   source-dirs:
     - src
@@ -54,27 +50,23 @@ library:
     - text
     - unliftio
     - unliftio-core
-
 tests:
   readme:
     main: README.lhs
     ghc-options: -pgmL markdown-unlit
     source-dirs:
       - test
-
     dependencies:
       - QuickCheck
       - generic-arbitrary
       - graphula
       - hspec
-      - markdown-unlit
       - monad-logger
       - persistent
       - persistent-sqlite
       - resourcet
       - transformers
       - unliftio-core
-
     when:
       - condition: impl(ghc >= 8.8)
         ghc-options:
@@ -82,7 +74,8 @@ tests:
       - condition: "flag(persistent-template)"
         dependencies:
           - persistent-template
-
+    build-tools:
+      - markdown-unlit
 flags:
   persistent-template:
     description: Include dependency on persistent-template
