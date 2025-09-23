@@ -61,20 +61,19 @@ tests:
     ghc-options: -pgmL markdown-unlit
     source-dirs:
       - test
-
+      #BLANKLINE
     dependencies:
       - QuickCheck
       - generic-arbitrary
       - graphula
       - hspec
-      - markdown-unlit
       - monad-logger
       - persistent
       - persistent-sqlite
       - resourcet
       - transformers
       - unliftio-core
-
+      #BLANKLINE
     when:
       - condition: impl(ghc >= 8.8)
         ghc-options:
@@ -82,6 +81,8 @@ tests:
       - condition: "flag(persistent-template)"
         dependencies:
           - persistent-template
+    build-tools:
+      - markdown-unlit
 
 flags:
   persistent-template:
