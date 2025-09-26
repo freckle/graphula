@@ -1,4 +1,5 @@
 -- | 'Arbitrary' operations that respect Graphula's seed
+{-# OPTIONS_GHC -Wno-deprecations #-}
 module Graphula.Arbitrary
   ( generate
   ) where

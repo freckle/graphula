@@ -67,7 +67,6 @@ tests:
       - generic-arbitrary
       - graphula
       - hspec
-      - markdown-unlit
       - monad-logger
       - persistent
       - persistent-sqlite
@@ -82,6 +81,8 @@ tests:
       - condition: "flag(persistent-template)"
         dependencies:
           - persistent-template
+    build-tools:
+      - markdown-unlit
 
 flags:
   persistent-template:
