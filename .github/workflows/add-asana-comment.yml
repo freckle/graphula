@@ -4,6 +4,9 @@ on:
   pull_request:
     types: [opened]
 
+permissions:
+  contents: read
+
 jobs:
   link-asana-task:
     if: ${{ github.actor != 'dependabot[bot]' }}
