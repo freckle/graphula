@@ -43,6 +43,7 @@ library:
   dependencies:
     - HUnit
     - QuickCheck
+    - annotated-exception
     - containers
     - directory
     - generics-eot

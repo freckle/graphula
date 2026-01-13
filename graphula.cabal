@@ -48,6 +48,7 @@ library
   build-depends:
       HUnit
     , QuickCheck
+    , annotated-exception
     , base <5
     , containers
     , directory
