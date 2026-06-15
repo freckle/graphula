@@ -32,17 +32,19 @@ dependencies. We use this interface to generate fixtures for automated testing.
 
 module Main (module Main) where
 
-import Control.Exception (try, Exception(..))
+import Control.Exception (try)
 import Control.Monad.IO.Class
 import Control.Monad.IO.Unlift
 import Control.Monad.Logger (NoLoggingT)
 import Control.Monad.Trans.Reader (ReaderT)
 import Control.Monad.Trans.Resource (ResourceT)
+import Data.List (isSuffixOf)
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import GHC.Generics (Generic)
 import Graphula
 import Test.Hspec
+import Test.HUnit.Lang (HUnitFailure (..), formatFailureReason)
 import Test.QuickCheck
 import Test.QuickCheck.Arbitrary.Generic
 
@@ -186,9 +188,9 @@ generationFailureSpec = do
     nodeKeyed @School (entityKey school) () mempty
 
   case result of
-    Left ex ->
-      displayException @GenerationFailure ex
-        `shouldBe` "GenerationFailureMaxAttemptsToInsert (Just \"entity already exists by this key\") School"
+    Left (HUnitFailure _ r) ->
+      formatFailureReason r
+        `shouldSatisfy` ("GenerationFailureMaxAttemptsToInsert (Just \"entity already exists by this key\") School" `isSuffixOf`)
     Right _ -> pure ()
 ```
 

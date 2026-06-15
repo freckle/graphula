@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.38.1.
+-- This file has been generated from package.yaml by hpack version 0.39.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -81,7 +81,8 @@ test-suite readme
   build-tool-depends:
       markdown-unlit:markdown-unlit
   build-depends:
-      QuickCheck
+      HUnit
+    , QuickCheck
     , base <5
     , generic-arbitrary
     , graphula

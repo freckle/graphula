@@ -63,6 +63,7 @@ tests:
       - test
 
     dependencies:
+      - HUnit
       - QuickCheck
       - generic-arbitrary
       - graphula
