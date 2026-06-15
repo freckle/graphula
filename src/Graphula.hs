@@ -281,7 +281,7 @@ prefaceFailureReason detail = \case
   Reason msg -> Reason $ detail <> "\n\n" <> msg
   ExpectedButGot mPreface expected actual ->
     ExpectedButGot
-      (Just $ maybe detail ((detail <> ". ") <>) mPreface)
+      (Just $ maybe detail ((detail <> "\n\n") <>) mPreface)
       expected
       actual
 
