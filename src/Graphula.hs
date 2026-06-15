@@ -13,6 +13,7 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -168,7 +169,13 @@ import Test.HUnit.Lang
   )
 import Test.QuickCheck (Arbitrary (..))
 import Test.QuickCheck.Random (QCGen, mkQCGen)
-import UnliftIO.Exception (catch, throwIO)
+import UnliftIO.Exception
+  ( Handler (..)
+  , SomeException
+  , catches
+  , displayException
+  , throwIO
+  )
 
 -- | A constraint over lists of nodes for 'MonadGraphula', and 'GraphulaNode'.
 --
@@ -260,7 +267,14 @@ runGraphulaT mSeed runDB action = do
   seed <- maybe (liftIO randomIO) pure mSeed
   qcGen <- liftIO $ newIORef $ mkQCGen seed
   runReaderT (runGraphulaT' action) (Args (RunDB runDB) qcGen)
-    `catch` logFailingSeed seed
+    `catches` [ Handler $ logFailingSeed seed
+              , Handler $
+                  logFailingSeed seed
+                    . HUnitFailure Nothing
+                    . Reason
+                    . displayException @SomeException
+              ]
+
 
 logFailingSeed :: MonadIO m => Int -> HUnitFailure -> m a
 logFailingSeed seed = rethrowHUnitWith ("Graphula with seed: " ++ show seed)
