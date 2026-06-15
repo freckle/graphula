@@ -162,11 +162,7 @@ import Graphula.Logged
 import Graphula.NoConstraint
 import Graphula.Node
 import System.Random (randomIO)
-import Test.HUnit.Lang
-  ( FailureReason (..)
-  , HUnitFailure (..)
-  , formatFailureReason
-  )
+import Test.HUnit.Lang (FailureReason (..), HUnitFailure (..))
 import Test.QuickCheck (Arbitrary (..))
 import Test.QuickCheck.Random (QCGen, mkQCGen)
 import UnliftIO.Exception
@@ -267,21 +263,27 @@ runGraphulaT mSeed runDB action = do
   seed <- maybe (liftIO randomIO) pure mSeed
   qcGen <- liftIO $ newIORef $ mkQCGen seed
   runReaderT (runGraphulaT' action) (Args (RunDB runDB) qcGen)
-    `catches` [ Handler $ logFailingSeed seed
+    `catches` [ Handler $ throwIO . prefixHUnitFailure seed
               , Handler $
-                  logFailingSeed seed
+                  throwIO
+                    . prefixHUnitFailure seed
                     . HUnitFailure Nothing
                     . Reason
                     . displayException @SomeException
               ]
 
+prefixHUnitFailure :: Int -> HUnitFailure -> HUnitFailure
+prefixHUnitFailure seed (HUnitFailure l r) =
+  HUnitFailure l $ prefaceFailureReason ("Graphula with seed: " <> show seed) r
 
-logFailingSeed :: MonadIO m => Int -> HUnitFailure -> m a
-logFailingSeed seed = rethrowHUnitWith ("Graphula with seed: " ++ show seed)
-
-rethrowHUnitWith :: MonadIO m => String -> HUnitFailure -> m a
-rethrowHUnitWith message (HUnitFailure l r) =
-  throwIO . HUnitFailure l . Reason $ message ++ "\n\n" ++ formatFailureReason r
+prefaceFailureReason :: String -> FailureReason -> FailureReason
+prefaceFailureReason detail = \case
+  Reason msg -> Reason $ detail <> "\n\n" <> msg
+  ExpectedButGot mPreface expected actual ->
+    ExpectedButGot
+      (Just $ maybe detail ((detail <> ". ") <>) mPreface)
+      expected
+      actual
 
 type GraphulaNode m a =
   ( HasDependencies a
