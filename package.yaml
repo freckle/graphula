@@ -65,6 +65,7 @@ tests:
 
     dependencies:
       - QuickCheck
+      - annotated-exception
       - generic-arbitrary
       - graphula
       - hspec
