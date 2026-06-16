@@ -1,4 +1,6 @@
 resolver: lts-12.26
+extra-deps:
+  - annotated-exception-0.3.0.4
 
 flags:
   graphula:
