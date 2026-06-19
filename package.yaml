@@ -43,6 +43,7 @@ library:
   dependencies:
     - HUnit
     - QuickCheck
+    - annotated-exception
     - containers
     - directory
     - generics-eot
@@ -64,6 +65,7 @@ tests:
 
     dependencies:
       - QuickCheck
+      - annotated-exception
       - generic-arbitrary
       - graphula
       - hspec

@@ -137,6 +137,7 @@ module Graphula
 
 import Prelude hiding (readFile)
 
+import Control.Exception.Annotated.UnliftIO (Annotation (..), checkpoint)
 import Control.Monad.IO.Unlift
 import Control.Monad.Reader (MonadReader, ReaderT, asks, runReaderT)
 import Control.Monad.Trans (MonadTrans, lift)
@@ -168,7 +169,7 @@ import Test.HUnit.Lang
   )
 import Test.QuickCheck (Arbitrary (..))
 import Test.QuickCheck.Random (QCGen, mkQCGen)
-import UnliftIO.Exception (catch, throwIO)
+import UnliftIO.Exception (SomeException, catch, fromException, throwIO)
 
 -- | A constraint over lists of nodes for 'MonadGraphula', and 'GraphulaNode'.
 --
@@ -262,8 +263,13 @@ runGraphulaT mSeed runDB action = do
   runReaderT (runGraphulaT' action) (Args (RunDB runDB) qcGen)
     `catch` logFailingSeed seed
 
-logFailingSeed :: MonadIO m => Int -> HUnitFailure -> m a
-logFailingSeed seed = rethrowHUnitWith ("Graphula with seed: " ++ show seed)
+newtype GraphulaSeed = GraphulaSeed Int
+  deriving stock (Show)
+
+logFailingSeed :: MonadUnliftIO m => Int -> SomeException -> m a
+logFailingSeed seed ex = case fromException ex of
+  Just hf -> rethrowHUnitWith ("Graphula with seed: " <> show seed) hf
+  _ -> checkpoint (Annotation $ GraphulaSeed seed) $ throwIO ex
 
 rethrowHUnitWith :: MonadIO m => String -> HUnitFailure -> m a
 rethrowHUnitWith message (HUnitFailure l r) =

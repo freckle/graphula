@@ -32,7 +32,7 @@ dependencies. We use this interface to generate fixtures for automated testing.
 
 module Main (module Main) where
 
-import Control.Exception (try, Exception(..))
+import Control.Exception.Annotated.UnliftIO (try, Exception(..))
 import Control.Monad.IO.Class
 import Control.Monad.IO.Unlift
 import Control.Monad.Logger (NoLoggingT)
