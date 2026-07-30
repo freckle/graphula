@@ -1,4 +1,1 @@
-resolver: lts-21.11
-
-ghc-options:
-  "$locals": -fwrite-ide-info
+stack-lts21.yaml
