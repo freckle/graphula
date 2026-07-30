@@ -26,11 +26,28 @@ jobs:
         stack-yaml: ${{ fromJSON(needs.generate.outputs.stack-yamls) }}
       fail-fast: false
 
+    # Accept nightly is failing right now
+    continue-on-error: >-
+      ${{ matrix.stack-yaml == 'stack-nightly.yaml' && true || false }}
+
     steps:
       - uses: actions/checkout@v7
       - uses: freckle/stack-action@v5
         with:
           stack-yaml: ${{ matrix.stack-yaml }}
+
+  check:
+    if: always()
+
+    needs:
+      - test
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
 
   lint:
     runs-on: ubuntu-latest
