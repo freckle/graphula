@@ -168,7 +168,7 @@ import Test.HUnit.Lang
   )
 import Test.QuickCheck (Arbitrary (..))
 import Test.QuickCheck.Random (QCGen, mkQCGen)
-import UnliftIO.Exception (catch, throwIO)
+import UnliftIO.Exception (Exception (..), SomeException, catch, throwIO)
 
 -- | A constraint over lists of nodes for 'MonadGraphula', and 'GraphulaNode'.
 --
@@ -262,12 +262,23 @@ runGraphulaT mSeed runDB action = do
   runReaderT (runGraphulaT' action) (Args (RunDB runDB) qcGen)
     `catch` logFailingSeed seed
 
-logFailingSeed :: MonadIO m => Int -> HUnitFailure -> m a
-logFailingSeed seed = rethrowHUnitWith ("Graphula with seed: " ++ show seed)
+logFailingSeed :: MonadIO m => Int -> SomeException -> m a
+logFailingSeed seed =
+  throwIO
+    . whenException (prefixHUnitFailure ("Graphula with seed: " <> show seed))
 
-rethrowHUnitWith :: MonadIO m => String -> HUnitFailure -> m a
-rethrowHUnitWith message (HUnitFailure l r) =
-  throwIO . HUnitFailure l . Reason $ message ++ "\n\n" ++ formatFailureReason r
+prefixHUnitFailure :: String -> HUnitFailure -> HUnitFailure
+prefixHUnitFailure message (HUnitFailure l r) =
+  HUnitFailure l . Reason $ message ++ "\n\n" ++ formatFailureReason r
+
+-- | Apply a function to a 'SomeException' when it's the expected type
+whenException
+  :: Exception e
+  => (e -> e)
+  -- ^ Function to apply if 'fromException' at this type returns 'Just'
+  -> SomeException
+  -> SomeException
+whenException f ex = maybe ex (toException . f) $ fromException ex
 
 type GraphulaNode m a =
   ( HasDependencies a
