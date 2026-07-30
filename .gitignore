@@ -1,4 +1,5 @@
+*.graphula
 *.stack-work
 /dist-newstyle
-*.graphula
+stack*.yaml.lock
 test.db
