@@ -156,6 +156,7 @@ import qualified Database.Persist as Persist
 import Database.Persist.Sql (SqlBackend)
 import Graphula.Class
 import Graphula.Dependencies
+import Graphula.ExceptionContext
 import Graphula.Idempotent
 import Graphula.Logged
 import Graphula.NoConstraint
@@ -265,6 +266,7 @@ runGraphulaT mSeed runDB action = do
 logFailingSeed :: MonadIO m => Int -> SomeException -> m a
 logFailingSeed seed =
   throwIO
+    . addExceptionContext (GraphulaExceptionContext seed)
     . whenException (prefixHUnitFailure ("Graphula with seed: " <> show seed))
 
 prefixHUnitFailure :: String -> HUnitFailure -> HUnitFailure
