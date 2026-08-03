@@ -192,6 +192,21 @@ generationFailureSpec = do
     Right _ -> pure ()
 ```
 
+## Seed
+
+`HUnitFailure` exceptions will have their reason prefixed by the seed used for
+Graphula's arbitrary data, making it visible in expectation-failure messages.
+Re-supplying this seed to `runGraphulaT` will reproduce the same graph, to
+hopefully reproduce intermittent test failures caused by randomness.
+
+If using `base >= 4.20`, **all** exceptions will also have this seed added to
+the [exception's context][ghc-docs]. This won't be visible anywhere (besides
+`HUnitFailure`) by default, but can be extracted through custom exception
+handling, e.g. in a `SpecHook`. We hope tools like `hspec` make using exception
+context more ergonomic in the future.
+
+[ghc-docs]: https://hackage-content.haskell.org/package/base-4.22.0.0/docs/Control-Exception-Context.html
+
 ## Running It
 
 ```haskell
