@@ -11,6 +11,7 @@ dependencies. We use this interface to generate fixtures for automated testing.
 
 <!--
 ```haskell
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
@@ -32,7 +33,11 @@ dependencies. We use this interface to generate fixtures for automated testing.
 
 module Main (module Main) where
 
-import Control.Exception (try, Exception(..))
+import Control.Exception (try, Exception(..), SomeException)
+#if MIN_VERSION_base(4,20,0)
+import Control.Exception (someExceptionContext)
+import Control.Exception.Context (getExceptionAnnotations)
+#endif
 import Control.Monad.IO.Class
 import Control.Monad.IO.Unlift
 import Control.Monad.Logger (NoLoggingT)
@@ -42,6 +47,9 @@ import Database.Persist.Sqlite
 import Database.Persist.TH
 import GHC.Generics (Generic)
 import Graphula
+#if MIN_VERSION_base(4,20,0)
+import Graphula.ExceptionContext (GraphulaExceptionContext (..))
+#endif
 import Test.Hspec
 import Test.QuickCheck
 import Test.QuickCheck.Arbitrary.Generic
@@ -207,6 +215,42 @@ context more ergonomic in the future.
 
 [ghc-docs]: https://hackage-content.haskell.org/package/base-4.22.0.0/docs/Control-Exception-Context.html
 
+```haskell
+seedPrefixesHUnitFailureSpec :: IO ()
+seedPrefixesHUnitFailureSpec = do
+  result <- try $ runGraphulaT (Just 1) runDB $ do
+    liftIO $ (1 :: Int) `shouldBe` 2
+
+  case result :: Either SomeException () of
+    Left ex -> show ex `shouldContain` "Graphula with seed: 1"
+    Right () -> expectationFailure "expected an exception"
+
+#if MIN_VERSION_base(4,20,0)
+seedExceptionContextSpec :: IO ()
+seedExceptionContextSpec = do
+  result <- try $ runGraphulaT (Just 2) runDB $ do
+    liftIO $ (1 :: Int) `shouldBe` 2
+
+  case result :: Either SomeException () of
+    Left ex -> seedsInContext ex `shouldBe` [2]
+    Right () -> expectationFailure "expected an exception"
+
+seedExceptionContextNonHUnitFailureSpec :: IO ()
+seedExceptionContextNonHUnitFailureSpec = do
+  result <- try $ runGraphulaT (Just 3) runDB $ do
+    liftIO $ ioError $ userError "boom"
+
+  case result :: Either SomeException () of
+    Left ex -> seedsInContext ex `shouldBe` [3]
+    Right () -> expectationFailure "expected an exception"
+
+seedsInContext :: SomeException -> [Int]
+seedsInContext ex =
+  map graphulaExceptionContextSeed
+    $ getExceptionAnnotations (someExceptionContext ex)
+#endif
+```
+
 ## Running It
 
 ```haskell
@@ -240,6 +284,11 @@ main = hspec $
     it "generates and links arbitrary graphs of data" simpleSpec
     it "allows logging graphs" loggingSpec
     it "shows informative generation failures" generationFailureSpec
+    it "prefixes HUnitFailure reasons with the seed" seedPrefixesHUnitFailureSpec
+#if MIN_VERSION_base(4,20,0)
+    it "adds the seed to exception context, for HUnitFailure" seedExceptionContextSpec
+    it "adds the seed to exception context, for other exceptions" seedExceptionContextNonHUnitFailureSpec
+#endif
 
 runDB :: MonadUnliftIO m => ReaderT SqlBackend (NoLoggingT (ResourceT m)) a -> m a
 runDB f = runSqlite "test.db" $ do
