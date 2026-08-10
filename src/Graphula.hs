@@ -169,7 +169,7 @@ import Test.HUnit.Lang
   )
 import Test.QuickCheck (Arbitrary (..))
 import Test.QuickCheck.Random (QCGen, mkQCGen)
-import UnliftIO.Exception (Exception (..), SomeException, catch, throwIO)
+import UnliftIO.Exception (Exception (..), SomeException, catch)
 
 -- | A constraint over lists of nodes for 'MonadGraphula', and 'GraphulaNode'.
 --
@@ -265,8 +265,7 @@ runGraphulaT mSeed runDB action = do
 
 logFailingSeed :: MonadIO m => Int -> SomeException -> m a
 logFailingSeed seed =
-  throwIO
-    . addExceptionContext (GraphulaExceptionContext seed)
+  throwWithGraphulaExceptionContext (GraphulaExceptionContext seed)
     . whenException (prefixHUnitFailure ("Graphula with seed: " <> show seed))
 
 prefixHUnitFailure :: String -> HUnitFailure -> HUnitFailure

@@ -3,16 +3,18 @@
 
 module Graphula.ExceptionContext
   ( GraphulaExceptionContext (..)
-  , addExceptionContext
+  , throwWithGraphulaExceptionContext
   ) where
 
 import Prelude
 
+import Control.Exception (SomeException (..), throwIO)
+import Control.Monad.IO.Class (MonadIO, liftIO)
+
 #if MIN_VERSION_base(4,20,0)
-import Control.Exception (addExceptionContext)
+import Control.Exception (ExceptionWithContext (..), someExceptionContext)
 import Control.Exception.Annotation (ExceptionAnnotation)
-#else
-import Control.Exception (SomeException)
+import Control.Exception.Context (addExceptionAnnotation)
 #endif
 
 newtype GraphulaExceptionContext = GraphulaExceptionContext
@@ -22,11 +24,24 @@ newtype GraphulaExceptionContext = GraphulaExceptionContext
 
 #if MIN_VERSION_base(4,20,0)
 instance ExceptionAnnotation GraphulaExceptionContext
+#endif
+
+-- | Attach the seed as exception context, then rethrow
+--
+-- On @base < 4.20@, where exception context does not exist, this simply
+-- rethrows the given exception unchanged.
+throwWithGraphulaExceptionContext
+  :: MonadIO m
+  => GraphulaExceptionContext
+  -> SomeException
+  -> m a
+#if MIN_VERSION_base(4,20,0)
+throwWithGraphulaExceptionContext ctx ex@(SomeException e) =
+  liftIO
+    . throwIO
+    $ ExceptionWithContext
+      (addExceptionAnnotation ctx (someExceptionContext ex))
+      e
 #else
-addExceptionContext
-  :: a
-  -- ^ Argument ignored due to @base < 4.20@
-  -> SomeException
-  -> SomeException
-addExceptionContext _ = id
+throwWithGraphulaExceptionContext _ctx ex = liftIO $ throwIO ex
 #endif
