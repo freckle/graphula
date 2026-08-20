@@ -14,6 +14,6 @@ jobs:
   mergeabot:
     runs-on: ubuntu-latest
     steps:
-      - uses: freckle/mergeabot-action@v3.1.2
+      - uses: freckle/mergeabot-action@v3.2.0
         with:
           quarantine-days: -1
