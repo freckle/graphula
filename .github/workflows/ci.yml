@@ -41,6 +41,7 @@ jobs:
 
     needs:
       - test
+      - lint
 
     runs-on: ubuntu-latest
 
