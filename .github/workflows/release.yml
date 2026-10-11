@@ -21,7 +21,7 @@ jobs:
           private-key: ${{ secrets.FRECKLE_AUTOMATION_PRIVATE_KEY }}
 
       - id: release
-        uses: cycjimmy/semantic-release-action@v6.0.0
+        uses: cycjimmy/semantic-release-action@v7.1.2
         with:
           extra_plugins: |
             semantic-release-stack-upload
